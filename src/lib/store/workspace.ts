@@ -29,14 +29,19 @@ import type {
   ConsentEvent,
   SigningKey,
   VerificationEvent,
+  SkillTag,
+  EmployerChallenge,
+  Endorsement,
+  OutcomeEvent,
+  PortfolioShare,
 } from "@shared/types";
 import { PROPERTY_LABELS } from "@shared/thresholds";
 import { computeReport } from "@lib/metrics";
 import { estimateRunCost } from "@lib/llm";
 import { newId, nowIso } from "./ids";
 import { runGeneration } from "./orchestrator";
-import { buildDemoEmployerData, buildDemoWorkspace, buildDemoBridgeEvents, DEMO_INSTRUCTOR } from "./seed";
-import { bridgeFor, withBridgeDefaults } from "./employer";
+import { buildDemoEmployabilityData, buildDemoEmployerData, buildDemoWorkspace, buildDemoBridgeEvents, DEMO_INSTRUCTOR } from "./seed";
+import { applyChallengeToBlueprint, bridgeFor, recordCanonicalPure, resolveSkills, skillKeysForBlueprint, slugify, withBridgeDefaults, deriveChallengeId } from "./employer";
 import { ensureSigningKey, signCanonical } from "@lib/badges/keys";
 import { activeBlueprint, currentThresholds, evidenceForVariant, institutionRowForRun, runById, studentById, submissionForVariant, validationsForBlueprint, variantById } from "./selectors";
 import { applyScenarioEdits, buildReviewPackagePure, evidenceCanonical, findPartnerByOrganisation, hashEvidence, nextEvidenceId, validationStatusText } from "./employer";
@@ -96,6 +101,17 @@ export interface WorkspaceActions {
   signEvidenceRecord: (recordId: string) => Promise<EvidenceRecord>;
   addConsent: (recordId: string, ev: Omit<ConsentEvent, "id" | "at" | "learnerId">) => ConsentEvent;
   addVerification: (ev: Omit<VerificationEvent, "id" | "at">) => VerificationEvent;
+  // Employability bridge
+  addSkill: (tag: Omit<SkillTag, "key"> & { key?: string }) => SkillTag;
+  setCriterionSkills: (bpId: string, critId: string, skillKeys: string[]) => void;
+  addChallenge: (c: Omit<EmployerChallenge, "id" | "contributedAt" | "status" | "blueprintIds" | "organisation"> & { organisation?: string }) => EmployerChallenge;
+  retireChallenge: (id: string) => void;
+  linkChallengeToBlueprint: (challengeId: string, blueprintId: string) => void;
+  setSubmissionIncluded: (recordId: string, included: boolean) => Promise<EvidenceRecord>;
+  addEndorsement: (e: Omit<Endorsement, "id" | "at">) => Endorsement;
+  addOutcome: (o: Omit<OutcomeEvent, "id" | "at" | "learnerId">) => OutcomeEvent;
+  createPortfolioShare: (learnerId: string, recordIds: string[], toOrganisation: string | null) => PortfolioShare;
+  revokePortfolioShare: (id: string) => void;
 }
 
 export type WorkspaceState = Workspace & { runAbort: AbortController | null } & WorkspaceActions;
@@ -157,23 +173,7 @@ function releaseRun(ws: Workspace, runId: string, overThreshold: boolean, reason
 
 /** Rebuild the canonical content a record's hash covers, from the workspace. Null if the content is gone. */
 export function recordCanonical(ws: Workspace, record: EvidenceRecord): string | null {
-  const found = variantById(ws, record.variantId, record.runId);
-  if (!found) return null;
-  const { run, variant } = found;
-  const submission = submissionForVariant(ws, record.variantId, run.id);
-  const student = studentById(ws, record.studentId);
-  const blueprint = ws.blueprints.find((b) => b.id === record.blueprintId);
-  if (!submission?.grade || !student || !blueprint) return null;
-  return evidenceCanonical({
-    student,
-    course: ws.course,
-    blueprint,
-    variant,
-    grade: submission.grade,
-    report: run.report,
-    validationIds: record.validationIds,
-    issuedAt: record.issuedAt,
-  });
+  return recordCanonicalPure(ws, record);
 }
 
 export const useWorkspace = create<WorkspaceState>()(
@@ -204,7 +204,13 @@ export const useWorkspace = create<WorkspaceState>()(
           next.employerValidations = Array.isArray(parsed.employerValidations) ? parsed.employerValidations : demo.employerValidations;
           next.evidenceRecords = Array.isArray(parsed.evidenceRecords) ? parsed.evidenceRecords : demo.evidenceRecords;
         }
-        Object.assign(next, withBridgeDefaults(next));
+        // Skills and challenges first (work-sample defaults need them), then the bridge (learner ids),
+        // then the learner-keyed employability data (outcomes, portfolio shares).
+        const emp0 = buildDemoEmployabilityData(next);
+        const prepared = { ...next, skills: emp0.skills, challenges: emp0.challenges };
+        const bridged = withBridgeDefaults(prepared);
+        const emp = buildDemoEmployabilityData({ ...prepared, evidenceRecords: bridged.evidenceRecords });
+        Object.assign(next, bridged, emp);
         set({ ...next, runAbort: null });
       },
 
@@ -583,7 +589,20 @@ export const useWorkspace = create<WorkspaceState>()(
         if (!blueprint) throw new Error("The blueprint for this run no longer exists.");
         const issuedAt = nowIso();
         const validationIds = validationsForBlueprint(ws, blueprint.id).filter((v) => v.status === "validated").map((v) => v.id);
-        const canonical = evidenceCanonical({ student, course: ws.course, blueprint, variant, grade: submission.grade, report: run.report, validationIds, issuedAt });
+        const skills = resolveSkills(ws.skills, skillKeysForBlueprint(blueprint));
+        const canonical = evidenceCanonical({
+          student,
+          course: ws.course,
+          blueprint,
+          variant,
+          grade: submission.grade,
+          report: run.report,
+          validationIds,
+          issuedAt,
+          submissionIncluded: false,
+          submissionText: null,
+          skillKeys: skills.map((sk) => sk.key),
+        });
         const record: EvidenceRecord = {
           id: nextEvidenceId(ws.evidenceRecords, new Date(issuedAt).getFullYear()),
           runId: run.id,
@@ -595,7 +614,10 @@ export const useWorkspace = create<WorkspaceState>()(
           hash: hashEvidence(canonical),
           validationIds,
         };
-        record.bridge = bridgeFor(ws, record);
+        record.bridge = {
+          ...bridgeFor(ws, record),
+          workSample: { submissionIncluded: false, submissionText: null, skills, challengeId: deriveChallengeId(ws.challenges, blueprint, variant), endorsementIds: [] },
+        };
         set((s) => ({
           evidenceRecords: [...s.evidenceRecords, record],
           audit: [auditEvent("evidence", `Evidence record ${record.id} issued for ${student.name}`, s.course.instructor.name, run.id), ...s.audit],
@@ -673,6 +695,166 @@ export const useWorkspace = create<WorkspaceState>()(
         }));
         return event;
       },
+
+      // ---- Employability bridge -----------------------------------------------
+
+      addSkill: (tag) => {
+        const ws = get();
+        const key = slugify(tag.key ?? tag.label);
+        if (!key) throw new Error("A skill needs a label.");
+        const existing = (ws.skills ?? []).find((s) => s.key === key);
+        if (existing) return existing;
+        const skill: SkillTag = { key, label: tag.label.trim(), source: tag.source, externalRef: tag.externalRef?.trim() || undefined };
+        set((s) => ({ skills: [...(s.skills ?? []), skill] }));
+        return skill;
+      },
+
+      setCriterionSkills: (bpId, critId, skillKeys) =>
+        set((s) => ({
+          blueprints: s.blueprints.map((b) =>
+            b.id === bpId
+              ? { ...b, updatedAt: nowIso(), rubric: b.rubric.map((c) => (c.id === critId ? { ...c, skillKeys: [...new Set(skillKeys)] } : c)) }
+              : b,
+          ),
+        })),
+
+      addChallenge: (c) => {
+        const ws = get();
+        const partner = ws.employerPartners.find((p) => p.id === c.partnerId) ?? null;
+        const organisation = (c.organisation ?? partner?.organisation ?? "").trim();
+        if (!organisation) throw new Error("A challenge needs an employer partner.");
+        const challenge: EmployerChallenge = {
+          ...c,
+          organisation,
+          title: c.title.trim(),
+          brief: c.brief.trim(),
+          domain: c.domain.trim(),
+          stakeholderRole: c.stakeholderRole.trim(),
+          deliverable: c.deliverable.trim(),
+          skillKeys: [...new Set(c.skillKeys)],
+          id: newId("chal"),
+          contributedAt: nowIso(),
+          status: "active",
+          blueprintIds: [],
+        };
+        set((s) => ({
+          challenges: [...(s.challenges ?? []), challenge],
+          audit: [auditEvent("employer", `${organisation} contributed a challenge: ${challenge.title}`, c.contributedBy || organisation), ...s.audit],
+        }));
+        return challenge;
+      },
+
+      retireChallenge: (id) =>
+        set((s) => {
+          const c = (s.challenges ?? []).find((x) => x.id === id);
+          if (!c) return s;
+          return {
+            challenges: (s.challenges ?? []).map((x) => (x.id === id ? { ...x, status: "retired" as const } : x)),
+            audit: [auditEvent("employer", `Challenge retired: ${c.title} (${c.organisation})`, s.course.instructor.name), ...s.audit],
+          };
+        }),
+
+      linkChallengeToBlueprint: (challengeId, blueprintId) =>
+        set((s) => {
+          const challenge = (s.challenges ?? []).find((c) => c.id === challengeId);
+          const bp = s.blueprints.find((b) => b.id === blueprintId);
+          if (!challenge || !bp) return s;
+          const linked = applyChallengeToBlueprint(bp, challenge);
+          return {
+            blueprints: s.blueprints.map((b) => (b.id === blueprintId ? { ...linked, updatedAt: nowIso() } : b)),
+            challenges: (s.challenges ?? []).map((c) => (c.id === challengeId ? { ...c, blueprintIds: [...new Set([...c.blueprintIds, blueprintId])] } : c)),
+            audit: [auditEvent("employer", `${challenge.organisation}'s challenge "${challenge.title}" now feeds ${bp.name}`, s.course.instructor.name), ...s.audit],
+          };
+        }),
+
+      setSubmissionIncluded: async (recordId, included) => {
+        const ws = get();
+        const record = ws.evidenceRecords.find((r) => r.id === recordId);
+        if (!record) throw new Error(`No evidence record ${recordId}.`);
+        const bridge = record.bridge ?? bridgeFor(ws, record);
+        const sample = bridge.workSample ?? { submissionIncluded: false, submissionText: null, skills: [], challengeId: null, endorsementIds: [] };
+        if (sample.submissionIncluded === included) return record;
+        const submission = submissionForVariant(ws, record.variantId, record.runId);
+        if (included && !submission?.text) throw new Error("There is no submission text to include.");
+        const nextSample = { ...sample, submissionIncluded: included, submissionText: included ? (submission?.text ?? null) : null };
+        let next: EvidenceRecord = { ...record, bridge: { ...bridge, workSample: nextSample } };
+        const canonical = recordCanonicalPure(ws, next);
+        if (canonical) {
+          next = { ...next, hash: hashEvidence(canonical) };
+          if (bridge.signature && ws.signingKey) {
+            const signature = await signCanonical(ws.signingKey, canonical);
+            next = { ...next, bridge: { ...next.bridge!, signature, signedWithKid: ws.signingKey.kid } };
+          } else if (bridge.signature) {
+            next = { ...next, bridge: { ...next.bridge!, signature: null, signedWithKid: null } };
+          }
+        }
+        const student = studentById(ws, record.studentId);
+        const consent: ConsentEvent | null = included
+          ? { id: newId("con"), at: nowIso(), action: "shared", learnerId: bridge.learnerId, toOrganisation: null, toEmail: null, note: "submission included" }
+          : null;
+        if (consent) next = { ...next, bridge: { ...next.bridge!, consent: [...next.bridge!.consent, consent] } };
+        set((s) => ({
+          evidenceRecords: s.evidenceRecords.map((r) => (r.id === recordId ? next : r)),
+          audit: [
+            auditEvent("evidence", `${student?.name ?? bridge.learnerId} ${included ? "included their submission in" : "removed their submission from"} ${recordId}`, student?.name ?? bridge.learnerId, record.runId),
+            ...s.audit,
+          ],
+        }));
+        return next;
+      },
+
+      addEndorsement: (e) => {
+        const ws = get();
+        const record = ws.evidenceRecords.find((r) => r.id === e.recordId);
+        if (!record) throw new Error(`No evidence record ${e.recordId}.`);
+        const partnerId = e.partnerId ?? ws.employerPartners.find((p) => p.organisation.trim().toLowerCase() === e.organisation.trim().toLowerCase())?.id ?? null;
+        const endorsement: Endorsement = { ...e, partnerId, id: newId("end"), at: nowIso(), score: Math.max(1, Math.min(5, Math.round(e.score))) };
+        set((s) => ({
+          endorsements: [...(s.endorsements ?? []), endorsement],
+          evidenceRecords: s.evidenceRecords.map((r) =>
+            r.id === e.recordId && r.bridge?.workSample
+              ? { ...r, bridge: { ...r.bridge, workSample: { ...r.bridge.workSample, endorsementIds: [...r.bridge.workSample.endorsementIds, endorsement.id] } } }
+              : r,
+          ),
+          audit: [
+            auditEvent("employer", `${e.organisation} endorsed ${e.recordId}${e.meetsBar ? " (meets their bar)" : ""}`, `${e.reviewerName} (${e.organisation})`, record.runId),
+            ...s.audit,
+          ],
+        }));
+        return endorsement;
+      },
+
+      addOutcome: (o) => {
+        const ws = get();
+        const record = ws.evidenceRecords.find((r) => r.id === o.recordId);
+        if (!record) throw new Error(`No evidence record ${o.recordId}.`);
+        const learnerId = (record.bridge ?? bridgeFor(ws, record)).learnerId;
+        const outcome: OutcomeEvent = { ...o, id: newId("out"), at: nowIso(), learnerId };
+        const actor = o.by === "employer" ? o.organisation : (studentById(ws, record.studentId)?.name ?? learnerId);
+        set((s) => ({
+          outcomes: [...(s.outcomes ?? []), outcome],
+          audit: [auditEvent("outcome", `${o.organisation} ${o.by === "employer" ? "logged" : "was reported by the student to have"} ${o.kind}${o.kind === "ramped" && o.onboardingHours ? ` (${o.onboardingHours} h)` : ""} for ${learnerId}`, actor, record.runId), ...s.audit],
+        }));
+        return outcome;
+      },
+
+      createPortfolioShare: (learnerId, recordIds, toOrganisation) => {
+        const ws = get();
+        const ids = recordIds.filter((id) => ws.evidenceRecords.some((r) => r.id === id && r.bridge?.learnerId === learnerId));
+        if (!ids.length) throw new Error("No records of this learner to share.");
+        const share: PortfolioShare = { id: newId("pshare"), learnerId, recordIds: ids, toOrganisation: toOrganisation?.trim() || null, createdAt: nowIso(), revokedAt: null };
+        set((s) => ({ portfolioShares: [...(s.portfolioShares ?? []), share] }));
+        for (const id of ids) get().addConsent(id, { action: "shared", toOrganisation: share.toOrganisation, toEmail: null, note: `portfolio share ${share.id}` });
+        return share;
+      },
+
+      revokePortfolioShare: (id) => {
+        const ws = get();
+        const share = (ws.portfolioShares ?? []).find((p) => p.id === id);
+        if (!share || share.revokedAt) return;
+        set((s) => ({ portfolioShares: (s.portfolioShares ?? []).map((p) => (p.id === id ? { ...p, revokedAt: nowIso() } : p)) }));
+        for (const rid of share.recordIds) get().addConsent(rid, { action: "revoked", toOrganisation: share.toOrganisation, toEmail: null, note: `portfolio share ${share.id} revoked` });
+      },
     }),
     {
       name: LS_KEY,
@@ -730,12 +912,14 @@ export const useWorkspace = create<WorkspaceState>()(
           merged.employerValidations = Array.isArray(p.employerValidations) ? p.employerValidations : demo.employerValidations;
           merged.evidenceRecords = Array.isArray(p.evidenceRecords) ? p.evidenceRecords : demo.evidenceRecords;
         }
-        // Bridge (schema v2): records get learner ids and credential ids; event arrays get defaults.
-        const bridged = withBridgeDefaults(merged);
-        merged.evidenceRecords = bridged.evidenceRecords;
-        merged.verificationEvents = bridged.verificationEvents;
-        merged.signingKey = bridged.signingKey;
-        return merged;
+        // Skills and challenges first (work-sample defaults need them), then the bridge (schema v3:
+        // learner ids, credential ids, work-sample fields; event arrays get defaults), then the
+        // learner-keyed employability data (endorsements, outcomes, portfolio shares) when missing.
+        const emp0 = buildDemoEmployabilityData(merged);
+        const prepared = { ...merged, skills: emp0.skills, challenges: emp0.challenges };
+        const bridged = withBridgeDefaults(prepared);
+        const emp = buildDemoEmployabilityData({ ...prepared, evidenceRecords: bridged.evidenceRecords });
+        return { ...merged, ...bridged, ...emp } as WorkspaceState;
       },
     },
   ),

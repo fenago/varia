@@ -19,6 +19,9 @@ import Review from "./pages/Review";
 import Evidence from "./pages/Evidence";
 import Verify from "./pages/Verify";
 import Share from "./pages/Share";
+import For from "./pages/For";
+import Portfolio from "./pages/Portfolio";
+import Talent from "./pages/Talent";
 
 export type PageKey =
   | "start"
@@ -37,7 +40,10 @@ export type PageKey =
   | "review"
   | "evidence"
   | "verify"
-  | "share";
+  | "share"
+  | "for"
+  | "portfolio"
+  | "talent";
 
 /** Crumb + title per page, copied from the mockup's PAGES map. */
 export const PAGES: Record<PageKey, { crumb: string; title: string; path: string }> = {
@@ -58,6 +64,9 @@ export const PAGES: Record<PageKey, { crumb: string; title: string; path: string
   evidence: { crumb: "Evidence record", title: "Evidence of demonstrated skill", path: "/evidence" },
   verify: { crumb: "Verification", title: "Verify an evidence record", path: "/verify" },
   share: { crumb: "Your record", title: "Share your evidence record", path: "/share" },
+  for: { crumb: "Orientation", title: "Who VARIA is for", path: "/for" },
+  portfolio: { crumb: "Portfolio", title: "Your verified work", path: "/portfolio" },
+  talent: { crumb: "Talent view", title: "Candidates who did your work", path: "/talent" },
 };
 
 /** Resolve the page key for a pathname (so /grade/v-07 → "grade", /review/b1 → "review"). */
@@ -87,6 +96,8 @@ export function App() {
           <Route path="/console" element={<Console />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/employer" element={<Employer />} />
+          <Route path="/for" element={<For />} />
+          <Route path="/for/:audience" element={<For />} />
           <Route path="*" element={<Start />} />
         </Route>
         <Route element={<ReviewLayout />}>
@@ -97,6 +108,10 @@ export function App() {
           <Route path="/verify/:recordId" element={<Verify />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/share/:recordId" element={<Share />} />
+          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/portfolio/:learnerId" element={<Portfolio />} />
+          <Route path="/talent" element={<Talent />} />
+          <Route path="/talent/:partnerId" element={<Talent />} />
         </Route>
       </Routes>
     </PageTitleProvider>

@@ -8,7 +8,7 @@
  * never enters the credential; it lives on the human-readable evidence page.
  */
 
-import type { EvidenceRecord, EmployerValidation, Property, SigningKey } from "@shared/types";
+import type { Endorsement, EvidenceRecord, EmployerValidation, OutcomeEvent, Property, SigningKey } from "@shared/types";
 import type { EvidenceView } from "@lib/store/selectors";
 import { downloadJson } from "@lib/share";
 
@@ -35,7 +35,7 @@ export interface OpenBadgeCredential {
       description: string;
       achievementType: "Assessment";
       criteria: { narrative: string };
-      alignment: { type: "Alignment"; targetName: string; targetType: "ceasn:Competency" }[];
+      alignment: { type: "Alignment"; targetName: string; targetType: "ceasn:Competency"; targetFramework?: string; targetCode?: string }[];
     };
     result: { type: "Result"; resultDescription: string; value: string; achievedLevel: string; status: "Completed" }[];
   };
@@ -75,7 +75,17 @@ function validationsNarrative(vals: EmployerValidation[]): string {
  * Build the credential. `signature` is the record's detached JWS if the record
  * has been signed; `key` supplies the kid and issuer name for the proof block.
  */
-export function toOpenBadge(view: EvidenceView, record: EvidenceRecord, key: Pick<SigningKey, "kid" | "issuerName" | "demo"> | null): OpenBadgeCredential {
+export interface OpenBadgeExtras {
+  endorsements?: Endorsement[];
+  outcomes?: OutcomeEvent[];
+}
+
+export function toOpenBadge(
+  view: EvidenceView,
+  record: EvidenceRecord,
+  key: Pick<SigningKey, "kid" | "issuerName" | "demo"> | null,
+  extras?: OpenBadgeExtras,
+): OpenBadgeCredential {
   const bridge = record.bridge;
   const learnerId = bridge?.learnerId ?? "L-unknown";
   const credentialId = bridge?.credentialId ?? `urn:varia:${record.id}`;
@@ -124,7 +134,16 @@ export function toOpenBadge(view: EvidenceView, record: EvidenceRecord, key: Pic
         description: view.blueprint.construct,
         achievementType: "Assessment",
         criteria: { narrative: view.blueprint.rubric.map((c) => `${c.name} (${c.points} pts)`).join("; ") },
-        alignment: view.blueprint.constructDimensions.map((d) => ({ type: "Alignment" as const, targetName: d, targetType: "ceasn:Competency" as const })),
+        alignment: [
+          ...view.blueprint.constructDimensions.map((d) => ({ type: "Alignment" as const, targetName: d, targetType: "ceasn:Competency" as const })),
+          ...(bridge?.workSample?.skills ?? []).map((sk) => ({
+            type: "Alignment" as const,
+            targetName: sk.label,
+            targetType: "ceasn:Competency" as const,
+            targetFramework: sk.source === "taxonomy" ? "O*NET" : sk.source === "employer" ? "Employer competency" : "Instructor",
+            ...(sk.externalRef ? { targetCode: sk.externalRef } : {}),
+          })),
+        ],
       },
       result: results,
     },
@@ -136,6 +155,39 @@ export function toOpenBadge(view: EvidenceView, record: EvidenceRecord, key: Pic
         description: checksNarrative(view),
         narrative: validationsNarrative(view.validations),
       },
+      ...(extras?.endorsements?.length
+        ? [
+            {
+              type: "Evidence" as const,
+              name: "Employer endorsements",
+              description: `${extras.endorsements.length} employer endorsement${extras.endorsements.length === 1 ? "" : "s"} of this work sample.`,
+              narrative: extras.endorsements
+                .map((e) => `${e.organisation} (${e.reviewerName}, ${e.at.slice(0, 10)}): ${e.score}/5${e.meetsBar ? ", meets their bar" : ""}. ${e.comment}`)
+                .join(" "),
+            },
+          ]
+        : []),
+      ...(extras?.outcomes?.length
+        ? [
+            {
+              type: "Evidence" as const,
+              name: "Outcomes",
+              description: "Events logged against this record by the learner or an employer.",
+              narrative: extras.outcomes.map((o) => `${o.at.slice(0, 10)}: ${o.kind} · ${o.organisation}${o.onboardingHours ? ` (${o.onboardingHours} h to productive)` : ""}`).join("; "),
+            },
+          ]
+        : []),
+      ...(bridge?.workSample?.submissionIncluded && bridge.workSample.submissionText
+        ? [
+            {
+              type: "Evidence" as const,
+              id: `${iss}/evidence/${record.variantId}#submission`,
+              name: "Work sample",
+              description: "The learner's submission, included with the learner's consent.",
+              narrative: bridge.workSample.submissionText,
+            },
+          ]
+        : []),
     ],
   };
 
@@ -155,6 +207,11 @@ export function toOpenBadge(view: EvidenceView, record: EvidenceRecord, key: Pic
   return cred;
 }
 
-export function downloadOpenBadge(view: EvidenceView, record: EvidenceRecord, key: Pick<SigningKey, "kid" | "issuerName" | "demo"> | null): void {
-  downloadJson(toOpenBadge(view, record, key), `${record.id}-open-badge-3.0.json`);
+export function downloadOpenBadge(
+  view: EvidenceView,
+  record: EvidenceRecord,
+  key: Pick<SigningKey, "kid" | "issuerName" | "demo"> | null,
+  extras?: OpenBadgeExtras,
+): void {
+  downloadJson(toOpenBadge(view, record, key, extras), `${record.id}-open-badge-3.0.json`);
 }

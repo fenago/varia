@@ -93,6 +93,11 @@ key. Breadcrumb and page title come from the `PAGES` map in the mockup script.
 | `/employer` | Oversight · Employer validation | Oversight / Employer validation |
 | `/review`, `/review/:blueprintId` | (employer-facing, `ReviewLayout`, no rail) | Employer review / Validate an assessment |
 | `/evidence/:variantId` | (employer-facing, `ReviewLayout`, printable) | Evidence record / Evidence of demonstrated skill |
+| `/verify/:recordId` | (public-feeling, `ReviewLayout`) | Verify / Record verification |
+| `/share/:recordId` | (student-facing, `ReviewLayout`) | Share / Share your record |
+| `/for`, `/for/:audience` | Orientation · Who it's for | Orientation / Who VARIA is for · For students / instructors / institutions / employers |
+| `/portfolio`, `/portfolio/:learnerId` | (student-facing, `ReviewLayout`) | Portfolio / Your verified work |
+| `/talent`, `/talent/:partnerId` | (employer-facing, `ReviewLayout`) | Talent view / Candidates who did your work |
 
 Header right side: `DAT 4100 · Fall 2026` neutral tag, then an accent tag showing the generator
 model label from settings, or `Demo mode · add a key` (linking to `/settings`) when no key is set.
@@ -301,6 +306,46 @@ say so in the final report and the lead applies it.
 | **G · QA** | tests only | Build passes, every route renders, demo flow end-to-end, label audit vs mockup |
 
 Order: A, B, C, D in parallel → E, F in parallel → G.
+
+### Employability bridge (Challenge → Version → Work sample → Portfolio → Talent view → Outcome)
+
+Content for the audience pages is in `src/shared/audiences.ts` (`AUDIENCES`, `AUDIENCE_OVERVIEW`).
+Data model additions are in `types.ts`: `SkillTag`, `EmployerChallenge`, `Endorsement`,
+`OutcomeEvent`, `PortfolioShare`, `WorkSampleFields` (record schema v3), `Criterion.skillKeys`,
+`Blueprint.challengeIds`.
+
+- **Who it's for** (`/for`) — overview: `AUDIENCE_OVERVIEW` pipeline drawn as six steps with the
+  actor under each, then four audience cards (label, promise, quote, "Read more" → `/for/:key`).
+  **`/for/:audience`** — promise as h3, lede, the five "what you get" blocks, "What it costs you",
+  primary action + secondary proof link. Start page gets a "Who this is for" strip of the four
+  cards above the five-step grid.
+- **Employer page reframed** — top: a **funnel** (challenges contributed → students who completed
+  one → work samples shared → endorsed → interviewed → hired) computed from `employerFunnel`.
+  Then **Challenges**: table (title, organisation, domain · stakeholder, skills, linked blueprints)
+  with "Contribute a challenge" form (partner, title, brief, domain, stakeholder role,
+  deliverable, skills multi-select from `ws.skills` + add new) and per row "Use in {active
+  blueprint}" → `linkChallengeToBlueprint` (adds domain/stakeholder/scenario values to the
+  scenario bank, records the id). Then the three Axim tiles + adoption observed, partners,
+  blueprint validation, results, history, evidence records (as now).
+- **Portfolio** (`/portfolio/:learnerId`; bare `/portfolio` → the first learner with records) —
+  student-facing. Header: learner ID, course, skills summary (union of record skills with counts).
+  Records as work-sample cards: blueprint, challenge organisation, date, rubric total, skills,
+  endorsement stamp, outcome stamps, "Include my submission" toggle (consent → `setSubmissionIncluded`),
+  "Share with an employer" (organisation → `addConsent` + `createPortfolioShare` → link
+  `/talent/:partnerId` or a portfolio link `/portfolio/:learnerId#share=…`), "Log an outcome"
+  (interviewed / offered / hired, organisation) → `addOutcome(by: 'student')`. Open Badges download
+  per record. Muted: "In a real deployment the student signs in."
+- **Talent view** (`/talent/:partnerId`; bare `/talent` → first partner) — employer-facing. Header:
+  organisation, its challenges. Rows from `talentRows(ws, partnerId)`: learners whose records are
+  shared to this organisation or publicly and match the partner's challenge or domain; each shows
+  learner ID, course, blueprint/challenge, skills, rubric total, endorsed?, outcomes, links to
+  verify and to the evidence page; expand to read the submission if included. Actions per row:
+  "Endorse" (score 1–5, meets bar, comment, reviewer name/email) → `addEndorsement`; "Log outcome"
+  (interviewed / offered / hired / ramped with onboarding hours) → `addOutcome(by: 'employer')`.
+  Funnel strip for this partner at the top.
+- **Evidence record v3** — the Evidence page shows skills, the submission when included,
+  endorsements, outcomes; the Open Badges export adds skills as `alignment` and endorsements as
+  evidence narrative; the canonical hash covers `submissionIncluded` and skill keys.
 
 ### Employer-outcomes bridge (Axim required rows)
 

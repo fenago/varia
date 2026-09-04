@@ -13,9 +13,14 @@ import type {
   BlueprintDraft,
   Course,
   Criterion,
+  EmployerChallenge,
   EmployerPartner,
   EmployerValidation,
+  Endorsement,
   EvidenceRecord,
+  OutcomeEvent,
+  PortfolioShare,
+  SkillTag,
   Grade,
   InstitutionSet,
   IntegrityReport,
@@ -34,7 +39,7 @@ import type {
 } from "@shared/types";
 import { DEFAULT_THRESHOLDS, JOINT_WEIGHTS, PROPERTY_LABELS, SIGMA_CEILING } from "@shared/thresholds";
 import { variantId } from "./ids";
-import { evidenceCanonical, hashEvidence } from "./employer";
+import { credentialIdFor, deriveChallengeId, evidenceCanonical, hashEvidence, learnerIdFor, resolveSkills, skillKeysForBlueprint } from "./employer";
 import {
   SEED_SCENARIOS,
   SEED_SUBMISSION_V07,
@@ -51,6 +56,11 @@ export const DEMO_RUN_ID = "run-demo-b1";
 export const DEMO_DUE_LABEL = "due Fri 11 Sep, 23:59";
 export const DEMO_INSTRUCTOR = "Dr. E. Lee";
 export const DEMO_INSTRUCTOR_SHORT = "E. Lee";
+export const DEMO_CHALLENGE_IDS = {
+  bayfront: "chal-bayfront-loan-default",
+  northline: "chal-northline-resume-screening",
+  coral: "chal-coral-sepsis-risk",
+} as const;
 
 /** Who set which threshold, as the console shows it. */
 export const THRESHOLD_ATTRIBUTION: Record<Property, string> = {
@@ -144,8 +154,8 @@ Finding 3 — Documentation. Intended use is stated, but out-of-scope uses are n
 
 Finding 4 — Prioritisation. The subgroup fairness gap comes first: it is the finding the complaint names, it is the one with a regulatory exposure, and it is the cheapest to close because the data needed already exists in the evaluation set. Second, commission an out-of-time validation on the most recent quarter of applications, stratified by the same subgroups, so that robustness is measured rather than assumed. Third, complete the card with an explicit out-of-scope statement, the decision threshold, and the override policy before the next model review. Each recommendation names an owner and a date; the audit is not complete until the card is.`;
 
-function crit(id: string, name: string, weight: number, anchors: Criterion["anchors"], conf: Criterion["anchorsConfidence"]): Criterion {
-  return { id, name, points: 3, weight, levels: 4, anchors, anchorsConfidence: conf };
+function crit(id: string, name: string, weight: number, anchors: Criterion["anchors"], conf: Criterion["anchorsConfidence"], skillKeys: string[] = []): Criterion {
+  return { id, name, points: 3, weight, levels: 4, anchors, anchorsConfidence: conf, skillKeys };
 }
 
 const ANCHORS_FAIRNESS: [string, string, string, string] = [
@@ -196,10 +206,10 @@ export function buildDemoBlueprintB1(): Blueprint {
       "Given a deployed classifier scenario and a partial model card, produce a structured audit that identifies fairness gaps, robustness gaps, and documentation gaps, and justifies each finding against evidence in the card.",
     constructDimensions: CONSTRUCT_DIMENSIONS,
     rubric: [
-      crit("c-fairness", "Identifies fairness gaps with evidence", 0.3, ANCHORS_FAIRNESS, "high"),
-      crit("c-robustness", "Robustness analysis under subgroup shift", 0.25, ANCHORS_ROBUSTNESS, "high"),
-      crit("c-documentation", "Documentation completeness judgement", 0.25, ANCHORS_DOCUMENTATION, "high"),
-      crit("c-prioritisation", "Prioritisation and recommendation quality", 0.2, ANCHORS_PRIORITISATION_DRAFT, "draft"),
+      crit("c-fairness", "Identifies fairness gaps with evidence", 0.3, ANCHORS_FAIRNESS, "high", ["fairness-analysis", "evidence-based-reasoning"]),
+      crit("c-robustness", "Robustness analysis under subgroup shift", 0.25, ANCHORS_ROBUSTNESS, "high", ["robustness-evaluation"]),
+      crit("c-documentation", "Documentation completeness judgement", 0.25, ANCHORS_DOCUMENTATION, "high", ["documentation-review"]),
+      crit("c-prioritisation", "Prioritisation and recommendation quality", 0.2, ANCHORS_PRIORITISATION_DRAFT, "draft", ["risk-prioritisation", "model-auditing"]),
     ],
     canonicalSolution: CANONICAL_B1,
     canonicalSolutionSource: "found",
@@ -219,6 +229,7 @@ export function buildDemoBlueprintB1(): Blueprint {
     createdAt: now,
     updatedAt: now,
     lastUsed: null,
+    challengeIds: [DEMO_CHALLENGE_IDS.bayfront, DEMO_CHALLENGE_IDS.northline, DEMO_CHALLENGE_IDS.coral],
   };
 }
 
@@ -245,10 +256,10 @@ function buildDemoBlueprintB2(): Blueprint {
       "Given a technical finding about a deployed model, write a one-page memo for a non-technical executive that preserves the decision-relevant content and states a recommendation.",
     constructDimensions: ["Translation of technical finding", "Preservation of decision-relevant content", "Recommendation clarity", "Audience fit"],
     rubric: [
-      crit("c2-translation", "Translates the finding without distortion", 0.3, ["Finding misstated.", "Finding stated with technical terms unexplained.", "Finding stated plainly and accurately.", "Finding stated plainly, accurately, with its uncertainty."], "high"),
-      crit("c2-content", "Preserves decision-relevant content", 0.3, ["Key numbers missing.", "Some numbers present, consequences unclear.", "Numbers and consequences present.", "Numbers, consequences and trade-offs present."], "high"),
-      crit("c2-recommendation", "States a clear recommendation", 0.2, ["No recommendation.", "Recommendation vague.", "Recommendation specific.", "Recommendation specific with owner and timing."], "high"),
-      crit("c2-audience", "Fits the executive audience", 0.2, ["Reads as a technical report.", "Partly adapted.", "Executive-ready length and tone.", "Executive-ready, with a one-line summary up front."], "high"),
+      crit("c2-translation", "Translates the finding without distortion", 0.3, ["Finding misstated.", "Finding stated with technical terms unexplained.", "Finding stated plainly and accurately.", "Finding stated plainly, accurately, with its uncertainty."], "high", ["stakeholder-communication"]),
+      crit("c2-content", "Preserves decision-relevant content", 0.3, ["Key numbers missing.", "Some numbers present, consequences unclear.", "Numbers and consequences present.", "Numbers, consequences and trade-offs present."], "high", ["evidence-based-reasoning"]),
+      crit("c2-recommendation", "States a clear recommendation", 0.2, ["No recommendation.", "Recommendation vague.", "Recommendation specific.", "Recommendation specific with owner and timing."], "high", ["stakeholder-communication"]),
+      crit("c2-audience", "Fits the executive audience", 0.2, ["Reads as a technical report.", "Partly adapted.", "Executive-ready length and tone.", "Executive-ready, with a one-line summary up front."], "high", ["stakeholder-communication"]),
     ],
     canonicalSolution:
       "To: Chief Operating Officer. Subject: Confusion-matrix imbalance in the returns classifier. Summary: the model catches 91% of fraudulent returns overall, but among first-time customers it misses one in three. Why it matters: first-time customers are 40% of returns volume this quarter, so the aggregate figure overstates protection where exposure is growing. Recommendation: hold the current threshold for repeat customers, lower it for first-time customers for one quarter, and re-measure by segment. Owner: risk analytics; decision needed by the 15th.",
@@ -275,10 +286,10 @@ function buildDemoBlueprintB3(): Blueprint {
       "Given a deployment vignette, decompose the ethical risk along stakeholder, harm-type and severity axes and justify the severity ratings.",
     constructDimensions: ["Stakeholder enumeration", "Harm-type classification", "Severity justification", "Mitigation mapping"],
     rubric: [
-      crit("c3-stakeholders", "Enumerates affected stakeholders", 0.25, ["Stakeholders missing.", "Obvious stakeholders only.", "Direct and indirect stakeholders.", "Direct, indirect and institutional stakeholders with their exposure."], "high"),
-      crit("c3-harms", "Classifies harm types", 0.25, ["No classification.", "Harms listed without type.", "Harms typed (allocative, representational, procedural).", "Harms typed and linked to stakeholders."], "high"),
-      crit("c3-severity", "Justifies severity ratings", 0.25, ["No ratings.", "Ratings without reasons.", "Ratings with reasons.", "Ratings with reasons, likelihood and reversibility."], "high"),
-      crit("c3-mitigation", "Maps mitigations to risks", 0.25, ["No mitigations.", "Generic mitigations.", "Mitigations matched to risks.", "Mitigations matched, sequenced and owned."], "high"),
+      crit("c3-stakeholders", "Enumerates affected stakeholders", 0.25, ["Stakeholders missing.", "Obvious stakeholders only.", "Direct and indirect stakeholders.", "Direct, indirect and institutional stakeholders with their exposure."], "high", ["ethical-risk-analysis"]),
+      crit("c3-harms", "Classifies harm types", 0.25, ["No classification.", "Harms listed without type.", "Harms typed (allocative, representational, procedural).", "Harms typed and linked to stakeholders."], "high", ["ethical-risk-analysis"]),
+      crit("c3-severity", "Justifies severity ratings", 0.25, ["No ratings.", "Ratings without reasons.", "Ratings with reasons.", "Ratings with reasons, likelihood and reversibility."], "high", ["risk-prioritisation"]),
+      crit("c3-mitigation", "Maps mitigations to risks", 0.25, ["No mitigations.", "Generic mitigations.", "Mitigations matched to risks.", "Mitigations matched, sequenced and owned."], "high", ["risk-prioritisation"]),
     ],
     canonicalSolution:
       "Stakeholders: applicants (direct), case workers (direct), the agency (institutional), the public (indirect). Harm types: allocative harm to applicants wrongly denied; procedural harm from an unexplained score; representational harm if the model encodes neighbourhood stereotypes. Severity: allocative harm high, low reversibility, moderate likelihood given the validation gaps; procedural harm high likelihood, moderate severity, reversible with an appeal path. Mitigations: subgroup audit before further rollout; human review for all denials; plain-language score explanation; quarterly re-validation.",
@@ -758,13 +769,14 @@ export function buildDemoInstitutionSets(): InstitutionSet[] {
 
 export function buildDemoAudit(): AuditEvent[] {
   return [
-    { id: "aud-ev-1", at: "2026-09-08T16:40:00-04:00", actor: DEMO_INSTRUCTOR, kind: "grade", text: "Evidence record VR-2026-0001 issued for Alvarez, R.", runId: DEMO_RUN_ID },
+    { id: "aud-end-1", at: "2026-09-02T16:05:00-04:00", actor: "M. Restrepo (Bayfront Regional Bank)", kind: "employer", text: "Bayfront Regional Bank endorsed VR-2026-0001" },
+    { id: "aud-ev-1", at: "2026-09-08T16:40:00-04:00", actor: DEMO_INSTRUCTOR, kind: "evidence", text: "Evidence record VR-2026-0001 issued for Alvarez, R.", runId: DEMO_RUN_ID },
     { id: "aud-1", at: "2026-09-04T08:20:00-04:00", actor: "T. Gordon", kind: "appeal", text: "Student appeal opened on DAT 4100 v-19", runId: DEMO_RUN_ID },
     { id: "aud-2", at: "2026-09-03T14:02:00-04:00", actor: "system", kind: "system", text: "ENC 1102 set blocked automatically — two checks failed" },
     { id: "aud-3", at: "2026-09-02T09:41:00-04:00", actor: "M. Okafor", kind: "release", text: "CIS 3320 released over difficulty threshold. Reason: \"formative, low stakes, copy-resistance prioritised\"" },
     { id: "aud-4", at: "2026-08-28T16:15:00-04:00", actor: "Assessment office", kind: "threshold", text: "Difficulty parity threshold tightened 10.0 → 8.0" },
     { id: "aud-5", at: "2026-08-21T11:03:00-04:00", actor: "Assessment office", kind: "policy", text: "Llama 3.2 3B removed from selectable generators" },
-    { id: "aud-val-1", at: "2026-08-19T15:30:00-04:00", actor: "M. Restrepo (Bayfront Regional Bank)", kind: "policy", text: "Bayfront Regional Bank validated Stakeholder memo" },
+    { id: "aud-val-1", at: "2026-08-19T15:30:00-04:00", actor: "M. Restrepo (Bayfront Regional Bank)", kind: "employer", text: "Bayfront Regional Bank validated Stakeholder memo" },
   ];
 }
 
@@ -877,6 +889,12 @@ export function buildDemoEmployerValidations(): EmployerValidation[] {
   ];
 }
 
+/**
+ * Seeded evidence records with a full schema-v3 bridge: learner id, credential id,
+ * work-sample fields (VR-2026-0001 includes the student's submission; VR-2026-0002
+ * does not), hashed under the v3 canonical. `seededAt` and `skills`/`challenges`
+ * are needed for the learner id and the work-sample defaults.
+ */
 export function buildDemoEvidenceRecords(
   run: Run,
   submissions: Submission[],
@@ -884,31 +902,189 @@ export function buildDemoEvidenceRecords(
   course: Course,
   roster: Roster,
   validations: EmployerValidation[],
+  ctx: { seededAt: string; skills: SkillTag[]; challenges: EmployerChallenge[] } = { seededAt: "seed", skills: buildDemoSkills(), challenges: buildDemoChallenges() },
 ): EvidenceRecord[] {
   const issuedBy = `${DEMO_INSTRUCTOR} · Miami Dade College`;
   const validationIds = validations.filter((v) => v.blueprintId === blueprint.id && v.status === "validated").map((v) => v.id);
-  const make = (variantIdStr: string, id: string, issuedAt: string): EvidenceRecord | null => {
+  const skills = resolveSkills(ctx.skills, skillKeysForBlueprint(blueprint));
+  const make = (variantIdStr: string, id: string, issuedAt: string, includeSubmission: boolean): EvidenceRecord | null => {
     const variant = run.variants.find((v) => v.id === variantIdStr);
     const submission = submissions.find((s) => s.variantId === variantIdStr);
     const student = roster.students.find((s) => s.id === variant?.studentId);
     if (!variant || !submission?.grade || !student) return null;
-    const canonical = evidenceCanonical({ student, course, blueprint, variant, grade: submission.grade, report: run.report, validationIds, issuedAt });
-    return { id, runId: run.id, variantId: variantIdStr, studentId: student.id, blueprintId: blueprint.id, issuedAt, issuedBy, hash: hashEvidence(canonical), validationIds };
+    const submissionIncluded = includeSubmission && !!submission.text;
+    const submissionText = submissionIncluded ? submission.text : null;
+    const canonical = evidenceCanonical({
+      student,
+      course,
+      blueprint,
+      variant,
+      grade: submission.grade,
+      report: run.report,
+      validationIds,
+      issuedAt,
+      submissionIncluded,
+      submissionText,
+      skillKeys: skills.map((sk) => sk.key),
+    });
+    return {
+      id,
+      runId: run.id,
+      variantId: variantIdStr,
+      studentId: student.id,
+      blueprintId: blueprint.id,
+      issuedAt,
+      issuedBy,
+      hash: hashEvidence(canonical),
+      validationIds,
+      bridge: {
+        schemaVersion: 3,
+        learnerId: learnerIdFor({ course, seededAt: ctx.seededAt }, student.id),
+        consent: [],
+        credentialId: credentialIdFor(id),
+        signature: null,
+        signedWithKid: null,
+        workSample: {
+          submissionIncluded,
+          submissionText,
+          skills,
+          challengeId: deriveChallengeId(ctx.challenges, blueprint, variant),
+          endorsementIds: [],
+        },
+      },
+    };
   };
-  return [make("v-04", "VR-2026-0001", "2026-09-08T16:40:00-04:00"), make("v-15", "VR-2026-0002", "2026-09-08T16:41:00-04:00")].filter(
+  return [make("v-04", "VR-2026-0001", "2026-09-08T16:40:00-04:00", true), make("v-15", "VR-2026-0002", "2026-09-08T16:41:00-04:00", false)].filter(
     (r): r is EvidenceRecord => !!r,
   );
 }
 
 /** Employer-bridge data alone, for migrating persisted workspaces that pre-date it. */
-export function buildDemoEmployerData(ws: Pick<Workspace, "runs" | "submissions" | "blueprints" | "course" | "roster">): Pick<Workspace, "employerPartners" | "employerValidations" | "evidenceRecords"> {
+export function buildDemoEmployerData(
+  ws: Pick<Workspace, "runs" | "submissions" | "blueprints" | "course" | "roster" | "seededAt"> & Partial<Pick<Workspace, "skills" | "challenges">>,
+): Pick<Workspace, "employerPartners" | "employerValidations" | "evidenceRecords"> {
   const validations = buildDemoEmployerValidations();
   const run = ws.runs.find((r) => r.id === DEMO_RUN_ID) ?? ws.runs[0];
   const b1 = ws.blueprints.find((b) => b.id === DEMO_BLUEPRINT_ID);
+  const ctx = { seededAt: ws.seededAt, skills: ws.skills?.length ? ws.skills : buildDemoSkills(), challenges: ws.challenges?.length ? ws.challenges : buildDemoChallenges() };
   return {
     employerPartners: buildDemoEmployerPartners(),
     employerValidations: validations,
-    evidenceRecords: run && b1 ? buildDemoEvidenceRecords(run, ws.submissions, b1, ws.course, ws.roster, validations) : [],
+    evidenceRecords: run && b1 ? buildDemoEvidenceRecords(run, ws.submissions, b1, ws.course, ws.roster, validations, ctx) : [],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Employability bridge: skills, challenges, endorsements, outcomes, portfolio
+// ---------------------------------------------------------------------------
+
+export function buildDemoSkills(): SkillTag[] {
+  return [
+    { key: "fairness-analysis", label: "Fairness analysis", source: "taxonomy", externalRef: "O*NET 15-2051.01 · Fairness assessment of models" },
+    { key: "robustness-evaluation", label: "Robustness evaluation", source: "taxonomy", externalRef: "O*NET 15-2051.01 · Model validation" },
+    { key: "documentation-review", label: "Technical documentation review", source: "taxonomy", externalRef: "O*NET 15-1299.08 · Technical documentation" },
+    { key: "risk-prioritisation", label: "Risk prioritisation", source: "taxonomy", externalRef: "O*NET 13-2054.00 · Risk assessment" },
+    { key: "model-auditing", label: "Model auditing", source: "employer", externalRef: "Bayfront MRM-C3 · Model risk audit" },
+    { key: "stakeholder-communication", label: "Stakeholder communication", source: "employer", externalRef: "Northline L2 · Executive communication" },
+    { key: "ethical-risk-analysis", label: "Ethical risk analysis", source: "instructor" },
+    { key: "evidence-based-reasoning", label: "Evidence-based reasoning", source: "instructor" },
+  ];
+}
+
+export function buildDemoChallenges(): EmployerChallenge[] {
+  return [
+    {
+      id: DEMO_CHALLENGE_IDS.bayfront,
+      partnerId: DEMO_PARTNER_IDS.bayfront,
+      organisation: "Bayfront Regional Bank",
+      title: "Audit our loan-default classifier",
+      brief:
+        "We put a loan-default classifier into production in March across three lending regions. In August the underwriting team raised a complaint that applicants in two of those regions are being declined at a rate that does not match their historical repayment. The model card we have is partial: it reports aggregate accuracy, the training window and the feature list, and not much else. We need someone to read that card the way our model-risk committee would, tell us where the fairness, robustness and documentation gaps are, back each finding with what the card does and does not say, and tell us what to fix first.",
+      domain: "Lending",
+      stakeholderRole: "Risk officer",
+      deliverable: "a structured audit with prioritised recommendations",
+      skillKeys: ["fairness-analysis", "robustness-evaluation", "risk-prioritisation"],
+      contributedAt: "2026-07-29T10:30:00-04:00",
+      contributedBy: "M. Restrepo · Chief Risk Officer",
+      status: "active",
+      blueprintIds: [DEMO_BLUEPRINT_ID],
+    },
+    {
+      id: DEMO_CHALLENGE_IDS.northline,
+      partnerId: DEMO_PARTNER_IDS.northline,
+      organisation: "Northline Talent Systems",
+      title: "Audit our résumé-screening classifier",
+      brief:
+        "Our résumé-screening classifier has been running across four regional offices since March. One office has complained that its shortlists no longer look like its applicant pool. The vendor's model card gives us an aggregate shortlist rate, one hiring cycle of validation, and an intended-use statement. We want an audit that an HR director can act on: which gaps matter for shortlist composition, what the card cannot tell us, and which one thing to demand from the vendor first.",
+      domain: "Hiring",
+      stakeholderRole: "HR director",
+      deliverable: "an audit memo the HR director can take to the vendor",
+      skillKeys: ["fairness-analysis", "documentation-review", "stakeholder-communication"],
+      contributedAt: "2026-08-06T09:15:00-04:00",
+      contributedBy: "J. Whitaker · HR Director",
+      status: "active",
+      blueprintIds: [DEMO_BLUEPRINT_ID],
+    },
+    {
+      id: DEMO_CHALLENGE_IDS.coral,
+      partnerId: DEMO_PARTNER_IDS.coral,
+      organisation: "Coral Health Network",
+      title: "Audit our sepsis-risk classifier",
+      brief:
+        "Two inpatient units have used a sepsis-risk classifier since the spring. Nursing has escalated that alerts cluster on one unit and rarely fire on the other, and the model card we were given does not break performance down by unit, age band or admission source. We need an audit written for a clinical lead: fairness and robustness gaps with the evidence for each, what documentation is missing before we extend to a third unit, and a ranked list of what to ask the vendor.",
+      domain: "Healthcare",
+      stakeholderRole: "Clinical lead",
+      deliverable: "a clinical-governance audit with a ranked vendor request list",
+      skillKeys: ["robustness-evaluation", "documentation-review", "ethical-risk-analysis"],
+      contributedAt: "2026-08-12T14:00:00-04:00",
+      contributedBy: "Dr. A. Okonkwo · Clinical Informatics Lead",
+      status: "active",
+      blueprintIds: [DEMO_BLUEPRINT_ID],
+    },
+  ];
+}
+
+export function buildDemoEndorsements(): Endorsement[] {
+  return [
+    {
+      id: "end-demo-0001",
+      at: "2026-09-02T16:05:00-04:00",
+      recordId: "VR-2026-0001",
+      partnerId: DEMO_PARTNER_IDS.bayfront,
+      organisation: "Bayfront Regional Bank",
+      reviewerName: "M. Restrepo",
+      reviewerEmail: "m.restrepo@bayfrontregional.example",
+      score: 4,
+      meetsBar: true,
+      comment: "Finds the subgroup false-positive gap and puts it first, which is what our committee would do. The robustness section stops short of a re-validation plan; we would ask for that in a first-quarter analyst.",
+    },
+  ];
+}
+
+/** Outcomes need the learner id, which depends on the workspace's seededAt. */
+export function buildDemoOutcomes(learnerId: string): OutcomeEvent[] {
+  return [
+    { id: "out-demo-0001", at: "2026-09-03T11:00:00-04:00", recordId: "VR-2026-0001", learnerId, kind: "interviewed", organisation: "Bayfront Regional Bank", by: "employer", note: "Summer analyst programme, first-round interview." },
+    { id: "out-demo-0002", at: "2026-09-04T17:30:00-04:00", recordId: "VR-2026-0001", learnerId, kind: "offered", organisation: "Bayfront Regional Bank", by: "employer", note: "Offer extended for the summer analyst programme." },
+  ];
+}
+
+export function buildDemoPortfolioShares(learnerId: string): PortfolioShare[] {
+  return [{ id: "pshare-demo-0001", learnerId, recordIds: ["VR-2026-0001"], toOrganisation: "Bayfront Regional Bank", createdAt: "2026-09-02T15:10:00-04:00", revokedAt: null }];
+}
+
+/** Employability data for migrating persisted workspaces that pre-date it (idempotent: existing ids are kept). */
+export function buildDemoEmployabilityData(
+  ws: Pick<Workspace, "evidenceRecords"> & Partial<Pick<Workspace, "skills" | "challenges" | "endorsements" | "outcomes" | "portfolioShares">>,
+): Pick<Workspace, "skills" | "challenges" | "endorsements" | "outcomes" | "portfolioShares"> {
+  const rec = ws.evidenceRecords.find((r) => r.id === "VR-2026-0001");
+  const learnerId = rec?.bridge?.learnerId ?? null;
+  return {
+    skills: Array.isArray(ws.skills) ? ws.skills : buildDemoSkills(),
+    challenges: Array.isArray(ws.challenges) ? ws.challenges : buildDemoChallenges(),
+    endorsements: Array.isArray(ws.endorsements) ? ws.endorsements : rec ? buildDemoEndorsements() : [],
+    outcomes: Array.isArray(ws.outcomes) ? ws.outcomes : learnerId ? buildDemoOutcomes(learnerId) : [],
+    portfolioShares: Array.isArray(ws.portfolioShares) ? ws.portfolioShares : learnerId ? buildDemoPortfolioShares(learnerId) : [],
   };
 }
 
@@ -924,6 +1100,15 @@ export function buildDemoWorkspace(computeReport?: (run: Run, t: ThresholdSet) =
   const submissions = buildDemoSubmissions(run, b1.rubric);
   const employerPartners = buildDemoEmployerPartners();
   const employerValidations = buildDemoEmployerValidations();
+  const seededAt = new Date().toISOString();
+  const skills = buildDemoSkills();
+  const challenges = buildDemoChallenges();
+  const evidenceRecords = buildDemoEvidenceRecords(run, submissions, b1, course, roster, employerValidations, { seededAt, skills, challenges });
+  const alvarezLearnerId = evidenceRecords.find((r) => r.id === "VR-2026-0001")?.bridge?.learnerId ?? learnerIdFor({ course, seededAt }, run.variants[3].studentId ?? "");
+  const endorsements = buildDemoEndorsements();
+  const withEndorsement = evidenceRecords.map((r) =>
+    r.id === "VR-2026-0001" && r.bridge?.workSample ? { ...r, bridge: { ...r.bridge, workSample: { ...r.bridge.workSample, endorsementIds: endorsements.map((e) => e.id) } } } : r,
+  );
   // The Bayfront review added a scenario value to B2; reflect it on the blueprint as recordValidation would.
   const b2 = buildDemoBlueprintB2();
   const b2Validated: Blueprint = {
@@ -946,10 +1131,17 @@ export function buildDemoWorkspace(computeReport?: (run: Run, t: ThresholdSet) =
     activeBlueprintId: b1.id,
     activeRunId: run.id,
     pendingDraft: null,
-    seededAt: new Date().toISOString(),
+    seededAt,
     employerPartners,
     employerValidations,
-    evidenceRecords: buildDemoEvidenceRecords(run, submissions, b1, course, roster, employerValidations),
+    evidenceRecords: withEndorsement,
+    verificationEvents: [],
+    signingKey: null,
+    skills,
+    challenges,
+    endorsements,
+    outcomes: buildDemoOutcomes(alvarezLearnerId),
+    portfolioShares: buildDemoPortfolioShares(alvarezLearnerId),
   };
 }
 
@@ -958,9 +1150,13 @@ export function buildDemoWorkspace(computeReport?: (run: Run, t: ThresholdSet) =
 // on VR-2026-0001 so the observed-adoption number is non-zero in demo mode.
 // ---------------------------------------------------------------------------
 
-export function buildDemoBridgeEvents<T extends Pick<Workspace, "evidenceRecords" | "verificationEvents" | "employerPartners">>(ws: T): T {
+export function buildDemoBridgeEvents<T extends Pick<Workspace, "evidenceRecords" | "verificationEvents" | "employerPartners" | "audit">>(ws: T): T {
   const rec = ws.evidenceRecords.find((r) => r.id === "VR-2026-0001");
   if (!rec || !rec.bridge) return ws;
+  const interviewText = `Bayfront Regional Bank logged interview for ${rec.bridge.learnerId}`;
+  const audit = ws.audit.some((a) => a.id === "aud-out-1")
+    ? ws.audit
+    : [{ id: "aud-out-1", at: "2026-09-03T11:00:00-04:00", actor: "M. Restrepo (Bayfront Regional Bank)", kind: "outcome" as const, text: interviewText }, ...ws.audit].sort((a, b) => b.at.localeCompare(a.at));
   const bayfront = ws.employerPartners.find((p) => p.id === DEMO_PARTNER_IDS.bayfront);
   const org = bayfront?.organisation ?? "Bayfront Regional Bank";
   const consent = {
@@ -984,6 +1180,7 @@ export function buildDemoBridgeEvents<T extends Pick<Workspace, "evidenceRecords
   const alreadyVer = (ws.verificationEvents ?? []).some((v) => v.id === verification.id);
   return {
     ...ws,
+    audit,
     evidenceRecords: ws.evidenceRecords.map((r) =>
       r.id === rec.id && r.bridge && !alreadyConsent ? { ...r, bridge: { ...r.bridge, consent: [...r.bridge.consent, consent] } } : r,
     ),

@@ -30,6 +30,7 @@ export default function Share() {
   const [error, setError] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
   const [sharedWith, setSharedWith] = useState<string | null>(null);
+  const [includeBusy, setIncludeBusy] = useState(false);
 
   usePageTitle("Share your evidence record", record ? record.id : "Your record");
 
@@ -101,6 +102,29 @@ export default function Share() {
       <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)", gap: 22, alignItems: "start" }}>
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 12px" }}>Share with</h6>
+          <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13.5, cursor: "pointer", marginBottom: 14, paddingBottom: 12, borderBottom: "1px solid var(--color-divider)" }}>
+            <input
+              type="checkbox"
+              checked={!!bridge?.workSample?.submissionIncluded}
+              disabled={includeBusy}
+              onChange={async (e) => {
+                setError(null);
+                setIncludeBusy(true);
+                try {
+                  await useWorkspace.getState().setSubmissionIncluded(record.id, e.target.checked);
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : String(err));
+                } finally {
+                  setIncludeBusy(false);
+                }
+              }}
+              style={{ marginTop: 3 }}
+            />
+            <span>
+              {includeBusy ? "Saving…" : "Include my submission"}{" "}
+              <span className="text-muted">— the work itself travels with the record, and the record's hash then covers it. Employers hire from work, not from a score.</span>
+            </span>
+          </label>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div className="field" style={{ margin: 0 }}>
               <label>Organisation</label>
@@ -175,6 +199,12 @@ export default function Share() {
           </div>
           <div className="text-muted" style={{ fontSize: 12, marginTop: 8 }}>
             <Link to={`/evidence/${record.variantId}`}>Full evidence page</Link> · <Link to={`/verify/${record.id}`}>Verify page</Link>
+            {bridge?.learnerId ? (
+              <>
+                {" "}
+                · <Link to={`/portfolio/${bridge.learnerId}`}>Your portfolio</Link>
+              </>
+            ) : null}
           </div>
         </Blueprint>
       </div>

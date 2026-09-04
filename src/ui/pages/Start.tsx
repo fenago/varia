@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, Pill } from "@ui/components";
+import { AudienceCard, Blueprint, BlueprintButton, Pill } from "@ui/components";
+import { AUDIENCES } from "@shared/audiences";
 import { useWorkspace } from "@lib/store/workspace";
 import { activeRun, studentById } from "@lib/store/selectors";
 import { PROPERTY_LABELS } from "@shared/thresholds";
@@ -71,6 +72,16 @@ export default function Start() {
           <button type="button" className="btn va-btn-onDark" onClick={() => navigate("/report")}>See a finished report</button>
         </div>
       </Blueprint>
+
+      <div>
+        <div className="va-kicker" style={{ marginBottom: 4 }}>Who this is for</div>
+        <h6 style={{ margin: "0 0 14px" }}>Four people, one artifact</h6>
+        <div className="va-tiles" style={{ gap: 16 }}>
+          {AUDIENCES.map((a) => (
+            <AudienceCard key={a.key} label={a.label} promise={a.promise} quote={a.quote} to={`/for/${a.key}`} />
+          ))}
+        </div>
+      </div>
 
       <div>
         <h6 style={{ margin: "0 0 16px" }}>The whole thing, in five steps</h6>

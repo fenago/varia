@@ -10,6 +10,21 @@ import { usePageTitleOverride } from "./PageTitleContext";
  * the top bar (e.g. "Reviewing for Northline Talent Systems") and the title
  * as the page heading.
  */
+const MODES: [string, string][] = [
+  ["/portfolio", "Student view"],
+  ["/share", "Student view"],
+  ["/talent", "Employer view"],
+  ["/review", "Employer review"],
+  ["/verify", "Verification"],
+  ["/evidence", "Record"],
+];
+
+/** Which actor this employer/student-facing page is for, shown as a chip in the bar. */
+export function modeForPath(pathname: string): string | null {
+  const hit = MODES.find(([prefix]) => pathname === prefix || pathname.startsWith(prefix + "/"));
+  return hit ? hit[1] : null;
+}
+
 export function ReviewLayout() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -21,6 +36,7 @@ export function ReviewLayout() {
   const override = usePageTitleOverride();
   const crumb = override?.crumb || base.crumb;
   const title = override?.title || base.title;
+  const mode = modeForPath(pathname);
 
   return (
     <div className="va-review">
@@ -32,6 +48,7 @@ export function ReviewLayout() {
           </span>
         </div>
         <div className="va-review-context">{override?.crumb ? override.crumb : ""}</div>
+        {mode && <span className="va-bar-mode">{mode}</span>}
       </header>
 
       <main className="va-review-main">

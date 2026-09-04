@@ -249,6 +249,17 @@ function GradeView({ variantId }: { variantId: string }) {
                     {evidence.id}
                   </a>{" "}
                   issued.
+                  <div style={{ marginTop: 4 }}>
+                    This work becomes a verified sample in the student's{" "}
+                    {evidence.bridge?.learnerId ? (
+                      <a href={`/portfolio/${evidence.bridge.learnerId}`} target="_blank" rel="noopener noreferrer">
+                        portfolio
+                      </a>
+                    ) : (
+                      "portfolio"
+                    )}
+                    .
+                  </div>
                 </div>
               ) : (
                 <button

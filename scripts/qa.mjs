@@ -98,7 +98,7 @@ await check("rail sections and labels", async () => {
   await go("/notes");
   const rail = await page.locator("aside, .va-rail").first().innerText();
   for (const s of ["Orientation", "Instructor", "Oversight", "Setup"]) assert(rail.toLowerCase().includes(s.toLowerCase()), `section ${s}`);
-  for (const l of ["Getting started", "Design notes", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "API key & models"]) assert(rail.includes(l), `label ${l}`);
+  for (const l of ["Getting started", "Who it's for", "Design notes", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "API key & models"]) assert(rail.includes(l), `label ${l}`);
   const current = await page.locator('[aria-current="page"]').innerText();
   assert(current.includes("Design notes"), `aria-current is ${current}`);
 });
@@ -353,8 +353,8 @@ await check("rail + employer page tiles, partners, blueprints, history, records"
   const t = await snapshotText("/employer-seeded");
   for (const s of ["67%", "33%", "4.3", "goal 75%", "goal 50%"]) assert(t.includes(s), `tile text ${s}`);
   for (const org of ["Bayfront Regional Bank", "Coral Health Network", "Northline Talent Systems"]) assert(await page.locator("tr", { hasText: org }).count() >= 1, `partner ${org}`);
-  assert(await page.locator("tr", { hasText: "Bayfront Regional Bank" }).first().locator('input[type="checkbox"]').isChecked(), "Bayfront adopted checked");
-  const mca = await page.locator("tr", { hasText: "Model card audit" }).first().innerText();
+  assert(await page.locator("tr", { hasText: "Bayfront Regional Bank" }).filter({ has: page.locator('input[type="checkbox"]') }).first().locator('input[type="checkbox"]').isChecked(), "Bayfront adopted checked");
+  const mca = await page.locator("tr", { hasText: "Model card audit" }).filter({ hasNot: page.locator('button:has-text("In use"), button:has-text("Use in blueprint")') }).first().innerText();
   assert(/pending/i.test(mca), `B1 pending: ${mca}`);
   for (const bp of ["Stakeholder memo", "Ethical risk decomposition"]) assert(/validated/i.test(await page.locator("tr", { hasText: bp }).first().innerText()), `${bp} validated`);
   const hist = await page.locator("text=Validation history").locator("..").innerText();
@@ -366,7 +366,7 @@ await check("rail + employer page tiles, partners, blueprints, history, records"
 console.log("\n16. In-workspace employer review");
 await check("review pending blueprint in this browser", async () => {
   await go("/employer");
-  await page.locator("tr", { hasText: "Model card audit" }).first().getByRole("button", { name: /^Review here$/ }).click();
+  await page.locator("tr", { hasText: "Model card audit" }).filter({ has: page.getByRole("button", { name: /^Review here$/ }) }).first().getByRole("button", { name: /^Review here$/ }).click();
   await page.waitForURL(/\/review\/[^/?]+/);
   mcaBlueprintId = page.url().match(/\/review\/([^/?#]+)/)[1];
   await page.waitForTimeout(200);
@@ -384,7 +384,7 @@ await check("review pending blueprint in this browser", async () => {
   await page.waitForTimeout(200);
   const e = await snapshotText("/employer-after-review");
   assert(e.includes("100%"), "validated tile 100%");
-  assert(/validated/i.test(await page.locator("tr", { hasText: "Model card audit" }).first().innerText()), "B1 validated");
+  assert(/validated/i.test(await page.locator("tr", { hasText: "Model card audit" }).filter({ hasNot: page.locator('button:has-text("In use"), button:has-text("Use in blueprint")') }).first().innerText()), "B1 validated");
   await go(`/review/${mcaBlueprintId}`);
   assert((await page.locator("body").innerText()).includes("QA Test Scenario"), "scenario value persisted on blueprint");
 });
@@ -590,6 +590,280 @@ await check("employer/review/evidence headings present", async () => {
   const missing = want.filter((l) => !all.includes(l.toLowerCase()));
   assert(missing.length === 0, `missing: ${missing.join(" | ")}`);
   return `${want.length} labels`;
+});
+
+
+// ---------------------------------------------------------------------------
+// Employability bridge
+// ---------------------------------------------------------------------------
+async function selectByLabel(sel, re) {
+  const opts = await sel.locator("option").all();
+  for (const o of opts) { if (re.test(await o.innerText())) { await sel.selectOption(await o.getAttribute("value")); return; } }
+  throw new Error(`no option matching ${re}`);
+}
+async function funnelValues(scope = page) {
+  const cells = scope.locator(".va-funnel .va-funnel-cell");
+  const n = await cells.count();
+  const out = {};
+  for (let i = 0; i < n; i++) {
+    const t = (await cells.nth(i).innerText()).trim();
+    const m = t.match(/^(\d+)\s*\n\s*([^\n]+)/);
+    if (m) out[m[2].trim()] = Number(m[1]);
+  }
+  return out;
+}
+function expectFunnel(f, want) {
+  for (const [k, v] of Object.entries(want)) assert(f[k] === v, `funnel ${k}: ${f[k]} (want ${v}) — ${JSON.stringify(f)}`);
+}
+const FUNNEL_SEED = { "Challenges contributed": 3, "Students who completed one": 11, "Work samples shared": 1, "Endorsed": 1, "Interviewed": 1, "Hired": 0 };
+async function wsState() { return page.evaluate(() => JSON.parse(localStorage.getItem("varia.workspace.v1")).state); }
+async function partnerIds() { const st = await wsState(); return Object.fromEntries(st.employerPartners.map((p) => [p.organisation, p.id])); }
+async function recordHash(id) { const st = await wsState(); return st.evidenceRecords.find((r) => r.id === id)?.hash; }
+
+const AUDIENCE = {
+  students: { promise: "Your work counts, and it travels.", action: "/portfolio" },
+  instructors: { promise: "Keep your assignment. Lose the proctoring.", action: "/import" },
+  institutions: { promise: "Integrity you can audit, without surveillance.", action: "/console" },
+  employers: { promise: "Hire from work samples, on your problems.", action: "/talent" },
+};
+
+console.log("\n27. Who it's for — overview, audience pages, Start strip");
+await check("/for overview and the four audience pages", async () => {
+  await go("/for");
+  const t = await page.locator("body").innerText();
+  assert(t.includes("Four people, one artifact"), "hero title");
+  for (const s of ["Challenge", "Version", "Work sample", "Portfolio", "Talent view", "Outcome"]) assert(t.includes(s), `pipeline step ${s}`);
+  const readMore = page.getByRole("link", { name: /Read more/ });
+  assert((await readMore.count()) === 4, `read-more links ${await readMore.count()}`);
+  await shot("for");
+  for (const [key, a] of Object.entries(AUDIENCE)) {
+    await go("/for");
+    await page.locator(`a[href="/for/${key}"]`).first().click();
+    await page.waitForURL(`**/for/${key}`);
+    await page.waitForTimeout(150);
+    const tt = await snapshotText(`/for/${key}`);
+    assert(tt.includes(a.promise), `${key} promise`);
+    assert(tt.toLowerCase().includes("what it costs you"), `${key} cost box`);
+    const blocks = await page.locator(".va-two .blueprint, .va-two > .blueprint").count();
+    assert(blocks >= 5, `${key} what-you-get blocks ${blocks}`);
+    if (key === "employers") await shot("for_employers");
+    await page.locator(".btn-primary.blueprint").first().click();
+    await page.waitForURL(`**${a.action}**`);
+  }
+  await go("/for/unknown");
+  assert(/\/for\/?$/.test(page.url()), `unknown audience url ${page.url()}`);
+  await go("/");
+  const st = await page.locator("body").innerText();
+  const stl = st.toLowerCase(); const i1 = stl.indexOf("who this is for"), i2 = stl.indexOf("the whole thing, in five steps");
+  assert(i1 > 0 && i2 > i1, `start strip order ${i1} ${i2}`);
+});
+
+console.log("\n28. Employer funnel and challenges");
+await check("funnel 3/11/1/1/1/0, challenges in use, contribute + link", async () => {
+  await resetDemo();
+  await go("/employer");
+  expectFunnel(await funnelValues(), FUNNEL_SEED);
+  assert((await page.locator('button:has-text("In use")').count()) === 3, "three challenges in use");
+  await page.getByRole("button", { name: /^Contribute a challenge$/ }).click();
+  const form = page.locator("form", { has: page.locator('input[placeholder="Audit our loan-default classifier"]') });
+  await selectByLabel(form.locator("select").first(), /Coral Health/);
+  await form.locator('input[placeholder="Audit our loan-default classifier"]').fill("Triage our readmission-risk model");
+  await form.locator("textarea").first().fill("Our readmission-risk model flags patients for follow-up calls. Nursing says the list skews toward one unit. Tell us whether the model is fair and what to fix first.");
+  await form.locator('input[placeholder="Lending"]').fill("Healthcare");
+  await form.locator('input[placeholder="Risk officer"]').fill("Quality lead");
+  const skillBoxes = form.locator('input[type="checkbox"]');
+  await skillBoxes.nth(0).check(); await skillBoxes.nth(1).check();
+  await form.locator('input[placeholder="Add a skill your organisation names"]').fill("Clinical data literacy");
+  await form.getByRole("button", { name: /^Add a skill$/ }).click();
+  await page.waitForTimeout(100);
+  assert((await form.innerText()).includes("Clinical data literacy"), "new skill appears in the list");
+  await form.getByRole("button", { name: /Contribute challenge/ }).click();
+  await page.waitForTimeout(200);
+  expectFunnel(await funnelValues(), { "Challenges contributed": 4 });
+  const row = page.locator("tr", { hasText: "Triage our readmission-risk model" });
+  assert((await row.count()) === 1, "new challenge row");
+  await row.getByRole("button", { name: /Use in blueprint/ }).click();
+  await page.waitForTimeout(200);
+  assert((await row.innerText()).includes("In use"), "row shows In use");
+  const st = await wsState();
+  const bp = st.blueprints.find((b) => b.id === st.activeBlueprintId);
+  const stake = bp.surfaceDimensions.find((d) => d.key === "stakeholder")?.values ?? [];
+  assert(stake.some((v) => v.toLowerCase() === "quality lead"), `stakeholder values ${stake.join(",")}`);
+  assert((bp.challengeIds ?? []).length === 4, `challengeIds ${bp.challengeIds}`);
+  const t = (await page.locator("body").innerText()).toLowerCase();
+  assert(t.includes("hires logged\n0"), "Hires logged 0 tile");
+  await shot("employer_funnel");
+});
+
+console.log("\n29. Portfolio — outcome, share, revoke, Open Badges");
+let alvarezLearner = null;
+await check("portfolio for Alvarez", async () => {
+  await go("/portfolio");
+  await page.waitForURL("**/portfolio/L-**");
+  alvarezLearner = page.url().split("/portfolio/")[1].split(/[?#]/)[0];
+  await page.waitForTimeout(150);
+  const t = await snapshotText("/portfolio");
+  assert(t.includes("Alvarez"), "student name");
+  assert(/L-[0-9a-f]{12}/.test(t), "learner id");
+  for (const s of ["Endorsed by Bayfront", "Interviewed", "Offered", "10 / 12", "Submission included"]) assert(t.toLowerCase().includes(s.toLowerCase()), `card ${s}`);
+  await shot("portfolio");
+  // log outcome: hired at Bayfront
+  await page.getByRole("button", { name: /^Log an outcome$/ }).first().click();
+  const oform = page.locator("select.input").filter({ has: page.locator('option[value="hired"]') }).first();
+  await oform.selectOption("hired");
+  await page.locator('input[list^="orgs-"]').first().fill("Bayfront Regional Bank");
+  await page.getByRole("button", { name: /^Log it$/ }).click();
+  await page.waitForTimeout(200);
+  assert((await page.locator(".va-stamp").allInnerTexts()).some((x) => /hired/i.test(x)), "hired stamp");
+  await go("/employer");
+  expectFunnel(await funnelValues(), { "Hired": 1 });
+  await go("/console");
+  assert((await page.locator("body").innerText()).toLowerCase().includes("hires logged\n1"), "console hires logged 1");
+  // share with Coral
+  await go(`/portfolio/${alvarezLearner}`);
+  await page.getByRole("button", { name: /^Share with an employer$/ }).first().click();
+  const sel = page.locator("select.input").filter({ has: page.locator("option", { hasText: "Another organisation" }) }).first();
+  await selectByLabel(sel, /Coral Health/);
+  await page.getByRole("button", { name: /^Share$/ }).click();
+  await page.waitForTimeout(200);
+  const link = await page.locator(".va-copyfield input, input[readonly]").first().inputValue();
+  assert(link.includes("/talent/"), `share link ${link}`);
+  let tt = await page.locator("body").innerText();
+  assert(tt.includes("Coral Health Network"), "share listed");
+  const coralRow = page.locator("li, div", { hasText: /Coral Health Network/ }).filter({ has: page.getByRole("button", { name: /^Revoke$/ }) }).last();
+  await coralRow.getByRole("button", { name: /^Revoke$/ }).click();
+  await page.waitForTimeout(200);
+  const st = await wsState();
+  const active = st.portfolioShares.filter((s) => !s.revokedAt && s.toOrganisation === "Coral Health Network");
+  assert(active.length === 0, "coral share revoked");
+  // Open Badges download
+  const [dl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: /Download Open Badges 3.0/ }).first().click()]);
+  const path = await dl.path();
+  const json = JSON.parse(readFileSync(path, "utf8"));
+  const ob = JSON.stringify(json);
+  assert(Array.isArray(json.credentialSubject?.achievement?.alignment) && json.credentialSubject.achievement.alignment.length > 0, "alignment entries");
+  assert(/Employer endorsements/.test(ob), "endorsements evidence item");
+  assert(!/Alvarez/.test(ob), "no student name in badge");
+});
+
+console.log("\n30. Talent view — Bayfront and Coral");
+await check("talent view flows", async () => {
+  const ids = await partnerIds();
+  const bay = ids["Bayfront Regional Bank"], coral = ids["Coral Health Network"];
+  assert(bay && coral, `partner ids ${JSON.stringify(ids)}`);
+  await go("/talent");
+  await page.waitForURL("**/talent/**");
+  assert(Object.values(ids).some((id) => page.url().includes(id)), `redirect url ${page.url()}`);
+  await go(`/talent/${bay}`);
+  let t = await snapshotText("/talent-bayfront");
+  assert(t.includes("Audit our loan-default classifier"), "challenge card");
+  expectFunnel(await funnelValues(), { "Challenges contributed": 1 });
+  assert((await page.getByRole("button", { name: /Read the work sample/ }).count()) === 1, "one candidate");
+  assert(!t.includes("Alvarez"), "no student name on talent view");
+  assert(/L-[0-9a-f]{12}/.test(t), "learner id shown");
+  await page.getByRole("button", { name: /Read the work sample/ }).click();
+  await page.waitForTimeout(100);
+  t = await page.locator("body").innerText();
+  assert(/Fairness/.test(t), "submission text expanded");
+  assert(t.includes("You endorsed this sample"), "already endorsed line");
+  await shot("talent_bayfront");
+  // log outcome ramped 40h
+  await page.getByRole("button", { name: /^Log outcome$/ }).first().click();
+  await page.locator("select.input").filter({ has: page.locator('option[value="ramped"]') }).first().selectOption("ramped");
+  await page.locator('input[type="number"]').first().fill("40");
+  await page.getByRole("button", { name: /^Log it$/ }).click();
+  await page.waitForTimeout(200);
+  assert((await page.locator(".va-stamp").allInnerTexts()).some((x) => /ramped/i.test(x)), "ramped stamp");
+  await go("/console");
+  assert((await page.locator("body").innerText()).includes("mean 40 h to productive"), "console mean hours");
+  // Coral: empty, then share, then endorse
+  await go(`/talent/${coral}`);
+  assert((await page.locator("body").innerText()).includes("No learner has shared a sample with Coral Health Network yet"), "coral empty state");
+  await go(`/portfolio/${alvarezLearner}`);
+  await page.getByRole("button", { name: /^Share with an employer$/ }).first().click();
+  await selectByLabel(page.locator("select.input").filter({ has: page.locator("option", { hasText: "Another organisation" }) }).first(), /Coral Health/);
+  await page.getByRole("button", { name: /^Share$/ }).click();
+  await page.waitForTimeout(200);
+  await go(`/talent/${coral}`);
+  assert((await page.getByRole("button", { name: /Read the work sample/ }).count()) === 1, "coral candidate after share");
+  await page.getByRole("button", { name: /^Endorse$/ }).first().click();
+  await fieldInput(page, "Your name").fill("Dr. Ana Reyes");
+  await fieldInput(page, "Work email").fill("areyes@coralhealth.example");
+  await page.locator(".seg label.seg-opt", { hasText: /^5$/ }).last().click();
+  const meets = page.locator('label:has-text("bar") input[type="checkbox"], label:has-text("Meets") input[type="checkbox"]').first();
+  if (!(await meets.isChecked())) await meets.check();
+  await fieldInput(page, "Comment").fill("Clear prioritisation; would interview.");
+  await page.getByRole("button", { name: /Save endorsement/ }).click();
+  await page.waitForTimeout(200);
+  assert((await page.locator("body").innerText()).includes("You endorsed this sample"), "coral endorsement saved");
+  await go("/evidence/v-04");
+  const ev = await page.locator("body").innerText();
+  const sec = ev.slice(ev.toLowerCase().indexOf("employer endorsements"));
+  assert(/bayfront regional bank/i.test(sec) && /coral health network/i.test(sec), "two endorsements on evidence");
+});
+
+console.log("\n31. Evidence v3 sections, submission consent re-hash, verify");
+await check("evidence sections, include-toggle re-hash, verify", async () => {
+  await go("/evidence/v-04");
+  const t = await snapshotText("/evidence-v3");
+  const tl = t.toLowerCase();
+  for (const s of ["skills evidenced", "work sample", "employer endorsements", "outcomes"]) assert(tl.includes(s), `section ${s}`);
+  assert(/fairness/.test(tl.slice(tl.indexOf("work sample"))), "submission text in work sample");
+  const sign = page.getByRole("button", { name: /^Sign record$/ });
+  if (await sign.count()) { await sign.click(); await page.waitForTimeout(600); }
+  const h0 = await recordHash("VR-2026-0001");
+  await go("/share/VR-2026-0001");
+  const box = page.locator('label:has-text("Include my submission") input[type="checkbox"]').first();
+  assert((await box.count()) === 1, "include checkbox present");
+  assert(await box.isChecked(), "starts included");
+  await box.uncheck(); await page.waitForTimeout(500);
+  const h1 = await recordHash("VR-2026-0001");
+  assert(h1 && h1 !== h0, "hash changed when submission withheld");
+  await page.locator('label:has-text("Include my submission") input[type="checkbox"]').first().check(); await page.waitForTimeout(500);
+  const h2 = await recordHash("VR-2026-0001");
+  assert(h2 === h0, `hash restored (${h2} vs ${h0})`);
+  await go("/verify/VR-2026-0001");
+  assert(/record verified/i.test(await page.locator("body").innerText()), "verify after toggles");
+});
+
+console.log("\n32. Grade page portfolio line");
+await check("grade v-04 links to the portfolio", async () => {
+  await go("/grade/v-04");
+  const t = await page.locator("body").innerText();
+  assert(t.includes("verified sample in the student's portfolio"), "portfolio line");
+  const href = await page.locator('a[href^="/portfolio/"]').first().getAttribute("href");
+  assert(href && /\/portfolio\/L-/.test(href), `portfolio href ${href}`);
+});
+
+console.log("\n33. Migration from a pre-employability workspace");
+await check("strip employability arrays and workSample → v3 on reload", async () => {
+  await resetDemo();
+  await go("/settings");
+  await page.evaluate(() => {
+    const obj = JSON.parse(localStorage.getItem("varia.workspace.v1"));
+    for (const k of ["skills", "challenges", "endorsements", "outcomes", "portfolioShares"]) delete obj.state[k];
+    for (const r of obj.state.evidenceRecords) { if (r.bridge) { delete r.bridge.workSample; r.bridge.schemaVersion = 2; } }
+    localStorage.setItem("varia.workspace.v1", JSON.stringify(obj));
+  });
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForTimeout(300);
+  // zustand persist only writes back on the next mutation, so assert through the rendered store, not localStorage.
+  await go("/employer");
+  assert((await page.locator('button:has-text("In use")').count()) === 3, "challenges refilled from seed");
+  await go("/evidence/v-04");
+  const ev = (await page.locator("body").innerText()).toLowerCase();
+  assert(ev.includes("skills evidenced") && (await page.locator(".tag").count()) > 3, "record upgraded with skills");
+  await go("/portfolio");
+  assert(/L-[0-9a-f]{12}/.test(await page.locator("body").innerText()), "portfolio renders");
+  await go("/talent");
+  assert((await page.locator(".va-funnel").count()) === 1, "talent renders");
+});
+
+console.log("\n34. Reset restores the funnel");
+await check("reset → 3/11/1/1/1/0", async () => {
+  await resetDemo();
+  await go("/employer");
+  expectFunnel(await funnelValues(), FUNNEL_SEED);
 });
 
 console.log("\n13. Label audit vs mockup");

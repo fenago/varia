@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Blueprint, DataTable, Pill, SegChoice, StatTile, type Column, type PillGate } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
-import { auditNewestFirst, consoleRows, consoleStats, currentThresholds, employerStats, strategyLabel } from "@lib/store/selectors";
+import { auditNewestFirst, consoleRows, consoleStats, currentThresholds, employerStats, outcomeStats, strategyLabel } from "@lib/store/selectors";
 import { THRESHOLD_ATTRIBUTION } from "@lib/store/seed";
 import { PROPERTY_LABELS } from "@shared/thresholds";
 import type { InstitutionSet, InstitutionSetStatus, Property } from "@shared/types";
@@ -46,6 +46,7 @@ export default function Console() {
 
   const stats = useMemo(() => consoleStats(ws), [ws]);
   const emp = useMemo(() => employerStats(ws), [ws]);
+  const outc = useMemo(() => outcomeStats(ws), [ws]);
   const rows = useMemo(() => consoleRows(ws), [ws]);
   const audit = useMemo(() => auditNewestFirst(ws), [ws]);
   const thresholds = currentThresholds(ws);
@@ -130,7 +131,7 @@ export default function Console() {
             Manage on Employer validation →
           </Link>
         </div>
-        <div className="va-tiles" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+        <div className="va-tiles" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
           <StatTile
             kicker="Validated by employer partners"
             value={`${Math.round(emp.validatedPct * 100)}%`}
@@ -149,6 +150,17 @@ export default function Console() {
             sub={emp.responses ? `${emp.responses} survey ${emp.responses === 1 ? "response" : "responses"}` : "no responses yet"}
             color={emp.satisfactionMean != null && emp.satisfactionMean >= 4 ? "pass" : "watch"}
           />
+          <StatTile
+            kicker="Hires logged"
+            value={emp.hires}
+            sub={emp.hires === 0 ? "none yet · logged by employers or students" : `learner${emp.hires === 1 ? "" : "s"} hired on a shared sample`}
+            color={emp.hires > 0 ? "pass" : "watch"}
+          />
+        </div>
+        <div className="va-muted-12" style={{ marginTop: 8 }}>
+          Outcomes logged: {outc.interviewed} interviewed · {outc.offered} offered · {outc.hired} hired
+          {outc.ramped > 0 ? ` · ${outc.ramped} ramped` : ""}
+          {outc.meanOnboardingHours != null ? ` · mean ${outc.meanOnboardingHours} h to productive` : " · no ramp time reported yet"}
         </div>
       </div>
 

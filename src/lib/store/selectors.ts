@@ -283,9 +283,9 @@ export function readingEaseContext(run: Run | null, variant: Variant | null) {
 // Employer validation and evidence records
 // ---------------------------------------------------------------------------
 
-import type { EmployerPartner, EmployerValidation, EvidenceRecord, Grade, IntegrityReport, Course } from "@shared/types";
+import type { EmployerPartner, EmployerValidation, EvidenceRecord, Grade, IntegrityReport, Course, SkillTag, EmployerChallenge, Endorsement, OutcomeEvent, PortfolioShare } from "@shared/types";
 import { EMPLOYER_GOALS } from "@shared/thresholds";
-import { pickSampleVariants } from "./employer";
+import { learnerIdFor, pickSampleVariants, resolveSkills, skillKeysForBlueprint } from "./employer";
 
 export type BlueprintValidationStatus = "validated" | "changes-requested" | "declined" | "pending";
 
@@ -321,6 +321,8 @@ export interface EmployerStats {
   goals: typeof EMPLOYER_GOALS;
   /** partners with ≥1 valid verification event / partners (observed adoption) */
   observedAdoptedPct: number;
+  /** "hired" outcome events logged against records */
+  hires: number;
 }
 
 export function employerStats(ws: Workspace): EmployerStats {
@@ -342,6 +344,7 @@ export function employerStats(ws: Workspace): EmployerStats {
     responses: surveys.length,
     goals: EMPLOYER_GOALS,
     observedAdoptedPct: adoptionObserved(ws).observedAdoptedPct,
+    hires: (ws.outcomes ?? []).filter((o) => o.kind === "hired").length,
   };
 }
 
@@ -457,5 +460,237 @@ export function adoptionObserved(ws: Workspace): AdoptionObserved {
     partnersWithVerifications,
     verifications: events.length,
     observedAdoptedPct: ws.employerPartners.length ? partnersWithVerifications / ws.employerPartners.length : 0,
+  };
+}
+
+
+// ---------------------------------------------------------------------------
+// Employability bridge: skills, challenges, work samples, portfolio, talent, outcomes
+// ---------------------------------------------------------------------------
+
+export function skillByKey(ws: Workspace, key: string): SkillTag | null {
+  return (ws.skills ?? []).find((s) => s.key === key) ?? null;
+}
+
+export function skillsForBlueprint(ws: Workspace, bp: Blueprint | null | undefined): SkillTag[] {
+  return resolveSkills(ws.skills, skillKeysForBlueprint(bp));
+}
+
+export function challengeById(ws: Workspace, id: string | null | undefined): EmployerChallenge | null {
+  if (!id) return null;
+  return (ws.challenges ?? []).find((c) => c.id === id) ?? null;
+}
+
+export function challengesForPartner(ws: Workspace, partnerId: string): EmployerChallenge[] {
+  return (ws.challenges ?? []).filter((c) => c.partnerId === partnerId);
+}
+
+export function endorsementsForRecord(ws: Workspace, recordId: string): Endorsement[] {
+  return (ws.endorsements ?? []).filter((e) => e.recordId === recordId).sort((a, b) => b.at.localeCompare(a.at));
+}
+
+export function outcomesForRecord(ws: Workspace, recordId: string): OutcomeEvent[] {
+  return (ws.outcomes ?? []).filter((o) => o.recordId === recordId).sort((a, b) => a.at.localeCompare(b.at));
+}
+
+function orgKey(s: string | null | undefined): string {
+  return (s ?? "").trim().toLowerCase();
+}
+
+/** Organisations a record is currently shared with via consent events ("*" = anyone). Later revokes cancel earlier shares. */
+export function sharedWith(record: EvidenceRecord): Set<string> {
+  const out = new Set<string>();
+  for (const c of record.bridge?.consent ?? []) {
+    const key = c.toOrganisation ? orgKey(c.toOrganisation) : "*";
+    if (c.action === "shared") out.add(key);
+    else out.delete(key);
+  }
+  return out;
+}
+
+/** Active portfolio shares that include a record, to an organisation ("*" = public). */
+export function portfolioSharesFor(ws: Workspace, recordId: string): PortfolioShare[] {
+  return (ws.portfolioShares ?? []).filter((p) => !p.revokedAt && p.recordIds.includes(recordId));
+}
+
+export type SharedVia = "consent" | "portfolio" | "public";
+
+/** How a record reaches an organisation, if at all. */
+export function sharedViaFor(ws: Workspace, record: EvidenceRecord, organisation: string): SharedVia | null {
+  const key = orgKey(organisation);
+  const consent = sharedWith(record);
+  if (consent.has(key)) return "consent";
+  const shares = portfolioSharesFor(ws, record.id);
+  if (shares.some((p) => orgKey(p.toOrganisation) === key)) return "portfolio";
+  if (consent.has("*") || shares.some((p) => p.toOrganisation === null)) return "public";
+  return null;
+}
+
+/** Records shared to any organisation (or publicly) and not since revoked. */
+export function isSharedAnywhere(ws: Workspace, record: EvidenceRecord): boolean {
+  return sharedWith(record).size > 0 || portfolioSharesFor(ws, record.id).length > 0;
+}
+
+export interface EmployerFunnel {
+  challenges: number;
+  completed: number;
+  shared: number;
+  endorsed: number;
+  interviewed: number;
+  hired: number;
+}
+
+/** Challenge → completed → shared → endorsed → interviewed → hired, for one partner or the whole workspace. */
+export function employerFunnel(ws: Workspace, partnerId?: string | null): EmployerFunnel {
+  const partner = partnerId ? partnerById(ws, partnerId) : null;
+  const challenges = partner ? challengesForPartner(ws, partner.id) : (ws.challenges ?? []);
+  const linkedBlueprintIds = new Set(challenges.flatMap((c) => c.blueprintIds));
+  for (const b of ws.blueprints) if ((b.challengeIds ?? []).some((id) => challenges.some((c) => c.id === id))) linkedBlueprintIds.add(b.id);
+  const runIds = new Set(ws.runs.filter((r) => !partner || linkedBlueprintIds.has(r.blueprintId)).map((r) => r.id));
+  const completed = ws.submissions.filter((s) => s.grade && runIds.has(s.runId)).length;
+  const records = ws.evidenceRecords.filter((r) => runIds.has(r.runId));
+  const shared = records.filter((r) => (partner ? sharedViaFor(ws, r, partner.organisation) !== null : isSharedAnywhere(ws, r))).length;
+  const byOrg = (org: string) => !partner || orgKey(org) === orgKey(partner.organisation);
+  const endorsed = new Set((ws.endorsements ?? []).filter((e) => byOrg(e.organisation) && records.some((r) => r.id === e.recordId)).map((e) => e.recordId)).size;
+  const outcomes = (ws.outcomes ?? []).filter((o) => byOrg(o.organisation) && records.some((r) => r.id === o.recordId));
+  const interviewed = new Set(outcomes.filter((o) => o.kind === "interviewed").map((o) => o.learnerId)).size;
+  const hired = new Set(outcomes.filter((o) => o.kind === "hired").map((o) => o.learnerId)).size;
+  return { challenges: challenges.length, completed, shared, endorsed, interviewed, hired };
+}
+
+export interface LearnerWithRecords {
+  learnerId: string;
+  student: Student;
+  records: EvidenceRecord[];
+}
+
+export function learnersWithRecords(ws: Workspace): LearnerWithRecords[] {
+  const out: LearnerWithRecords[] = [];
+  for (const student of ws.roster.students) {
+    const records = ws.evidenceRecords.filter((r) => r.studentId === student.id);
+    if (!records.length) continue;
+    out.push({ learnerId: records[0].bridge?.learnerId ?? learnerIdFor(ws, student.id), student, records });
+  }
+  return out.sort((a, b) => a.student.name.localeCompare(b.student.name));
+}
+
+export interface PortfolioItem {
+  record: EvidenceRecord;
+  view: EvidenceView;
+  challenge: EmployerChallenge | null;
+  endorsements: Endorsement[];
+  outcomes: OutcomeEvent[];
+  shares: PortfolioShare[];
+}
+
+export interface Portfolio {
+  learnerId: string;
+  student: Student;
+  course: Course;
+  skills: { skill: SkillTag; count: number }[];
+  items: PortfolioItem[];
+}
+
+export function portfolioFor(ws: Workspace, learnerId: string): Portfolio | null {
+  const learner = learnersWithRecords(ws).find((l) => l.learnerId === learnerId);
+  if (!learner) return null;
+  const items: PortfolioItem[] = [];
+  const counts = new Map<string, { skill: SkillTag; count: number }>();
+  for (const record of [...learner.records].sort((a, b) => b.issuedAt.localeCompare(a.issuedAt))) {
+    const view = evidenceView(ws, record.variantId);
+    if (!view) continue;
+    const skills = record.bridge?.workSample?.skills ?? skillsForBlueprint(ws, view.blueprint);
+    for (const sk of skills) {
+      const cur = counts.get(sk.key);
+      if (cur) cur.count += 1;
+      else counts.set(sk.key, { skill: sk, count: 1 });
+    }
+    items.push({
+      record,
+      view,
+      challenge: challengeById(ws, record.bridge?.workSample?.challengeId),
+      endorsements: endorsementsForRecord(ws, record.id),
+      outcomes: outcomesForRecord(ws, record.id),
+      shares: portfolioSharesFor(ws, record.id),
+    });
+  }
+  return {
+    learnerId,
+    student: learner.student,
+    course: ws.course,
+    skills: [...counts.values()].sort((a, b) => b.count - a.count || a.skill.label.localeCompare(b.skill.label)),
+    items,
+  };
+}
+
+export interface TalentRow {
+  learnerId: string;
+  record: EvidenceRecord;
+  view: EvidenceView;
+  challenge: EmployerChallenge | null;
+  skills: SkillTag[];
+  total: number | null;
+  endorsements: Endorsement[];
+  outcomes: OutcomeEvent[];
+  sharedVia: SharedVia;
+}
+
+/**
+ * Learners whose records reach this partner (consent to the organisation, a portfolio share
+ * to it, or a public share), filtered to the partner's challenge domains when it has challenges.
+ */
+export function talentRows(ws: Workspace, partnerId: string): TalentRow[] {
+  const partner = partnerById(ws, partnerId);
+  if (!partner) return [];
+  const challenges = challengesForPartner(ws, partnerId).filter((c) => c.status === "active");
+  const domains = new Set(challenges.map((c) => orgKey(c.domain)));
+  const rows: TalentRow[] = [];
+  for (const record of ws.evidenceRecords) {
+    const sharedVia = sharedViaFor(ws, record, partner.organisation);
+    if (!sharedVia) continue;
+    const view = evidenceView(ws, record.variantId);
+    if (!view) continue;
+    const challenge = challengeById(ws, record.bridge?.workSample?.challengeId);
+    // A public share is narrowed to the partner's challenge domains; an explicit share to this
+    // organisation (consent or portfolio) is the learner's choice and always shows.
+    if (domains.size && sharedVia === "public") {
+      const domain = orgKey(challenge?.domain ?? String(view.variant.surfaceAssignment.domain ?? ""));
+      if (!domains.has(domain)) continue;
+    }
+    rows.push({
+      learnerId: record.bridge?.learnerId ?? learnerIdFor(ws, record.studentId),
+      record,
+      view,
+      challenge,
+      skills: record.bridge?.workSample?.skills ?? skillsForBlueprint(ws, view.blueprint),
+      total: view.grade?.total ?? null,
+      endorsements: endorsementsForRecord(ws, record.id),
+      outcomes: outcomesForRecord(ws, record.id),
+      sharedVia,
+    });
+  }
+  return rows.sort((a, b) => (b.total ?? 0) - (a.total ?? 0) || b.record.issuedAt.localeCompare(a.record.issuedAt));
+}
+
+export interface OutcomeStats {
+  interviewed: number;
+  offered: number;
+  hired: number;
+  ramped: number;
+  promoted: number;
+  meanOnboardingHours: number | null;
+}
+
+export function outcomeStats(ws: Workspace): OutcomeStats {
+  const all = ws.outcomes ?? [];
+  const count = (k: OutcomeEvent["kind"]) => new Set(all.filter((o) => o.kind === k).map((o) => o.learnerId)).size;
+  const hours = all.filter((o) => o.kind === "ramped" && typeof o.onboardingHours === "number").map((o) => o.onboardingHours as number);
+  return {
+    interviewed: count("interviewed"),
+    offered: count("offered"),
+    hired: count("hired"),
+    ramped: count("ramped"),
+    promoted: count("promoted"),
+    meanOnboardingHours: hours.length ? Math.round((hours.reduce((a, b) => a + b, 0) / hours.length) * 10) / 10 : null,
   };
 }

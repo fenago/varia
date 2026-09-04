@@ -84,6 +84,8 @@ export interface Criterion {
   /** Level descriptions for 0,1,2,3. null = not found. */
   anchors: [string, string, string, string] | null;
   anchorsConfidence: AnchorsConfidence;
+  /** Skills this criterion evidences (keys into Workspace.skills) */
+  skillKeys?: string[];
 }
 
 export interface SurfaceDimension {
@@ -139,6 +141,8 @@ export interface Blueprint {
   updatedAt: string;
   /** For the library list: "used Spring 2026 · J 0.88" */
   lastUsed?: { term: string; joint: number } | null;
+  /** Employer challenges this blueprint draws scenarios from */
+  challengeIds?: string[];
 }
 
 /** What the extraction call returns before the instructor confirms it. */
@@ -350,7 +354,8 @@ export type AuditKind =
   | "run"
   | "settings"
   | "employer"
-  | "evidence";
+  | "evidence"
+  | "outcome";
 
 export interface AuditEvent {
   id: string;
@@ -430,6 +435,12 @@ export interface Workspace {
   /** Bridge (optional so older persisted states load; the store fills defaults) */
   verificationEvents?: VerificationEvent[];
   signingKey?: SigningKey | null;
+  /** Employability bridge (optional for the same reason) */
+  skills?: SkillTag[];
+  challenges?: EmployerChallenge[];
+  endorsements?: Endorsement[];
+  outcomes?: OutcomeEvent[];
+  portfolioShares?: PortfolioShare[];
 }
 
 // ---------------------------------------------------------------------------
@@ -626,7 +637,7 @@ export interface SigningKey {
 
 /** Fields added to EvidenceRecord for the bridge (schema v2). */
 export interface EvidenceRecordBridge {
-  schemaVersion: 2;
+  schemaVersion: 2 | 3;
   /** Stable learner identifier, not the name: "L-" + first 12 hex of sha256(studentId|courseId|seededAt) */
   learnerId: string;
   consent: ConsentEvent[];
@@ -635,4 +646,91 @@ export interface EvidenceRecordBridge {
   /** Detached JWS (ES256) over the canonical content, or null if unsigned */
   signature: string | null;
   signedWithKid: string | null;
+  /** v3: the record is a work sample (defaults filled by the store) */
+  workSample?: WorkSampleFields;
+}
+
+// ---------------------------------------------------------------------------
+// Employability bridge: challenges, skills, work samples, portfolio, talent, outcomes
+// ---------------------------------------------------------------------------
+
+/** A skill an employer recognises. Rubric criteria map onto these. */
+export interface SkillTag {
+  key: string; // "fairness-analysis"
+  label: string; // "Fairness analysis"
+  source: "employer" | "taxonomy" | "instructor";
+  /** e.g. "O*NET 15-2051.01" or a partner's competency code */
+  externalRef?: string;
+}
+
+/** A real problem brief contributed by an employer partner. One brief → one version per student. */
+export interface EmployerChallenge {
+  id: string;
+  partnerId: string;
+  organisation: string;
+  title: string; // "Audit our loan-default classifier"
+  /** The real problem, in the employer's words */
+  brief: string;
+  domain: string; // "Lending"
+  stakeholderRole: string; // "Risk officer"
+  /** What the employer would want back */
+  deliverable: string;
+  /** Skills the employer says this exercises */
+  skillKeys: string[];
+  contributedAt: string;
+  contributedBy: string;
+  status: "active" | "retired";
+  /** Blueprints that draw scenarios from this challenge */
+  blueprintIds: string[];
+}
+
+/** An employer scored a shared work sample against their own bar. */
+export interface Endorsement {
+  id: string;
+  at: string;
+  recordId: string;
+  partnerId: string | null;
+  organisation: string;
+  reviewerName: string;
+  reviewerEmail?: string;
+  /** 1–5 against the employer's own bar */
+  score: number;
+  meetsBar: boolean;
+  comment: string;
+}
+
+export type OutcomeKind = "interviewed" | "offered" | "hired" | "ramped" | "promoted";
+
+/** Something that happened to a learner because of a record. Logged where it happens. */
+export interface OutcomeEvent {
+  id: string;
+  at: string;
+  recordId: string;
+  learnerId: string;
+  kind: OutcomeKind;
+  organisation: string;
+  by: "student" | "employer";
+  note?: string;
+  /** For "ramped": hours to productive, as reported by the employer */
+  onboardingHours?: number;
+}
+
+/** A learner sharing a set of records as one portfolio, to one organisation or publicly. */
+export interface PortfolioShare {
+  id: string;
+  learnerId: string;
+  recordIds: string[];
+  toOrganisation: string | null; // null = anyone with the link
+  createdAt: string;
+  revokedAt: string | null;
+}
+
+/** Schema v3 additions to an evidence record: it is now a work sample. */
+export interface WorkSampleFields {
+  /** The student chose to include their submission text in the record */
+  submissionIncluded: boolean;
+  submissionText: string | null;
+  skills: SkillTag[];
+  challengeId: string | null;
+  endorsementIds: string[];
 }

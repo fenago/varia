@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Blueprint, BlueprintButton, CopyField, Dialog, EmptyState, Stamp } from "@ui/components";
+import { Blueprint, BlueprintButton, CopyField, Dialog, EmptyState, OutcomeStamps, SkillTags, Stamp } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
-import { evidenceView } from "@lib/store/selectors";
+import { challengeById, endorsementsForRecord, evidenceView, outcomesForRecord, skillsForBlueprint } from "@lib/store/selectors";
 import { downloadOpenBadge } from "@lib/badges/openBadges";
 import { Link } from "react-router-dom";
 import { PROPERTY_LABELS } from "@shared/thresholds";
@@ -123,6 +123,11 @@ export default function Evidence() {
     }
   };
   const bridge = record?.bridge ?? null;
+  const sample = bridge?.workSample ?? null;
+  const skills = sample?.skills ?? skillsForBlueprint(ws, blueprint);
+  const challenge = challengeById(ws, sample?.challengeId);
+  const endorsements = record ? endorsementsForRecord(ws, record.id) : [];
+  const outcomes = record ? outcomesForRecord(ws, record.id) : [];
 
   const revoke = () => {
     if (!record) return;
@@ -201,7 +206,7 @@ export default function Evidence() {
           Print / Save as PDF
         </button>
         {issued && (
-          <button type="button" className="btn btn-secondary" onClick={() => downloadOpenBadge(view, record!, ws.signingKey ?? null)}>
+          <button type="button" className="btn btn-secondary" onClick={() => downloadOpenBadge(view, record!, ws.signingKey ?? null, { endorsements, outcomes })}>
             Download Open Badges 3.0
           </button>
         )}
@@ -218,6 +223,11 @@ export default function Evidence() {
             <Link className="btn btn-secondary" to={`/share/${record!.id}`} style={{ textDecoration: "none" }}>
               Student share page
             </Link>
+            {bridge?.learnerId && (
+              <Link className="btn btn-secondary" to={`/portfolio/${bridge.learnerId}`} style={{ textDecoration: "none" }}>
+                Portfolio
+              </Link>
+            )}
           </>
         )}
         {issued && (
@@ -333,10 +343,123 @@ export default function Evidence() {
         )}
       </Blueprint>
 
+      {/* Skills evidenced */}
+      <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
+        <div className="va-row-flex" style={{ marginBottom: 8, alignItems: "baseline", gap: 10 }}>
+          <h6 style={{ margin: 0 }}>Skills evidenced</h6>
+          {challenge && (
+            <span className="text-muted" style={{ fontSize: 12 }}>
+              on {challenge.organisation}'s challenge “{challenge.title}”
+            </span>
+          )}
+        </div>
+        {skills.length === 0 ? (
+          <span className="text-muted" style={{ fontSize: 13 }}>No skills tagged on this blueprint's rubric yet.</span>
+        ) : (
+          <span className="va-tags">
+            {skills.map((s) => (
+              <span
+                key={s.key}
+                className="tag tag-outline"
+                title={`${s.source === "taxonomy" ? "Taxonomy" : s.source === "employer" ? "Employer competency" : "Instructor"}${s.externalRef ? ` · ${s.externalRef}` : ""}`}
+              >
+                {s.label}
+              </span>
+            ))}
+          </span>
+        )}
+        <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 12.5, lineHeight: 1.5, maxWidth: "70ch" }}>
+          Each rubric criterion maps to skills an employer recognises. They travel with the record as Open Badges alignments.
+        </p>
+      </Blueprint>
+
+      {/* Work sample */}
+      <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
+        <div className="va-row-flex" style={{ marginBottom: 8, alignItems: "baseline", gap: 10 }}>
+          <h6 style={{ margin: 0 }}>Work sample</h6>
+          {issued && <Stamp gate={sample?.submissionIncluded ? "pass" : "watch"}>{sample?.submissionIncluded ? "Included by the student" : "Withheld"}</Stamp>}
+        </div>
+        {sample?.submissionIncluded && sample.submissionText ? (
+          <div className="va-surface-box" style={{ fontSize: 13.5, lineHeight: 1.65 }}>
+            {paragraphs(sample.submissionText).map((p, i) => (
+              <p key={i} style={{ margin: "0 0 10px" }}>
+                {p}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.55, maxWidth: "70ch" }}>
+            The student has not included their submission. They can choose to from their portfolio or share page; the record's hash then covers it.
+          </p>
+        )}
+      </Blueprint>
+
       {/* Employer validation */}
       <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 12px" }}>Employer validation</h6>
         <ValidationStamps validations={validations} />
+      </Blueprint>
+
+      {/* Employer endorsements */}
+      <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
+        <h6 style={{ margin: "0 0 12px" }}>Employer endorsements</h6>
+        {endorsements.length === 0 ? (
+          <div>
+            <Stamp gate="watch">Not yet endorsed</Stamp>
+            <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 13, lineHeight: 1.55, maxWidth: "70ch" }}>
+              An employer who receives this sample can score it against their own bar from their talent view. That is a stronger signal than the rubric score.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {endorsements.map((e) => (
+              <div key={e.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <div className="va-row-flex" style={{ gap: 8, flexWrap: "wrap" }}>
+                  <Stamp gate="pass">Endorsed by {e.organisation}</Stamp>
+                  <Stamp gate={e.meetsBar ? "pass" : "watch"}>{e.meetsBar ? "Meets their hiring bar" : "Below their hiring bar"}</Stamp>
+                  <span style={{ fontFamily: "var(--font-heading)", fontSize: 16 }}>{e.score} / 5</span>
+                </div>
+                <div style={{ fontSize: 13.5 }}>
+                  {e.reviewerName}
+                  {e.reviewerEmail ? <span className="text-muted"> · {e.reviewerEmail}</span> : null}
+                  <span className="text-muted"> · {formatDate(e.at)}</span>
+                </div>
+                {e.comment && (
+                  <div className="text-muted" style={{ fontSize: 12.5, lineHeight: 1.5, maxWidth: "70ch" }}>
+                    “{e.comment}”
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Blueprint>
+
+      {/* Outcomes */}
+      <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
+        <h6 style={{ margin: "0 0 12px" }}>Outcomes</h6>
+        {outcomes.length === 0 ? (
+          <p className="text-muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.55, maxWidth: "70ch" }}>
+            Nothing logged yet. Interviews, offers, hires and ramp time are recorded here by the student or the employer, where they happen.
+          </p>
+        ) : (
+          <>
+            <OutcomeStamps outcomes={outcomes} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10, fontSize: 13.5 }}>
+              {outcomes.map((o) => (
+                <div key={o.id} style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: "var(--font-heading)", textTransform: "capitalize" }}>{o.kind}</span>
+                  <span>{o.organisation}</span>
+                  <span className="text-muted" style={{ fontSize: 12.5 }}>
+                    {formatDate(o.at)} · logged by the {o.by}
+                    {o.onboardingHours != null ? ` · ${o.onboardingHours} h to productive` : ""}
+                    {o.note ? ` · ${o.note}` : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </Blueprint>
 
       {/* Integrity */}

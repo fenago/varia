@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, CopyField, DataTable, Field, Pill, Stamp, StatTile, type Column, type PillGate, type StatColor } from "@ui/components";
+import { Blueprint, BlueprintButton, CopyField, DataTable, Field, Funnel, Pill, SkillTags, Stamp, StatTile, type Column, type PillGate, type StatColor } from "@ui/components";
+import { Link } from "react-router-dom";
 import { useWorkspace } from "@lib/store/workspace";
-import { blueprintRowsForEmployer, employerStats, evidenceRows, type BlueprintValidationStatus, type EmployerBlueprintRow, type EvidenceRow } from "@lib/store/selectors";
+import { activeBlueprint, blueprintRowsForEmployer, employerFunnel, employerStats, evidenceRows, skillByKey, type BlueprintValidationStatus, type EmployerBlueprintRow, type EvidenceRow } from "@lib/store/selectors";
 import { decodePackage, downloadJson, readFragmentParam, readJsonFile, reviewLink } from "@lib/share";
-import type { EmployerPartner, EmployerValidation, ReviewResult } from "@shared/types";
+import type { EmployerChallenge, EmployerPartner, EmployerValidation, ReviewResult } from "@shared/types";
 
 const RED = "#8d4a3c";
 const GREEN = "#3d6b4d";
@@ -60,6 +61,67 @@ export default function Employer() {
     const fromPartners = ws.employerPartners.map((p) => p.sector);
     return Array.from(new Set([...fromBlueprints, ...fromPartners].map((s) => s.trim()).filter(Boolean)));
   }, [ws.blueprints, ws.employerPartners]);
+
+  // ---- challenges ----
+  const funnel = useMemo(() => employerFunnel(ws), [ws]);
+  const active = activeBlueprint(ws);
+  const challenges = useMemo(() => [...(ws.challenges ?? [])].sort((a, b) => b.contributedAt.localeCompare(a.contributedAt)), [ws.challenges]);
+  const skills = ws.skills ?? [];
+  const [showChallenge, setShowChallenge] = useState(false);
+  const [cPartner, setCPartner] = useState("");
+  const [cTitle, setCTitle] = useState("");
+  const [cBrief, setCBrief] = useState("");
+  const [cDomain, setCDomain] = useState("");
+  const [cRole, setCRole] = useState("");
+  const [cDeliverable, setCDeliverable] = useState("");
+  const [cSkills, setCSkills] = useState<string[]>([]);
+  const [newSkill, setNewSkill] = useState("");
+  const [cError, setCError] = useState<string | null>(null);
+  const [cNotice, setCNotice] = useState<string | null>(null);
+
+  const toggleSkill = (key: string) => setCSkills((ks) => (ks.includes(key) ? ks.filter((k) => k !== key) : [...ks, key]));
+  const addNewSkill = () => {
+    const label = newSkill.trim();
+    if (!label) return;
+    const tag = ws.addSkill({ label, source: "employer" });
+    setCSkills((ks) => (ks.includes(tag.key) ? ks : [...ks, tag.key]));
+    setNewSkill("");
+  };
+  const submitChallenge = (e: FormEvent) => {
+    e.preventDefault();
+    const partner = ws.employerPartners.find((p) => p.id === cPartner);
+    if (!partner) { setCError("Choose the employer partner contributing this challenge."); return; }
+    if (!cTitle.trim() || !cBrief.trim() || !cDomain.trim() || !cRole.trim()) { setCError("Title, brief, domain and stakeholder role are required."); return; }
+    try {
+      const ch = ws.addChallenge({
+        partnerId: partner.id,
+        title: cTitle.trim(),
+        brief: cBrief.trim(),
+        domain: cDomain.trim(),
+        stakeholderRole: cRole.trim(),
+        deliverable: cDeliverable.trim() || "As described in the brief",
+        skillKeys: cSkills,
+        contributedBy: partner.contactName?.trim() || "Employer partner",
+      });
+      setCNotice(`Challenge "${ch.title}" contributed by ${ch.organisation}.`);
+      setCTitle(""); setCBrief(""); setCDomain(""); setCRole(""); setCDeliverable(""); setCSkills([]); setCPartner("");
+      setCError(null);
+      setShowChallenge(false);
+    } catch (err) {
+      setCError(err instanceof Error ? err.message : String(err));
+    }
+  };
+  const useInActive = (ch: EmployerChallenge) => {
+    if (!active) return;
+    try {
+      ws.linkChallengeToBlueprint(ch.id, active.id);
+      setCNotice(`"${ch.title}" now feeds the scenario bank of ${active.name}.`);
+      setCError(null);
+    } catch (err) {
+      setCError(err instanceof Error ? err.message : String(err));
+    }
+  };
+  const blueprintName = (id: string) => ws.blueprints.find((b) => b.id === id)?.name ?? id;
 
   // ---- add partner form ----
   const [showAdd, setShowAdd] = useState(false);
@@ -312,15 +374,129 @@ export default function Employer() {
   const validatedColor: StatColor = stats.validatedPct >= stats.goals.validatedPct ? "pass" : "watch";
   const adoptedColor: StatColor = stats.adoptedPct >= stats.goals.adoptedPct ? "pass" : "watch";
 
+  const challengeColumns: Column<EmployerChallenge>[] = [
+    { key: "title", header: "Challenge", render: (c) => <span className="va-heading-15">{c.title}</span> },
+    { key: "org", header: "Organisation", render: (c) => c.organisation },
+    { key: "domain", header: "Domain · stakeholder", render: (c) => `${c.domain} · ${c.stakeholderRole}` },
+    { key: "skills", header: "Skills", render: (c) => <SkillTags skills={c.skillKeys.map((k) => skillByKey(ws, k) ?? k)} max={3} /> },
+    { key: "bps", header: "Used in", render: (c) => (c.blueprintIds.length ? c.blueprintIds.map(blueprintName).join(", ") : <span className="text-muted">—</span>) },
+    { key: "status", header: "Status", render: (c) => <Pill gate={c.status === "active" ? "pass" : "watch"}>{c.status === "active" ? "Active" : "Retired"}</Pill> },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      render: (c) => {
+        const linked = !!active && c.blueprintIds.includes(active.id);
+        return (
+          <span className="va-btn-row" style={{ justifyContent: "flex-end", gap: 6 }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              disabled={!active || linked || c.status !== "active"}
+              title={!active ? "No active blueprint" : linked ? `Already used in ${active.name}` : `Add this challenge's domain, stakeholder and scenario to ${active.name}`}
+              onClick={() => useInActive(c)}
+            >
+              {linked ? "In use" : "Use in blueprint"}
+            </button>
+            {c.status === "active" && (
+              <button type="button" className="btn btn-ghost" onClick={() => ws.retireChallenge(c.id)}>Retire</button>
+            )}
+          </span>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="va-page">
+      <div>
+        <div className="va-row-flex" style={{ alignItems: "baseline", marginBottom: 10 }}>
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>From an employer's problem to a hire, in six measurable steps.</p>
+          <Link to="/talent" style={{ marginLeft: "auto", fontSize: 13, color: "var(--color-accent-700)" }}>Open a talent view →</Link>
+        </div>
+        <Funnel
+          steps={[
+            { label: "Challenges contributed", value: funnel.challenges },
+            { label: "Students who completed one", value: funnel.completed },
+            { label: "Work samples shared", value: funnel.shared },
+            { label: "Endorsed", value: funnel.endorsed },
+            { label: "Interviewed", value: funnel.interviewed },
+            { label: "Hired", value: funnel.hired },
+          ]}
+        />
+      </div>
+
+      <Blueprint style={{ padding: "20px 22px" }}>
+        <div className="va-row-flex" style={{ marginBottom: 6 }}>
+          <h6 style={{ margin: 0 }}>Challenges</h6>
+          <span className="text-muted" style={{ fontSize: 12 }}>One real problem from an employer becomes a different version for every student.</span>
+          <button type="button" className="btn btn-secondary" style={{ marginLeft: "auto" }} onClick={() => setShowChallenge((v) => !v)}>
+            {showChallenge ? "Close" : "Contribute a challenge"}
+          </button>
+        </div>
+        {cNotice && <div style={{ fontSize: 12.5, color: GREEN, margin: "6px 0" }}>{cNotice}</div>}
+        {cError && <div style={{ fontSize: 12.5, color: RED, margin: "6px 0" }}>{cError}</div>}
+        {showChallenge && (
+          <form onSubmit={submitChallenge} style={{ margin: "12px 0 16px", display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 12 }} className="va-split">
+            <Field label="Employer partner">
+              <select className="input" value={cPartner} onChange={(e: ChangeEvent<HTMLSelectElement>) => setCPartner(e.target.value)} required>
+                <option value="">Choose a partner…</option>
+                {ws.employerPartners.map((p) => (
+                  <option key={p.id} value={p.id}>{p.organisation} · {p.sector}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Title">
+              <input className="input" value={cTitle} onChange={(e) => setCTitle(e.target.value)} placeholder="Audit our loan-default classifier" required />
+            </Field>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <Field label="The brief, in your words">
+                <textarea className="input" style={{ minHeight: 96 }} value={cBrief} onChange={(e) => setCBrief(e.target.value)} placeholder="Describe the problem the way you would brief a new hire" required />
+              </Field>
+            </div>
+            <Field label="Domain">
+              <input className="input" value={cDomain} onChange={(e) => setCDomain(e.target.value)} placeholder="Lending" list="va-domains" required />
+              <datalist id="va-domains">{sectors.map((sct) => <option key={sct} value={sct} />)}</datalist>
+            </Field>
+            <Field label="Stakeholder role">
+              <input className="input" value={cRole} onChange={(e) => setCRole(e.target.value)} placeholder="Risk officer" required />
+            </Field>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <Field label="What you would want back">
+                <input className="input" value={cDeliverable} onChange={(e) => setCDeliverable(e.target.value)} placeholder="A structured audit with prioritised recommendations" />
+              </Field>
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <div className="va-kicker" style={{ marginBottom: 6 }}>Skills this exercises</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", fontSize: 13.5 }}>
+                {skills.map((sk) => (
+                  <label key={sk.key} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                    <input type="checkbox" checked={cSkills.includes(sk.key)} onChange={() => toggleSkill(sk.key)} />
+                    {sk.label}
+                  </label>
+                ))}
+              </div>
+              <div className="va-btn-row" style={{ marginTop: 8, alignItems: "center" }}>
+                <input className="input" style={{ maxWidth: 280 }} value={newSkill} onChange={(e) => setNewSkill(e.target.value)} placeholder="Add a skill your organisation names" onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addNewSkill(); } }} />
+                <button type="button" className="btn btn-secondary" onClick={addNewSkill} disabled={!newSkill.trim()}>Add a skill</button>
+              </div>
+            </div>
+            <div style={{ gridColumn: "1 / -1" }} className="va-btn-row">
+              <BlueprintButton type="submit">Contribute challenge</BlueprintButton>
+              <span className="text-muted" style={{ fontSize: 12 }}>Stored in this browser; nothing is sent anywhere.</span>
+            </div>
+          </form>
+        )}
+        <DataTable<EmployerChallenge> columns={challengeColumns} rows={challenges} rowKey={(c) => c.id} empty="No challenges yet. Contribute the first one." />
+      </Blueprint>
+
       <p className="text-muted" style={{ margin: 0, maxWidth: "76ch", fontSize: 13.5, lineHeight: 1.6 }}>
         This page carries the three employer outcomes the AI Assessment Grant requires. Employers validate the blueprint once and every
         student's version inherits it. Partners who accept evidence records for hiring or promotion are counted as adopting the
         portable skill indicator. Each review ends with a five-question satisfaction survey.
       </p>
 
-      <div className="va-tiles" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
+      <div className="va-tiles" style={{ gridTemplateColumns: "repeat(5, 1fr)" }}>
         <StatTile
           kicker="Validated by employer partners"
           value={pct(stats.validatedPct)}
@@ -343,6 +519,12 @@ export default function Employer() {
           kicker="Employer satisfaction"
           value={stats.satisfactionMean == null ? "—" : `${stats.satisfactionMean.toFixed(1)} / ${stats.goals.satisfactionScale}`}
           sub={stats.responses === 0 ? "no survey responses yet" : `${stats.responses} response${stats.responses === 1 ? "" : "s"}`}
+        />
+        <StatTile
+          kicker="Hires logged"
+          value={String(stats.hires)}
+          sub="from outcome events on records"
+          color={stats.hires > 0 ? "pass" : undefined}
         />
       </div>
 

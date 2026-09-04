@@ -6,6 +6,7 @@
 import type {
   Blueprint,
   Course,
+  EmployerChallenge,
   EmployerPartner,
   EmployerValidation,
   EvidenceRecord,
@@ -13,9 +14,11 @@ import type {
   IntegrityReport,
   ReviewPackage,
   ScenarioEdit,
+  SkillTag,
   Student,
   Variant,
   Workspace,
+  WorkSampleFields,
 } from "@shared/types";
 import { sha256Hex } from "./sha256";
 
@@ -47,12 +50,24 @@ export interface EvidenceCanonicalInput {
   report: IntegrityReport | null;
   validationIds: string[];
   issuedAt: string;
+  /** v3 work-sample fields. Defaults: not included, no skills. */
+  submissionIncluded?: boolean;
+  submissionText?: string | null;
+  skillKeys?: string[];
 }
 
-/** The content an evidence record's hash covers. */
+/**
+ * The content an evidence record's hash covers (schema v3). Covers whether the
+ * submission is included (and a digest of it when it is) and the skill keys,
+ * so a record cannot be re-labelled after issue without the hash changing.
+ */
 export function evidenceCanonical(i: EvidenceCanonicalInput): string {
+  const included = !!i.submissionIncluded;
   return canonicalJson({
-    recordVersion: 1,
+    recordVersion: 3,
+    submissionIncluded: included,
+    submissionDigest: included && i.submissionText ? sha256Hex(i.submissionText) : null,
+    skillKeys: [...new Set(i.skillKeys ?? [])].sort(),
     student: i.student.name,
     course: `${i.course.code} · ${i.course.term}`,
     blueprint: i.blueprint.name,
@@ -161,24 +176,151 @@ export function credentialIdFor(recordId: string): string {
   return typeof location !== "undefined" && location.origin ? `${location.origin}/verify/${recordId}` : `urn:varia:${recordId}`;
 }
 
-export function bridgeFor(ws: Pick<Workspace, "course" | "seededAt">, record: Pick<EvidenceRecord, "id" | "studentId">): NonNullable<EvidenceRecord["bridge"]> {
+export type WorkspaceForBridge = Pick<
+  Workspace,
+  "course" | "seededAt" | "blueprints" | "runs" | "submissions" | "roster" | "evidenceRecords" | "verificationEvents" | "signingKey"
+> &
+  Partial<Pick<Workspace, "skills" | "challenges" | "endorsements" | "outcomes" | "portfolioShares">>;
+
+/** Skill keys a blueprint's rubric evidences (deduped, in criterion order). */
+export function skillKeysForBlueprint(bp: Pick<Blueprint, "rubric"> | null | undefined): string[] {
+  if (!bp) return [];
+  const out: string[] = [];
+  for (const c of bp.rubric) for (const k of c.skillKeys ?? []) if (!out.includes(k)) out.push(k);
+  return out;
+}
+
+/** Resolve skill tags for keys against the workspace's skill list; unknown keys become instructor tags. */
+export function resolveSkills(skills: SkillTag[] | undefined, keys: string[]): SkillTag[] {
+  return keys.map((k) => skills?.find((s) => s.key === k) ?? { key: k, label: k.replace(/-/g, " ").replace(/^\w/, (m) => m.toUpperCase()), source: "instructor" as const });
+}
+
+/** A challenge linked to the blueprint whose domain matches the variant's domain, if any. */
+export function deriveChallengeId(
+  challenges: EmployerChallenge[] | undefined,
+  blueprint: Pick<Blueprint, "id" | "challengeIds"> | null | undefined,
+  variant: Pick<Variant, "surfaceAssignment"> | null | undefined,
+): string | null {
+  if (!challenges?.length || !blueprint || !variant) return null;
+  const domain = String(variant.surfaceAssignment.domain ?? "").trim().toLowerCase();
+  if (!domain) return null;
+  const linked = challenges.filter((c) => c.status === "active" && (c.blueprintIds.includes(blueprint.id) || (blueprint.challengeIds ?? []).includes(c.id)));
+  return linked.find((c) => c.domain.trim().toLowerCase() === domain)?.id ?? null;
+}
+
+/** Everything a record's canonical content and work-sample defaults need, looked up from the workspace. */
+export function recordContext(ws: WorkspaceForBridge, record: Pick<EvidenceRecord, "runId" | "variantId" | "studentId" | "blueprintId">) {
+  const run = ws.runs.find((r) => r.id === record.runId) ?? null;
+  const variant = run?.variants.find((v) => v.id === record.variantId) ?? null;
+  const submission = ws.submissions.find((s) => s.variantId === record.variantId && s.runId === record.runId) ?? null;
+  const student = ws.roster.students.find((s) => s.id === record.studentId) ?? null;
+  const blueprint = ws.blueprints.find((b) => b.id === record.blueprintId) ?? null;
+  return { run, variant, submission, student, blueprint };
+}
+
+/** Work-sample defaults for a record: submission not included, skills from the blueprint, challenge derived from the variant's domain. */
+export function workSampleDefaults(ws: WorkspaceForBridge, record: Pick<EvidenceRecord, "runId" | "variantId" | "studentId" | "blueprintId">): WorkSampleFields {
+  const { variant, blueprint } = recordContext(ws, record);
   return {
-    schemaVersion: 2,
+    submissionIncluded: false,
+    submissionText: null,
+    skills: resolveSkills(ws.skills, skillKeysForBlueprint(blueprint)),
+    challengeId: deriveChallengeId(ws.challenges, blueprint, variant),
+    endorsementIds: [],
+  };
+}
+
+/** Rebuild the canonical content a record's hash covers, from the workspace. Null if the content is gone. */
+export function recordCanonicalPure(ws: WorkspaceForBridge, record: EvidenceRecord): string | null {
+  const { run, variant, submission, student, blueprint } = recordContext(ws, record);
+  if (!run || !variant || !submission?.grade || !student || !blueprint) return null;
+  const sample = record.bridge?.workSample;
+  return evidenceCanonical({
+    student,
+    course: ws.course,
+    blueprint,
+    variant,
+    grade: submission.grade,
+    report: run.report,
+    validationIds: record.validationIds,
+    issuedAt: record.issuedAt,
+    submissionIncluded: sample?.submissionIncluded ?? false,
+    submissionText: sample?.submissionText ?? null,
+    skillKeys: (sample?.skills ?? resolveSkills(ws.skills, skillKeysForBlueprint(blueprint))).map((s) => s.key),
+  });
+}
+
+export function bridgeFor(ws: WorkspaceForBridge, record: Pick<EvidenceRecord, "id" | "runId" | "variantId" | "studentId" | "blueprintId">): NonNullable<EvidenceRecord["bridge"]> {
+  return {
+    schemaVersion: 3,
     learnerId: learnerIdFor(ws, record.studentId),
     consent: [],
     credentialId: credentialIdFor(record.id),
     signature: null,
     signedWithKid: null,
+    workSample: workSampleDefaults(ws, record),
   };
 }
 
-/** Upgrade a workspace in place-of: records without a bridge get one (unsigned); bridge arrays get defaults. */
-export function withBridgeDefaults<T extends Pick<Workspace, "course" | "seededAt" | "evidenceRecords" | "verificationEvents" | "signingKey">>(ws: T): T {
-  const evidenceRecords = ws.evidenceRecords.map((r) => (r.bridge ? r : { ...r, bridge: bridgeFor(ws, r) }));
-  return {
+/**
+ * Upgrade a workspace: records without a bridge get one (unsigned); v2 records get
+ * work-sample defaults and are re-hashed under the v3 canonical (a signature over the
+ * old canonical is void, so it is cleared and can be re-signed on demand); the bridge
+ * and employability arrays get defaults.
+ */
+export function withBridgeDefaults<T extends WorkspaceForBridge>(ws: T): T {
+  const base: WorkspaceForBridge = {
     ...ws,
-    evidenceRecords,
+    skills: Array.isArray(ws.skills) ? ws.skills : [],
+    challenges: Array.isArray(ws.challenges) ? ws.challenges : [],
+    endorsements: Array.isArray(ws.endorsements) ? ws.endorsements : [],
+    outcomes: Array.isArray(ws.outcomes) ? ws.outcomes : [],
+    portfolioShares: Array.isArray(ws.portfolioShares) ? ws.portfolioShares : [],
     verificationEvents: Array.isArray(ws.verificationEvents) ? ws.verificationEvents : [],
     signingKey: ws.signingKey ?? null,
   };
+  const evidenceRecords = ws.evidenceRecords.map((r) => {
+    if (r.bridge?.workSample) return r;
+    const bridge = r.bridge
+      ? { ...r.bridge, schemaVersion: 3 as const, workSample: workSampleDefaults(base, r) }
+      : bridgeFor(base, r);
+    const upgraded: EvidenceRecord = { ...r, bridge };
+    const canonical = recordCanonicalPure(base, upgraded);
+    if (canonical) {
+      const hash = hashEvidence(canonical);
+      if (hash !== r.hash) {
+        upgraded.hash = hash;
+        upgraded.bridge = { ...bridge, signature: null, signedWithKid: null };
+      }
+    }
+    return upgraded;
+  });
+  return { ...(base as T), evidenceRecords };
+}
+
+/** Slug for a skill label: "Fairness analysis" → "fairness-analysis". */
+export function slugify(label: string): string {
+  return label
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/** Add a challenge's domain, stakeholder role and a scenario line to a blueprint's scenario bank (deduped, locked dims untouched). */
+export function applyChallengeToBlueprint(bp: Blueprint, challenge: EmployerChallenge): Blueprint {
+  const scenarioLine = `${challenge.organisation} · ${challenge.title.replace(/^audit our\s+/i, "")}`;
+  const edits: ScenarioEdit[] = [
+    { dimensionKey: "domain", added: [challenge.domain.toLowerCase()], removed: [] },
+    { dimensionKey: "stakeholder", added: [challenge.stakeholderRole.toLowerCase()], removed: [] },
+    { dimensionKey: "scenario", added: [scenarioLine], removed: [] },
+  ];
+  const edited = applyScenarioEdits(bp, edits);
+  const dims = edited.surfaceDimensions.map((d) => {
+    const before = bp.surfaceDimensions.find((x) => x.key === d.key);
+    if (!before || before.values.length === d.values.length || d.locked) return { ...d, note: before?.note };
+    return { ...d, note: `${d.values.length} values · ${d.values.length - before.values.length} from ${challenge.organisation}` };
+  });
+  const challengeIds = [...new Set([...(bp.challengeIds ?? []), challenge.id])];
+  return { ...edited, surfaceDimensions: dims, challengeIds };
 }

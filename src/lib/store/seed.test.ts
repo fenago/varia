@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { computeReport } from "@lib/metrics";
 import { buildDemoWorkspace, demoReadingEase, NAMED_STUDENTS } from "./seed";
-import { blueprintValidationStatus, consoleStats, employerStats, rosterRows, rosterStats, studentById } from "./selectors";
+import { blueprintValidationStatus, consoleStats, employerFunnel, employerStats, portfolioFor, rosterRows, rosterStats, studentById, talentRows } from "./selectors";
+import { DEMO_PARTNER_IDS } from "./seed";
+import { recordCanonicalPure, hashEvidence } from "./employer";
 
 describe("demo workspace", () => {
   const ws = buildDemoWorkspace(computeReport);
@@ -84,10 +86,11 @@ describe("demo workspace", () => {
     expect(rows[1].readingEase).toBe(49.8);
   });
 
-  it("has three blueprints with B1 active and seven audit events", () => {
+  it("has three blueprints with B1 active and eight seeded audit events", () => {
     expect(ws.blueprints).toHaveLength(3);
     expect(ws.activeBlueprintId).toBe("bp-b1-model-card-audit");
-    expect(ws.audit).toHaveLength(7);
+    expect(ws.audit).toHaveLength(8);
+    expect(ws.audit.some((a) => a.text === "Bayfront Regional Bank endorsed VR-2026-0001")).toBe(true);
     expect(ws.audit.some((a) => a.text === "Bayfront Regional Bank validated Stakeholder memo")).toBe(true);
     expect(ws.audit.some((a) => a.text === "Evidence record VR-2026-0001 issued for Alvarez, R.")).toBe(true);
     expect(ws.thresholds[ws.thresholds.length - 1].p4FleschSigma).toBe(8);
@@ -125,5 +128,84 @@ describe("demo workspace", () => {
     expect(s.satisfactionMean).toBe(4.3); // (22/5 + 21/5) / 2
     expect(s.goals.validatedPct).toBe(0.75);
     expect(s.goals.adoptedPct).toBe(0.5);
+    expect(s.hires).toBe(0);
+  });
+
+  it("seeds eight skills mapped onto the rubrics and three challenges linked to B1", () => {
+    expect(ws.skills).toHaveLength(8);
+    expect(ws.skills!.map((k) => k.key)).toContain("fairness-analysis");
+    const b1 = ws.blueprints.find((b) => b.id === "bp-b1-model-card-audit")!;
+    expect(b1.rubric.find((c) => c.id === "c-fairness")!.skillKeys).toEqual(["fairness-analysis", "evidence-based-reasoning"]);
+    expect(b1.rubric.find((c) => c.id === "c-prioritisation")!.skillKeys).toEqual(["risk-prioritisation", "model-auditing"]);
+    expect(ws.challenges).toHaveLength(3);
+    expect(ws.challenges!.every((c) => c.blueprintIds.includes(b1.id) && c.status === "active")).toBe(true);
+    expect(b1.challengeIds).toHaveLength(3);
+    expect(ws.challenges!.map((c) => c.organisation)).toEqual(["Bayfront Regional Bank", "Northline Talent Systems", "Coral Health Network"]);
+    expect(ws.challenges![0].brief.length).toBeGreaterThan(200);
+  });
+
+  it("seeds schema-v3 records: VR-2026-0001 is a shared, endorsed work sample with the Bayfront challenge", () => {
+    const r1 = ws.evidenceRecords.find((r) => r.id === "VR-2026-0001")!;
+    const r2 = ws.evidenceRecords.find((r) => r.id === "VR-2026-0002")!;
+    expect(r1.bridge?.schemaVersion).toBe(3);
+    expect(r1.bridge?.learnerId).toMatch(/^L-[0-9a-f]{12}$/);
+    expect(r1.bridge?.workSample?.submissionIncluded).toBe(true);
+    expect(r1.bridge?.workSample?.submissionText).toBeTruthy();
+    expect(r1.bridge?.workSample?.challengeId).toBe("chal-bayfront-loan-default");
+    expect(r1.bridge?.workSample?.skills.map((s) => s.key)).toEqual([
+      "fairness-analysis",
+      "evidence-based-reasoning",
+      "robustness-evaluation",
+      "documentation-review",
+      "risk-prioritisation",
+      "model-auditing",
+    ]);
+    expect(r1.bridge?.workSample?.endorsementIds).toEqual(["end-demo-0001"]);
+    expect(r2.bridge?.workSample?.submissionIncluded).toBe(false);
+    expect(r2.bridge?.workSample?.submissionText).toBeNull();
+    // hashes reproduce from the v3 canonical
+    for (const r of [r1, r2]) {
+      const canonical = recordCanonicalPure(ws, r)!;
+      expect(canonical).toContain('"recordVersion":3');
+      expect(hashEvidence(canonical)).toBe(r.hash);
+    }
+    expect(ws.endorsements).toHaveLength(1);
+    expect(ws.outcomes!.map((o) => o.kind)).toEqual(["interviewed", "offered"]);
+    expect(ws.outcomes!.every((o) => o.learnerId === r1.bridge!.learnerId)).toBe(true);
+    expect(ws.portfolioShares).toHaveLength(1);
+    expect(ws.portfolioShares![0].learnerId).toBe(r1.bridge!.learnerId);
+  });
+
+  it("funnel reads 3 / 11 / 1 / 1 / 1 / 0 with no partner, and Bayfront's talent view has one row", () => {
+    const f = employerFunnel(ws);
+    expect(f).toEqual({ challenges: 3, completed: 11, shared: 1, endorsed: 1, interviewed: 1, hired: 0 });
+    const fb = employerFunnel(ws, DEMO_PARTNER_IDS.bayfront);
+    expect(fb.challenges).toBe(1);
+    expect(fb.completed).toBe(11);
+    expect(fb.shared).toBe(1);
+    expect(fb.endorsed).toBe(1);
+    expect(fb.interviewed).toBe(1);
+    const rows = talentRows(ws, DEMO_PARTNER_IDS.bayfront);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].record.id).toBe("VR-2026-0001");
+    expect(rows[0].sharedVia).toBe("portfolio");
+    expect(rows[0].total).toBe(10);
+    expect(rows[0].endorsements).toHaveLength(1);
+    expect(rows[0].outcomes.map((o) => o.kind)).toEqual(["interviewed", "offered"]);
+    expect(talentRows(ws, DEMO_PARTNER_IDS.northline)).toHaveLength(0);
+  });
+
+  it("Alvarez's portfolio has one work sample with an endorsement and two outcomes, and a skills summary", () => {
+    const r1 = ws.evidenceRecords.find((r) => r.id === "VR-2026-0001")!;
+    const p = portfolioFor(ws, r1.bridge!.learnerId)!;
+    expect(p.student.name).toBe("Alvarez, R.");
+    expect(p.items).toHaveLength(1);
+    expect(p.items[0].endorsements).toHaveLength(1);
+    expect(p.items[0].outcomes).toHaveLength(2);
+    expect(p.items[0].challenge?.organisation).toBe("Bayfront Regional Bank");
+    expect(p.items[0].shares).toHaveLength(1);
+    expect(p.skills).toHaveLength(6);
+    expect(p.skills.every((s) => s.count === 1)).toBe(true);
+    expect(portfolioFor(ws, "L-nope")).toBeNull();
   });
 });
