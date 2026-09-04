@@ -80,7 +80,16 @@ export default function About() {
       <Blueprint style={{ padding: "22px 24px" }}>
         <div className="va-kicker">Funded by</div>
         <h6 style={{ margin: "4px 0 12px" }}>{GRANT.name}</h6>
-        <p style={{ margin: "0 0 18px", fontSize: 15, lineHeight: 1.6, maxWidth: "76ch", textWrap: "pretty" }}>{GRANT.summary}</p>
+        <p style={{ margin: "0 0 14px", fontSize: 15, lineHeight: 1.6, maxWidth: "76ch", textWrap: "pretty" }}>{GRANT.summary}</p>
+        <div className="va-btn-row" style={{ marginBottom: 18, alignItems: "center", gap: 12 }}>
+          <a className="btn btn-primary blueprint" href="/axim-milestones.html" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+            <Corners />
+            Open the partner journey one-pager
+          </a>
+          <span className="text-muted" style={{ fontSize: 12.5 }}>
+            Milestone-by-milestone talking points for the Axim cohort, September 2026 to September 2027.
+          </span>
+        </div>
         <table className="table">
           <tbody>
             {GRANT.facts.map((f) => (

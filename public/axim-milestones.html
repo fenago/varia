@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>VARIA × Axim Milestones</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;700&family=Barlow+Condensed:wght@500;600&display=swap">
+<style>
+  :root {
+    --bg: #f2f2f3;
+    --surface: #e9e9ea;
+    --text: #1d1f20;
+    --muted: #5d5d60;
+    --line: rgba(29, 31, 32, 0.16);
+    --accent: #5980a6;
+    --accent-deep: #416180;
+    --accent-ink: #1d2d3d;
+    --accent-tint: #eef6ff;
+    --on-ink: #f2f2f3;
+    --on-ink-muted: #8fa8bf;
+    --pass: #3d6b4d;
+    --watch: #8a6d2f;
+    --fail: #8d4a3c;
+    --font-heading: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+    --font-body: "Barlow", system-ui, -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #151d26;
+      --surface: #1f2a35;
+      --text: #e6ebf0;
+      --muted: #a4b2bf;
+      --line: rgba(230, 235, 240, 0.18);
+      --accent: #94bce3;
+      --accent-deep: #b5d9fd;
+      --accent-ink: #0f161d;
+      --accent-tint: #1c2b3a;
+      --on-ink: #f2f2f3;
+      --on-ink-muted: #8fa8bf;
+      --pass: #7fb891;
+      --watch: #d0ac5c;
+      --fail: #d8887a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #151d26;
+    --surface: #1f2a35;
+    --text: #e6ebf0;
+    --muted: #a4b2bf;
+    --line: rgba(230, 235, 240, 0.18);
+    --accent: #94bce3;
+    --accent-deep: #b5d9fd;
+    --accent-ink: #0f161d;
+    --accent-tint: #1c2b3a;
+    --on-ink: #f2f2f3;
+    --on-ink-muted: #8fa8bf;
+    --pass: #7fb891;
+    --watch: #d0ac5c;
+    --fail: #d8887a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: var(--font-heading); font-weight: 600; margin: 0; text-wrap: balance; }
+  p { margin: 0; }
+  a { color: var(--accent-deep); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .page { max-width: 1100px; margin: 0 auto; padding: 28px 24px 64px; display: flex; flex-direction: column; gap: 22px; }
+
+  .bp { position: relative; border: 1px solid var(--line); border-radius: 0; }
+  .bp > .corner { position: absolute; width: 11px; height: 11px; color: var(--muted); }
+  .bp > .corner::before, .bp > .corner::after { content: ""; position: absolute; background: currentColor; }
+  .bp > .corner::before { left: 5px; top: 0; width: 1px; height: 11px; }
+  .bp > .corner::after { top: 5px; left: 0; width: 11px; height: 1px; }
+  .bp > .tl { left: -6px; top: -6px; } .bp > .tr { right: -6px; top: -6px; }
+  .bp > .bl { left: -6px; bottom: -6px; } .bp > .br { right: -6px; bottom: -6px; }
+  .bp.ink > .corner { color: var(--on-ink-muted); }
+
+  .kicker { font-family: var(--font-heading); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+  .ink .kicker { color: var(--on-ink-muted); }
+
+  .hero { background: var(--accent-ink); color: var(--on-ink); padding: 26px 28px 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; }
+  .hero h1 { font-size: 34px; line-height: 1.05; letter-spacing: .01em; color: var(--on-ink); max-width: 22ch; margin-top: 6px; }
+  .hero p { color: #d5e0ea; font-size: 15px; max-width: 62ch; margin-top: 10px; }
+  .dates { display: flex; flex-direction: column; gap: 10px; min-width: 240px; }
+  .date { border: 1px solid rgba(255,255,255,.28); padding: 10px 14px; }
+  .date .when { font-family: var(--font-heading); font-size: 20px; line-height: 1; color: var(--on-ink); }
+  .date .what { font-size: 12.5px; color: #d5e0ea; margin-top: 4px; }
+
+  .split { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+  @media (max-width: 860px) { .split, .hero { grid-template-columns: minmax(0, 1fr); } }
+
+  .card { padding: 20px 22px; }
+  .card h2 { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+  .lede { font-size: 15px; line-height: 1.6; max-width: 66ch; margin-bottom: 14px; text-wrap: pretty; }
+  .points { display: flex; flex-direction: column; gap: 10px; }
+  .point b { font-family: var(--font-heading); font-weight: 600; font-size: 15.5px; display: block; }
+  .point span { color: var(--muted); }
+  ul.plain { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; font-family: var(--font-heading); font-weight: 600; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--text); }
+  td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.when { white-space: nowrap; font-family: var(--font-heading); font-size: 15px; font-weight: 600; width: 11%; font-variant-numeric: tabular-nums; }
+  td.due { color: var(--muted); width: 27%; }
+  td.due .tag { display: inline-block; font-family: var(--font-heading); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; border: 1px solid currentColor; padding: 1px 6px; margin-bottom: 4px; color: var(--fail); }
+  td.talk ul { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 5px; }
+  tr.phase td { background: var(--accent-tint); font-family: var(--font-heading); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-deep); padding: 6px 10px; }
+  .scroll { overflow-x: auto; }
+
+  dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 18px; }
+  dt { font-family: var(--font-heading); font-size: 15px; font-weight: 600; max-width: 18ch; }
+  dd { margin: 0; color: var(--muted); }
+
+  .note { background: var(--accent-ink); color: var(--on-ink); padding: 22px 24px; }
+  .note h2 { color: var(--on-ink-muted); }
+  .note p { color: #d5e0ea; font-size: 15px; line-height: 1.6; max-width: 72ch; text-wrap: pretty; }
+  .foot { color: var(--muted); font-size: 12px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .foot a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <section class="bp ink hero">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <div>
+      <div class="kicker">Axim Collaborative · Dynamic Assessments in the Age of AI · Miami Dade College</div>
+      <h1>VARIA on the partner journey: what to say at each milestone</h1>
+      <p>Talking points for the September 2026 partner discussion and the learning sessions that follow. VARIA is the working prototype behind the paper: one blueprint in, one equivalent version per student out, released only when four integrity checks pass.</p>
+    </div>
+    <div class="dates">
+      <div class="date"><div class="when">Mon 14 Sep · EOD</div><div class="what">Assessment Concept Intake form due</div></div>
+      <div class="date"><div class="when">Thu 24 Sep · 1:00 ET</div><div class="what">Learning Session #1 (then last Thursday monthly)</div></div>
+    </div>
+  </section>
+
+  <div class="split">
+    <section class="bp card">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2>How VARIA fits</h2>
+      <p class="lede">VARIA is not just one more authentic assessment. It is the trust layer the cohort's own framing requires and nobody else in the cohort is likely to bring.</p>
+      <div class="points">
+        <div class="point"><b>Application over recall.</b><span>Every VARIA blueprint is a performance task with an analytic rubric. There is no recall item type in the system.</span></div>
+        <div class="point"><b>How over what.</b><span>Rubric criteria score process (evidence, prioritisation, reasoning under shift), and each student's adapted model answer lets faculty grade the reasoning path, not a fixed key.</span></div>
+        <div class="point"><b>Employer-valued.</b><span>The surface dimensions (domain, stakeholder, scenario) are exactly where employer partners plug in. An employer contributes real scenarios and stakeholder roles, and every student gets a workplace-shaped task.</span></div>
+        <div class="point"><b>Evidence all parties can trust.</b><span>The four integrity checks and the compliance console are the mechanism. If assessments become personalised and AI-generated, every partner will be asked "how do you know two students got an equivalent task?" VARIA is the only answer in the room with a benchmark behind it.</span></div>
+        <div class="point"><b>Portable signal.</b><span>A released variant set plus its integrity report is a defensible artifact: the task, the rubric, the score, and the equivalence evidence travel together.</span></div>
+      </div>
+    </section>
+
+    <section class="bp card">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2>Honest gaps to name before someone else does</h2>
+      <ul class="plain">
+        <li>No employer-facing role or validation workflow yet. Employer validation happens outside the tool today.</li>
+        <li>No learner-facing delivery. Students receive tasks through Canvas, not VARIA. Canvas integration is a disabled button.</li>
+        <li>Rubric stability (P3) is a proxy. The full protocol is pre-registered, not built.</li>
+        <li>Outcomes instrumentation (engagement, time on task, persistence) is not collected by the app.</li>
+        <li>Live generation at class scale has been tested in demo mode only.</li>
+      </ul>
+      <h2 style="margin-top:18px">Outcomes the app produces natively</h2>
+      <ul class="plain">
+        <li>Rubric scores by criterion and score spread by version (student mastery).</li>
+        <li>Integrity report per set and audit trail (institution, employer trust).</li>
+        <li>Difficulty appeals count: zero on a released set is a headline.</li>
+        <li>Blueprints as portable JSON: the "shared assets adopted by 15+ institutions" path.</li>
+      </ul>
+    </section>
+  </div>
+
+  <section class="bp card">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <h2>Milestones and talking points</h2>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>When</th><th>Cohort milestone</th><th>VARIA talking points</th></tr></thead>
+      <tbody>
+        <tr class="phase"><td colspan="3">Q3–Q4 2026 · Prototype design, development, employer validation</td></tr>
+        <tr>
+          <td class="when">Sep 2026</td>
+          <td class="due"><span class="tag">Due</span><br>Finalise assessment concepts; begin prototype design and development</td>
+          <td class="talk"><ul>
+            <li>We are ahead of the milestone: the prototype exists, is deployed, and every screen works today.</li>
+            <li>Concept: DAT 4100 with three blueprints (model card audit, stakeholder memo, ethical risk analysis). Open-response performance tasks with per-student variation.</li>
+            <li>Design rationale is published research, not a hunch: cite the preprint and the 30 to 38 point frontier gap.</li>
+            <li>Framework link: mastery (student), shared rubric (faculty), shared assets (institution), employer-validated scenarios (employer).</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="when">Oct 2026</td>
+          <td class="due"><span class="tag">Due</span><br>Finalise employer validation approach</td>
+          <td class="talk"><ul>
+            <li>Employers validate the surface dimensions and the rubric, not each variant. They supply scenarios, stakeholder roles and complaint triggers, and sign off that the rubric reflects what they hire for.</li>
+            <li>Offer a one-page employer validation checkpoint export: construct, rubric, scenario bank.</li>
+            <li>Ask whether the cohort has a shared employer sign-off form so MDC does not invent one.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="when">Nov 2026</td>
+          <td class="due"><span class="tag">Due</span><br>Conduct employer validation checkpoint</td>
+          <td class="talk"><ul>
+            <li>Run one employer session on the demo run: three versions side by side, "would you accept any of these as a work sample?"</li>
+            <li>Capture their edits as new surface dimension values. That is the validation loop made concrete.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="when">Dec 2026</td>
+          <td class="due">Finalise v1 prototype with technical integration documentation and one employer checkpoint output</td>
+          <td class="talk"><ul>
+            <li>Integration is a strength: static site, no server, no institutional data leaves the browser, faculty bring their own key. Nothing for MDC IT to host.</li>
+            <li>Documentation to submit: architecture spec, deployment README, integrity report CSV as the data artifact format.</li>
+            <li>Name the Canvas gap and the plan: per-student assignment export in December; LTI or Canvas API in the pilot cycle if the cohort wants it.</li>
+          </ul></td>
+        </tr>
+        <tr class="phase"><td colspan="3">Q1–Q2 2027 · Pre-pilot, pilot, evaluation</td></tr>
+        <tr>
+          <td class="when">Jan 2027</td>
+          <td class="due">Pre-pilot feedback session: soft launch, faculty demo or employer demo</td>
+          <td class="talk"><ul>
+            <li>Offer to be the cohort's faculty demo. The demo run needs no key and no setup.</li>
+            <li>Ask peers to try Import with their own assignment sheet: the fastest way to surface extraction failures.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="when">Feb 2027</td>
+          <td class="due">Finalise prototype: onboard faculty, configure courses, complete QA</td>
+          <td class="talk"><ul>
+            <li>Onboarding is the five-step Getting started page. Target: a colleague goes from upload to released set in under 20 minutes without training.</li>
+            <li>QA gate: live generation on all three blueprints with real keys and a real roster; every set clears P1, P2, P4.</li>
+            <li>Set the threshold profile with the assessment office and record it on the compliance console before pilot.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="when">Mar 2027</td>
+          <td class="due"><span class="tag">Due</span><br>Begin pilot</td>
+          <td class="talk"><ul>
+            <li>Two sections, one receiving variants and one the fixed task, same rubric. That yields the persistence-correlation and mastery comparisons the framework asks for.</li>
+            <li>Record the baseline: prior-term scores on the same assignment.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="when">Apr 2027</td>
+          <td class="due">Continue pilot; at least one student and one employer validation checkpoint</td>
+          <td class="talk"><ul>
+            <li>Student checkpoint: the "not a test" rate and self-efficacy items, plus two questions on perceived fairness of their version, VARIA's specific claim.</li>
+            <li>Employer checkpoint: review a stratified sample of graded submissions across versions.</li>
+            <li>Appeals are a built-in metric. Zero difficulty appeals on a released set is a headline.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="when">May 2027</td>
+          <td class="due">Close pilot; collect data; begin evaluating student outcomes</td>
+          <td class="talk"><ul>
+            <li>Native data: rubric scores by criterion, score spread by version, reading ease per version, integrity reports, audit trail.</li>
+            <li>Collected outside: engagement, time on task, persistence, satisfaction.</li>
+            <li>The paper's pre-registered follow-up (rubric stability, copy resistance) can be the evaluation design, turning the pilot into a publishable second study.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="when">Jun 2027</td>
+          <td class="due"><span class="tag">Due</span><br>Submit all final artifacts from validation loops, outcomes and evaluations</td>
+          <td class="talk"><ul>
+            <li>Artifacts: blueprints, released variant sets, integrity reports, rubric, employer validation records, evaluation write-up, and the app itself as an open asset.</li>
+          </ul></td>
+        </tr>
+        <tr class="phase"><td colspan="3">Q3 2027 · Blueprint feedback, scale and sustain</td></tr>
+        <tr>
+          <td class="when">Jul 2027</td>
+          <td class="due">Provide feedback on the v1 blueprint</td>
+          <td class="talk"><ul>
+            <li>Propose that the cohort's shared rubric (faculty practice outcome, validated across 3+ institutions) be authored as a VARIA blueprint so validation and variation share one format.</li>
+          </ul></td>
+        </tr>
+        <tr>
+          <td class="when">Aug–Sep 2027</td>
+          <td class="due">Share the final blueprint; support conversations to extend and scale</td>
+          <td class="talk"><ul>
+            <li>Scale story: a static site any institution deploys in minutes, and blueprints are portable JSON. That is the "15+ institutions using shared assets" metric with a concrete path.</li>
+          </ul></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <div class="split">
+    <section class="bp card">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2>Intake form answers to draft now</h2>
+      <dl>
+        <dt>Learners in pilot</dt><dd>A number per section, conservative. Two or three DAT 4100 sections is roughly 70 to 100 learners for the first pilot; the three blueprints reuse across other courses.</dd>
+        <dt>Employers and industry data</dt><dd>Name the partners already tied to the course. Their input lands in the scenario bank (domain, stakeholder, scenario, complaint trigger).</dd>
+        <dt>Technical constraints</dt><dd>None on hosting. Constraints are API cost per run, faculty holding their own keys, and no LMS integration yet.</dd>
+        <dt>Unresolved, needs support</dt><dd>Canvas delivery of per-student tasks; institutional guidance on AI API use with student-identifying rosters.</dd>
+        <dt>Biggest risk to a March 2027 live pilot</dt><dd>Getting personalised tasks into students' hands inside the LMS with grades flowing back. Mitigation: a December decision between manual per-student export and an LTI build, and IT sign-off secured by January.</dd>
+      </dl>
+    </section>
+
+    <section class="bp ink note">
+      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+      <h2>One strategic note</h2>
+      <p>The cohort framework assumes AI-enhanced assessments are trustworthy. The paper shows that assumption is conditional, and VARIA is the instrument that makes it checkable. Position MDC's contribution as the cohort's integrity infrastructure, not only its pilot. That is a role no other partner is set up to play, and it maps to three required outcomes at once: shared assets adoption, employer validation, and a shared rubric across institutions.</p>
+    </section>
+  </div>
+
+  <div class="foot">
+    <span>Dr. Ernesto Lee · Miami Dade College · lead faculty, AI Assessment Grant</span>
+    <a href="https://osf.io/preprints/edarxiv/u6xef_v1" target="_blank" rel="noopener">Paper (EdArXiv)</a>
+    <a href="https://github.com/fenago/varia" target="_blank" rel="noopener">Code</a>
+    <span>Source: Axim partner discussion deck, September 2026</span>
+  </div>
+
+</div>
+</body>
+</html>
