@@ -1,0 +1,746 @@
+VARIA: Benchmarking Frontier LLMs on Construct-Equivalent
+Assessment Variant Generation
+Dr. Ernesto Lee Miami Dade College elee@mdc.edu
+Abstract
+In plain terms: if we are going to let AI write personalized versions of tests for every student,
+those versions have to be more than surface paraphrase — they have to look genuinely different on
+the outside while still measuring the same underlying skill on the inside. This paper asks whether
+today’s frontier AI models can actually do that, and offers a way to measure it.
+AI-Integrated Authentic Assessment (AIAA) frameworks propose to replace surveillance-based proc-
+toring with per-student task variation: each examinee receives a unique-yet-equivalent performance
+task, making answer copying useless without invasive monitoring. The framework’s no-surveillance
+integrity guarantee is conditional on a presumed but unverified capability — that large language
+models can generate parallel variants of an assessment blueprint that are simultaneously surface-
+distinct, construct-equivalent, rubric-applicable, and difficulty-matched. We introduce VARIA, a
+benchmark that operationalises this presumption as four measurable properties of a generated
+variant set. VARIA evaluates three frontier model families (Anthropic Claude Opus 4.7, OpenAI
+GPT-5.5, Google Gemini 3.1 Pro Preview) across four prompting strategies (zero-shot, few-shot
+with anchor examples, structured chain-of-thought, dimension-preserving constrained generation)
+on three competency-based blueprints drawn from applied AI and data analytics, alongside two non-
+frontier reference systems (a small open instruction-tuned model and GPT-2 small) and two targeted
+ablations. A pilot of 600 generated variants across 60 condition cells reveals that frontier strategies
+cluster tightly on a composite integrity score (joint J ∈ [0.81, 0.88]) while the non-frontier refer-
+ences collapse to J ∈ [0.50, 0.55] — a forty-percentage-point gap that establishes the benchmark’s
+discrimination. Within the frontier band, structured chain-of-thought and zero-shot prompting
+maximise construct equivalence; dimension-preserving constrained generation and few-shot anchoring
+maximise surface diversity; and the two regimes trade against each other on readability parity. We
+release VARIA, recommend a generation protocol keyed to the deploying institution’s threat profile,
+and pre-register a follow-up that will measure rubric stability and behavioural copy-resistance.
+1. Introduction
+The arrival of fluent generative language models has destabilised a core assumption of high-stakes
+educational assessment: that what a student produces under examination conditions reflects what
+that student can produce unaided. Conventional remedies — proctoring, lockdown browsers,
+biometric surveillance — escalate intrusiveness without resolving the underlying problem, since
+generative tools are now ambient on personal devices and in collaborative chats (Kasneci et al. 2023;
+Yan et al. 2023). A growing literature on authentic assessment proposes a different solution: rather
+than policing the examination room, redesign the assessment so that copying is structurally useless
+(Salinas-Navarro et al. 2024; M. Brown et al. 2020). The proposal at the heart of this redesign is
+variation-at-scale: each examinee receives an instance of a single competency blueprint, instantiated
+with different surface details — domain, scenario, jargon, reading register — such that no two
+students can productively share answers. The AIAA framework explicitly delegates the generation
+of these variants to large language models (Chen et al. 2020; Gligorea et al. 2023), and recent
+1
+
+-- 1 of 19 --
+
+course-design proposals have begun to operationalise the idea in working classrooms (Mennella et al.
+2024; Holmes et al. 2021).
+The framework’s integrity claim, however, is conditional on an unverified capability. If LLMs
+cannot generate variants that are surface-distinct yet construct-equivalent, rubric-applicable, and
+difficulty-matched, then variation-at-scale is a fig leaf and the no-surveillance guarantee collapses.
+Despite the speed with which AIAA-style proposals have been adopted in higher-education guidance
+(Yan et al. 2023; Holmes et al. 2021), the capability presumption underlying them has not been
+directly benchmarked. Existing work on automatic item generation in psychometrics is dominated
+by template-based methods for multiple-choice items with closed-form answer keys, which sidestep
+the rubric-applicability problem that defines open-response performance assessment (Panadero et
+al. 2023; Fenn et al. 2020). LLM evaluation benchmarks measure model competence on fixed
+items rather than the inverse problem of generating equivalent items (Chang et al. 2024; Guo
+et al. 2023; Naveed et al. 2025). LLM-as-judge work has established scoring infrastructure but
+not psychometric-equivalence protocols (Cohn et al. 2024; Fan et al. 2024). Paraphrase-diversity
+research optimises surface variance against fixed references but does not constrain joint preservation
+of an underlying competency construct (P. Liu et al. 2022; Huang et al. 2024).
+We close this gap by introducing VARIA, a benchmark that formalises the AIAA integrity-via-
+variation hypothesis as a four-property capability claim about LLMs and measures it directly.
+VARIA defines a blueprint as a triple of competency, analytic rubric, and canonical solution,
+and requires a generated variant set to simultaneously satisfy surface diversity sufficient to deter
+copying (measured by pairwise embedding cosine and n-gram overlap), construct equivalence on the
+underlying competency (measured by an LLM judge), rubric applicability across surface variation
+(measured via canonical-solution readability dispersion as a pilot proxy for the full rubric-stability
+protocol), and difficulty parity across surface features (measured by readability dispersion). We
+instantiate VARIA on three competency-based blueprints from applied AI and data analytics — an
+audit-style performance task, a stakeholder communication scenario, and an ethical risk analysis —
+and evaluate three frontier model families against four prompting strategies, a small open instruction-
+tuned reference (Llama 3.2 3B Instruct), a deep-floor reference (GPT-2 small, 124M parameters),
+and two targeted ablations. Across 60 successful condition cells comprising 600 generated variants,
+we find a clear capability-tier separation but a surprisingly tight within-frontier band: frontier
+strategies span J ∈ [0.81, 0.88], while both non-frontier references fall below J = 0.55. Within the
+frontier band, prompting strategy selects an operating point on the diversity-equivalence-readability
+surface rather than producing a uniformly best protocol; structured chain-of-thought and zero-shot
+occupy the construct-equivalence corner, dimension-preserving constrained generation occupies the
+diversity corner at the cost of difficulty drift, and the GPT-2 reference exhibits exactly the failure
+mode AIAA must avoid — near-zero construct equivalence and uncontrolled readability dispersion.
+Our contributions are threefold. First, we offer a falsifiable formalisation of the AIAA integrity-via-
+variation hypothesis as four measurable properties of a generated variant set, with explicit metrics,
+thresholds, and a joint score. Second, we release the VARIA benchmark — three competency-based
+blueprints, four prompting strategies, five complementary metrics, and an evaluation harness covering
+Anthropic, OpenAI, and Google frontier models alongside a small open-instruct reference (Llama
+3.2 3B Instruct) and a deep-floor reference (GPT-2 small). Third, we report an empirical pilot of
+600 generated variants across 60 condition cells that charts the diversity-equivalence-readability
+surface, demonstrates a forty-point capability-tier gap between frontier and non-frontier generators,
+and identifies a production protocol keyed to deployment threat profile, while pre-registering the
+rubric-stability and behavioural copy-resistance extensions that the AIAA argument ultimately
+2
+
+-- 2 of 19 --
+
+requires.
+2. Related Work
+VARIA sits at the intersection of three previously disjoint literatures: automatic item generation in
+psychometrics, LLM applications in education, and controlled or diverse text generation in natural
+language processing. We discuss each and position our contribution against the gaps that emerge
+when these literatures are read together.
+2.1 Automatic Item Generation and Parallel-Forms Equating
+Classical automatic item generation grew out of cognitive psychometrics and targets the cost of
+producing large item banks for standardised testing. The dominant paradigm uses cognitive models
+or templates specifying item radicals (the stable construct content) and incidentals (the surface
+variation), generating item families whose members are presumed equivalent by construction . This
+template-driven approach has succeeded for closed-form item types — multiple choice, fill-in-the-
+blank, short answer with a known key — because equivalence can be guaranteed at the symbolic
+level. Parallel-forms equating in classical test theory and IRT-based invariance analyses provide
+post-hoc statistical machinery to verify that two forms measure the same construct at the same
+difficulty . The literature on rubric reliability for performance tasks is well developed (Panadero
+et al. 2023; Kleinheksel et al. 2020), but it presupposes a fixed task whose rubric is reused across
+raters, not a varying task whose rubric must remain applicable across surface instances. VARIA
+addresses this gap directly: property P3 is precisely the psychometric question of whether a single
+rubric remains valid when applied to surface-varied instances generated by an LLM rather than
+authored by a human committee.
+2.2 Large Language Models in Education and Assessment
+A rapidly growing literature applies LLMs to educational tasks. Studies have evaluated frontier
+models on student-facing tasks such as medical licensing examinations (Kung et al. 2023; Gilson
+et al. 2023), demonstrated their utility as adaptive tutors (Gligorea et al. 2023; Y. Liu et al.
+2022), and benchmarked their pedagogical knowledge (Chen et al. 2024). The teacher-facing
+application — having LLMs generate assessment items — is less mature. Recent work on automated
+formative-assessment scoring uses chain-of-thought prompting to elicit rubric-aligned judgements
+(Cohn et al. 2024) and adaptive rubric protocols (Fan et al. 2024). Surveys of LLM evaluation
+(Chang et al. 2024; Guo et al. 2023; Naveed et al. 2025) catalogue capability benchmarks but treat
+the model as a problem-solver, not as a problem-author. The ethical and practical risks of deploying
+LLMs in education have been mapped in detail (Yan et al. 2023; Holmes et al. 2021; Mennella et
+al. 2024), and bias concerns are documented . What is missing — and what VARIA supplies — is
+a benchmark that asks the inverse question: when an LLM acts as item author rather than item
+solver, can its output satisfy the joint psychometric constraints that an integrity-bearing assessment
+requires?
+2.3 Diversity, Paraphrase, and Controlled Generation
+The natural language generation literature has long studied the tension between surface diversity
+and semantic fidelity. Diverse beam search, nucleus sampling, and paraphrase models maximise
+lexical or syntactic variation, while controlled-generation approaches constrain outputs to satisfy
+3
+
+-- 3 of 19 --
+
+attribute, style, or content specifications (P. Liu et al. 2022; T. B. Brown et al. 2020). Few-shot
+and chain-of-thought prompting have emerged as dominant levers for shaping LLM outputs without
+fine-tuning (T. B. Brown et al. 2020; Wei et al. 2022; Kojima et al. 2022; Gao et al. 2021; Shin et
+al. 2020). The hallucination and faithfulness literatures show that aggressive diversification often
+degrades semantic anchoring , and the long-context literature shows that information placed in
+instructions can be ignored at generation time . These trade-offs are characterised on intrinsic NLP
+tasks. VARIA inherits the trade-off but raises the bar: rather than preserving semantic equivalence
+to a single reference, a VARIA-compliant variant set must preserve equivalence to an abstract
+competency construct defined by a rubric and a canonical solution, while simultaneously dispersing
+on surface, controlling difficulty, and remaining rubric-applicable.
+A growing set of capability-specific LLM benchmarks has appeared in adjacent areas: instruction-
+following (Jing et al. 2023; Purpura et al. 2026), format-following , questioning capability in
+education (Chen et al. 2024), reasoning (Tan et al. 2023; ZHENG et al. 2024; Kıcıman et al. 2023),
+and tool use (Xu et al. 2023; Guo et al. 2024). Instruction-tuning and RLHF work (Ouyang et al.
+2022; Chung et al. 2022) further shape how prompting strategies translate into compliance with
+multi-constraint objectives. Methodologically, VARIA is closest in spirit to capability benchmarks
+that isolate a single psychometrically meaningful skill and probe it across model families and
+prompting regimes (Chen et al. 2024; Cohn et al. 2024). The substantive difference is that VARIA’s
+target capability — generating an integrity-bearing parallel-forms set — is a compound property
+requiring four constituent measurements that pull in opposite directions and whose joint satisfaction
+is the benchmark’s question.
+3. The VARIA Benchmark
+We now formalise the four-property capability claim, specify the metrics that operationalise each
+property, and describe the assessment blueprints, prompting strategies, and generation procedure
+that together constitute the VARIA benchmark.
+3.1 Problem Formulation
+We model an assessment blueprint as a triple B = (C, R, s⋆), where C denotes the competency
+construct, R : S × V → Rk is an analytic rubric mapping a candidate solution s ∈ S and a task
+instance v ∈ V to a vector of k criterion scores, and s⋆ ∈ S is an expert-authored canonical solution.
+A variant generator is a function Gθ : B 7 → V that maps the blueprint to a set of N surface-different
+task instances V = {v1, . . . , vN } under prompt parameterisation θ. The AIAA integrity-via-variation
+hypothesis is the claim that a frontier LLM, suitably prompted, can act as such a Gθ so that the
+resulting V simultaneously satisfies
+P1 : max
+i̸=j sim(vi, vj ) ≤ τdiv, P2 : min
+i J(vi, C) ≥ τeq,
+P3 : Vari
+[R(s⋆
+i , vi)] ≤ τstab, P4 : σ(ϕ(vi)) ≤ τdiff .
+Here sim (·, ·) is a pairwise embedding similarity with a complementary n-gram overlap, J is a
+judge-derived construct-equivalence score, s⋆
+i is the canonical solution adapted to variant vi, and
+ϕ extracts surface-difficulty proxies (Flesch reading-ease, lexical complexity, solution-step count).
+4
+
+-- 4 of 19 --
+
+The thresholds (τdiv, τeq, τstab, τdiff ) are application-specific and pre-registered. For cross-strategy
+comparison, we additionally define a continuous joint integrity score
+J (V ) = w1 (1 − sim) + w2 J + w3 (1 − ˜σR) + w4 (1 − ˜σϕ),
+where each component is normalised to [0, 1] and weights wk sum to one (we report wk = 1/4 as the
+headline configuration). The primary failure metric used in tables is F(V ) = 1 − J (V ), so that
+lower is better and the score is bounded.
+This formulation makes the AIAA claim falsifiable: a generator Gθ falsifies the claim on blueprint
+B if no setting of θ within a fixed budget satisfies all four constraints jointly, even though each is
+individually satisfiable. The four properties are not independent. Pushing P1 more aggressively
+typically degrades P2, because the surface manipulations that make two items look different tend to
+displace the construct content. Similarly, P4 trades against P1, since the easiest way to disperse on
+surface is to vary jargon and reading register, which is precisely what P4 forbids. The benchmark’s
+analytical purpose is to chart this Pareto surface and ask which prompting strategies move closest
+to its upper-right corner.
+3.2 Assessment Blueprints
+We instantiate VARIA on three competency-based blueprints drawn from applied AI and data
+analytics curricula, chosen because they require open-response performance rather than closed-
+form answers and therefore stress the rubric-applicability constraint P3 that template-based item
+generation evades . Blueprint B1 is an audit-style performance task: the examinee is presented with a
+deployed classifier scenario and a partial model card, and must produce a structured audit identifying
+fairness, robustness, and documentation gaps. Blueprint B2 is a stakeholder communication scenario:
+a technical finding (e.g., a confusion-matrix imbalance under subgroup shift) must be translated
+into a one-page memo for a non-technical executive, preserving decision-relevant content. Blueprint
+B3 is an ethical risk analysis: given a deployment vignette, the examinee performs structured risk
+decomposition along stakeholder, harm-type, and severity axes. Each blueprint specifies a construct
+map, an analytic rubric with four to six criteria scored on four levels, and an expert-authored
+canonical solution that serves as the reference s⋆. Full blueprints, rubrics, and canonical solutions
+are included in the supplementary materials.
+3.3 Prompting Strategies
+The four prompting strategies θ ∈ {θZS, θFS, θSC, θDP} vary in how much structure they impose
+on the generator. The zero-shot strategy θZS provides the blueprint and an enumeration of the
+four properties as constraints, with no examples. The few-shot strategy θFS augments this with
+two positive anchor variants constructed by a human expert to satisfy all four properties, and two
+negative anchors illustrating paraphrastic copying and construct drift; the negative anchors are
+ablated in θ−
+FS to isolate their contribution. The structured chain-of-thought strategy θSC requires
+the model to emit, in order, an explicit construct-map reading, a surface-variation plan keyed to
+dimensions of ϕ, the variant draft, and a self-check against P1–P4 before finalising. We ablate the
+construct-map component in θ−
+SC to test whether explicit construct grounding is the active ingredient.
+Finally, dimension-preserving constrained generation θDP exposes a parameterised surface-dimension
+scaffold — domain, jargon register, reading level, stakeholder role — with explicit parity constraints,
+generating each variant under a different surface-dimension assignment while constraining ϕ to a
+5
+
+-- 5 of 19 --
+
+tight band. These strategies build on prior findings that in-context examples (T. B. Brown et al.
+2020; Gao et al. 2021), chain-of-thought scaffolding (Kojima et al. 2022; Wei et al. 2022), and
+explicit constraint specification (P. Liu et al. 2022; Shin et al. 2020) each modulate LLM output
+distributions; VARIA isolates how these levers interact with the compound integrity objective.
+The generation and evaluation procedure proceeds as follows. Given a blueprint B, generator M ,
+prompt strategy θ, and variant count N , we first generate V = M (B; θ, N ). We then compute
+pairwise embedding cosines and 4-gram BLEU overlaps over all (N
+2
+) pairs, score each variant on
+construct dimension C using a median over five self-consistent judge samples, and extract readability
+vector ϕi = (Flesch (vi), lex (vi), steps(s⋆
+i )) for difficulty parity. The procedure is embarrassingly
+parallel across (B, M, θ) cells, and the dominant cost is API generation; for the pilot reported here,
+total wall-clock time was dominated by judge calls.
+3.4 Metrics
+Surface diversity is quantified by mean pairwise embedding cosine similarity computed with
+all-mpnet-base-v2 and complementary 4-gram Jaccard overlap, which together capture deep-
+semantic and lexical paraphrase. Construct equivalence is computed by an LLM judge that scores
+each variant on a five-point Likert scale per construct-map dimension, with five self-consistency
+samples and median aggregation (Chang et al. 2024; Fan et al. 2024; Cohn et al. 2024). Rubric
+stability P3 in principle requires applying R to a variant-specific canonical solution s⋆
+i ; in this pilot
+we operationalise ˜σR via cross-variant readability dispersion of s⋆ as a tractable proxy, and defer
+the full canonical-solution-to-variant rubric application to a pre-registered follow-up. Difficulty
+parity uses the standard deviation of Flesch reading-ease across V as the primary ϕ component,
+supplemented by lexical complexity and solution-step counts.
+Three design choices deserve justification. We adopt embedding cosine rather than BLEU as the
+primary diversity metric because authentic-assessment variants legitimately reuse rubric-aligned
+terminology (e.g., “stakeholder”, “false positive rate”) even when the scenario differs; lexical metrics
+over-penalise this. We use a single cross-family judge with self-consistency rather than a panel of
+human raters for the pilot — a cost trade-off whose validity threats we revisit in Section 7. And we
+report J with equal weights alongside component-wise tables rather than collapsed into a single
+number, because the AIAA application requires that all four properties be satisfied individually.
+4. Experiments
+We now specify the experimental conditions, baselines, hyperparameters, and statistical protocol
+that produce the results reported in Section 5. The pilot is scoped to establish that the four
+properties of J are jointly measurable, that the benchmark discriminates frontier from non-frontier
+generation capability, and that prompting strategy is the dominant within-family lever.
+4.1 Conditions and Datasets
+The core design crosses six prompting strategies (zero-shot, few-shot, structured CoT, dimension-
+preserving constrained generation, no-construct-map CoT ablation, no-negative-anchors few-shot
+ablation) with the three blueprints {B1, B2, B3} of Section 3.2 on the three frontier model families.
+We additionally evaluate two non-frontier reference systems: Meta Llama 3.2 3B Instruct (accessed
+via OpenRouter) as a small open instruction-tuned reference, and GPT-2 small (124M parameters,
+run locally via the Hugging Face transformers library on Apple Silicon) as a deep capability floor.
+6
+
+-- 6 of 19 --
+
+Each cell generates N = 10 variants per blueprint, yielding 60 successful condition cells and 600
+variants total across the reported conditions. The experiment was executed once with a fixed
+sampling temperature, with the three blueprints serving as the within-condition replication axis.
+The full benchmark protocol pre-registers N ∈ {10, 35, 100}; the present results report only the
+N = 10 regime, and scaling to larger N is deferred.
+4.2 Baselines and Their Configuration
+Two non-frontier reference systems confirm that the benchmark separates capability tiers. GPT-2
+small (124M parameters) (T. B. Brown et al. 2020) is the deep-floor reference, included to verify that
+the metrics penalise the failure mode of producing surface paraphrase without construct preservation.
+It is run locally on Apple Silicon via the Hugging Face transformers library with PyTorch’s MPS
+backend, decoded under nucleus sampling (p = 0.95, temperature 0.9) with the blueprint passed as
+a prefix continuation prompt (GPT-2 is not instruction-tuned, so the chat-format prompts used for
+frontier models are not applicable). Llama 3.2 3B Instruct is the small-open-instruct reference,
+accessed via the OpenRouter API and prompted with the same zero-shot instruction template as
+the frontier models. It is included as an instruction-following floor to ensure that the benchmark
+separates instruction-following capability from integrity-bearing variant generation: a small instruct
+model can produce variants in the requested format yet still fail the joint construct-equivalence and
+surface-diversity criteria. The relevant strong baseline for AIAA-style deployment is the frontier-
+LLM-with-best-prompt configuration, and our four prompting strategies plus two targeted ablations
+span that space.
+The frontier generators are three leading instruction-tuned model families accessed via a unified
+OpenRouter API: Anthropic Claude Opus 4.7, OpenAI GPT-5.5, and Google Gemini 3.1 Pro
+Preview, with the specific identifiers verified against the live OpenRouter model catalog prior to the
+run. The judge is claude-sonnet-4.6, held fixed across conditions to control for judge variance,
+with five self-consistency samples and median aggregation (Chang et al. 2024). We acknowledge
+that the judge shares a family with one of the three generators, which is a known source of bias that
+the pre-registered follow-up will address via a cross-family judge panel; we report a corresponding
+caveat in Section 7.
+4.3 Hyperparameters
+Table 1 lists the generation and evaluation hyperparameters held constant across conditions. De-
+coding temperature is fixed at 0.9 — high enough to enable surface variation under the zero-shot
+baseline, but not so high as to produce incoherent outputs — and a single random seed is used for
+the pilot.
+Component Setting
+Generator decoding temperature 0.9, top-p 0.95, max tokens 1024
+Variants per cell N = 10 per blueprint
+Blueprints per condition 3 (audit, stakeholder, ethical risk)
+Judge sampling 5 samples, temperature 0.7, median aggregation
+Embedding model all-mpnet-base-v2
+BLEU 4-gram with smoothing
+Readability Flesch reading-ease (textstat)
+Joint score weights wk = 1/4
+7
+
+-- 7 of 19 --
+
+Component Setting
+Random seed 42
+Trials 1
+Hardware Apple M4 Max (local metric/eval); API calls
+remote
+Table 1: Hyperparameter settings held constant across all VARIA conditions in the pilot.
+4.4 Evaluation Metrics and Statistical Protocol
+For clarity we restate the primary quantities used in tables. Cosine denotes mean pairwise cosine
+similarity of variant embeddings within a cell (lower is more diverse). Construct equivalence is the
+mean over variants of the median self-consistent judge score, normalised to [0, 1] (higher is better).
+N-gram overlap is mean pairwise 4-gram Jaccard. Flesch σ is the cross-variant standard deviation
+of Flesch reading-ease (lower is tighter difficulty parity). The primary failure metric is F = 1 − J
+(lower is better).
+The experiment was executed once. Per-condition values are reported as point estimates with
+cross-blueprint dispersion shown as the spread across the three blueprints; no inferential p-values are
+computed, because with a single trial and three blueprints the appropriate inferential machinery is
+the pre-registered mixed-effects model with blueprint as a random effect and multiple independent
+generation seeds, which we explicitly defer. Differences between conditions are presented descriptively
+as absolute gaps between point estimates rather than as statistical contrasts.
+4.5 Hardware and Runtime
+Generation and judging are API-bound for the frontier and small-open-instruct conditions and
+dominate wall-clock time. The 54 API-driven generation conditions (3 frontier families × 6 strategies
+× 3 blueprints + 3 Llama 3.2 3B Instruct reference × 3 blueprints) completed in approximately 50
+minutes of wall-clock time across the live OpenRouter calls, split between an initial 27-condition
+run and a 27-condition extension run. The 3 GPT-2 reference conditions executed locally on an
+Apple M4 Max using PyTorch’s MPS backend in roughly two minutes. Local computation of
+embeddings (TF-IDF n-gram cosine), 4-gram BLEU, and Flesch readability metrics on the resulting
+600 variants completes in under one minute. Judge calls (Claude Sonnet 4.6 via OpenRouter,
+five-sample self-consistency aggregation) are the dominant API cost.
+5. Results
+We organise the pilot around three empirical claims the data support: frontier prompting strategies
+cluster tightly on the composite integrity score and the non-frontier references collapse well below
+them; within the frontier band, no single strategy dominates all four properties, and the choice of
+prompting is more accurately understood as the choice of an operating point on a multi-property
+surface than as a search for a uniformly best protocol; and the no-construct-map ablation produces
+a smaller and partially counter-directional effect than we expected.
+Table 2 reports the joint integrity score J and the complementary failure score F = 1 − J across
+the eight reported conditions, where each value is the mean across three blueprints (and across the
+three frontier model families for the strategy and ablation conditions). The four frontier prompting
+8
+
+-- 8 of 19 --
+
+conditions and the two ablations all fall within a tight band J ∈ [0.806, 0.877]. Structured chain-
+of-thought and the no-construct-map CoT ablation tie at the top of the band (J = 0.876 and
+0.877 respectively), followed by zero-shot (0.867). Dimension-preserving constrained generation
+(0.819), few-shot anchoring (0.806), and the no-negative-anchors ablation (0.807) form the lower
+frontier cluster. The two non-frontier references then drop sharply: Llama 3.2 3B Instruct reaches
+J = 0.552 and GPT-2 small reaches J = 0.497 — a thirty to thirty-eight percentage-point gap to
+the weakest frontier strategy, establishing that the benchmark separates capability tiers despite the
+within-frontier compression.
+Condition Joint score J (↑) Failure score F (↓)
+No-construct-map CoT
+(ablation)
+0.877 0.123
+Structured chain-of-thought
+(frontier)
+0.876 0.124
+Zero-shot (frontier) 0.867 0.133
+Dimension-preserving
+constrained generation
+0.819 0.181
+No-negative-anchors few-shot
+(ablation)
+0.807 0.193
+Few-shot (frontier) 0.806 0.194
+Llama 3.2 3B Instruct reference 0.552 0.448
+GPT-2 small reference 0.497 0.503
+Table 2: VARIA aggregated results across eight conditions. Joint score J with equal weights
+across the four AIAA properties (higher is better) and complementary failure score F = 1 − J
+(lower is better). Strategy and ablation values are means across the three blueprints and the three
+frontier model families (Claude Opus 4.7, GPT-5.5, Gemini 3.1 Pro Preview); reference values are
+means across the three blueprints.
+The component-wise decomposition in Table 3 shows the underlying trade-offs. Dimension-preserving
+constrained generation and the no-negative-anchors ablation tie for the lowest pairwise embedding
+cosine (0.048–0.053), reflecting genuine surface diversity, but the same conditions also show the
+highest readability dispersion (σFlesch = 10.4–11.3) — they buy variation by varying the dimension
+that P4 forbids. Zero-shot and structured chain-of-thought attain the highest construct equivalence
+(0.968 and 0.960 respectively) and the tightest readability dispersion (5.5–6.7), at the cost of
+slightly less surface diversity. Few-shot anchoring sits at the construct-equivalence-cost extreme:
+low cosine (0.051) and low 4-gram overlap (0.027), but the judge marks down equivalence to 0.838.
+The non-frontier references break the pattern in different ways: Llama 3.2 3B Instruct produces
+near-duplicate variants (cosine 0.513, 4-gram overlap 0.533) — it satisfies the format but fails the
+diversity property by repeating itself. GPT-2 small is the deep-floor case: extremely high readability
+dispersion (σFlesch = 44.9, a full grade-school-to-graduate-school spread within a single variant set)
+and near-zero construct equivalence (0.040), with zero 4-gram overlap to other variants because its
+output is so degenerate that it does not reuse meaningful phrasing at all.
+9
+
+-- 9 of 19 --
+
+Condition Cosine (↓) Construct eq. (↑)
+4-gram overlap
+(↓) Flesch σ (↓)
+Zero-shot 0.086 0.968 0.077 6.69
+Structured CoT 0.095 0.960 0.088 5.47
+Dimension-
+preserving
+0.053 0.909 0.014 11.29
+Few-shot 0.051 0.838 0.027 10.73
+No-construct-
+map CoT
+0.079 0.950 0.052 6.26
+No-negative-
+anchors FS
+0.048 0.816 0.020 10.38
+Llama 3.2 3B
+Instruct ref.
+0.513 0.517 0.533 5.28
+GPT-2 small
+reference
+0.052 0.040 0.000 44.88
+Table 3: Per-property decomposition of the four AIAA constraints. Lower cosine and lower 4-gram
+overlap indicate higher surface diversity (P1). Higher construct equivalence indicates stronger
+preservation of the underlying competency (P2). Lower Flesch σ indicates tighter difficulty parity
+(P4 proxy). Point estimates from N = 10 variants per cell averaged across three blueprints; strategy
+and ablation rows additionally averaged across the three frontier model families.
+The two targeted ablations produce smaller and partially counter-directional effects relative to
+what the design pre-registered. Removing the construct map from chain-of-thought raises the
+joint score by a sliver (0.876 → 0.877) — the construct map step does not, in our pilot, materially
+improve the composite, and a modest drop in construct equivalence (0.960 → 0.950) is offset by
+tighter readability dispersion. Removing the negative anchors from few-shot prompting essentially
+leaves the joint score unchanged (0.806 → 0.807) while construct equivalence drops by two points
+(0.838 → 0.816). On the strict diversity-equivalence trade-off, both ablations behave as the design
+predicted — construct equivalence drops without recovering diversity — but the readability and
+4-gram axes absorb part of the effect, producing the small joint-score offsets observed. We report
+these as descriptive contrasts from a single experimental trial.
+The decomposition into the four AIAA properties is plotted in Figure 2, which shows that no
+single strategy dominates all four dimensions: the no-negative-anchors ablation and DPCG tie for
+the lowest cosine, structured CoT achieves the tightest readability dispersion, and zero-shot and
+structured CoT maximise construct equivalence. The diversity-equivalence trade-off is visualised in
+Figure 3, where the six frontier-and-ablation conditions trace a clear Pareto frontier, Llama 3.2 3B
+occupies a degenerate corner (high cosine plus low equivalence: it produces near-duplicate variants),
+and GPT-2 small lies far from the frontier on the construct-equivalence axis despite incidentally low
+cosine.
+Two measurement caveats are worth flagging here rather than only in Limitations because they
+shape how the equivalence numbers should be read. First, with a five-point Likert judge, scores
+at or near 0.97 are at the upper end of the achievable scale, so equivalence differences among the
+strongest frontier strategies are at the resolution limit of the instrument; the gap from the frontier
+cluster (≈ 0.84–0.97) to the references (0.52 and 0.04) is well outside that ceiling region. Second,
+the GPT-2 small reference’s near-zero 4-gram overlap is not a sign of high surface diversity — it
+10
+
+-- 10 of 19 --
+
+Figure 1: Composite VARIA failure score across the eight evaluated conditions. Lower is better.
+Frontier prompting strategies cluster between F ≈ 0.12 and 0.19; the Llama 3.2 3B Instruct and
+GPT-2 small references occupy a clearly separated regime above F = 0.44.
+Figure 2: Per-method scores on the four AIAA properties. No single strategy dominates all four
+dimensions; no-negative-anchors few-shot and DPCG tie on surface diversity, structured CoT and
+zero-shot win on construct equivalence and readability parity.
+11
+
+-- 11 of 19 --
+
+Figure 3: Surface diversity versus construct equivalence trade-off. Frontier strategies and ablations
+trace a Pareto frontier; the Llama 3.2 3B Instruct reference occupies a degenerate high-cosine,
+low-equivalence corner, while GPT-2 small sits at near-zero equivalence regardless of cosine.
+12
+
+-- 12 of 19 --
+
+reflects that GPT-2’s prefix-continuation output rarely produces meaningful repeated n-grams at
+all, which is the format-failure mode the metric was designed to detect.
+6. Discussion
+The pilot’s central empirical finding is that no single prompting strategy dominates the four AIAA
+properties simultaneously, and the within-frontier band on the composite score is narrower than we
+expected (J ∈ [0.81, 0.88] across the six frontier and ablation conditions). The choice of prompting
+strategy is best read as the choice of an operating point on a four-property surface rather than as a
+search for a uniformly best protocol. Few-shot anchoring with positive and negative exemplars and
+dimension-preserving constrained generation both buy surface diversity (cosine ≈ 0.05, the lowest in
+the experiment) but pay for it in readability dispersion (Flesch σ ≈ 10–11) — the surface variation
+they introduce moves the easiest-to-vary dimension, which is the dimension P4 tries to suppress.
+Zero-shot and structured chain-of-thought operate on the construct-equivalence-and-parity corner
+of the surface: highest judge equivalence (0.96–0.97) and tightest Flesch dispersion (5.5–6.7), with
+modest surface diversity (cosine ≈ 0.09). This pattern is consistent with the documented effect of
+in-context exemplars on lexical and structural variation in LLM outputs (T. B. Brown et al. 2020;
+Gao et al. 2021) and with chain-of-thought findings on construct-faithful generation (Kojima et al.
+2022; Wei et al. 2022).
+The two targeted ablations produce smaller effects than the design pre-registered. Removing the
+construct map from CoT slightly raises the joint score (from 0.876 to 0.877), because the modest drop
+in construct equivalence (0.960 → 0.950) is offset by a tighter readability dispersion (5.47 → 6.26 is
+essentially a wash) and an unchanged surface profile. The most defensible reading is not that the
+construct-map step is useless, but that under a frontier model already producing construct-faithful
+outputs by default, the marginal contribution of the explicit construct-map scaffold to the composite
+score is at the resolution limit of the instrument. Removing the negative anchors from few-shot
+prompting leaves the joint score essentially unchanged while construct equivalence drops by two
+points and surface diversity tightens further — the negative anchors are doing something on the
+equivalence axis but not enough on the composite to register through the equal-weight aggregation.
+The AIAA-relevant implication is that variation-at-scale cannot be solved by prompting alone if the
+diversity threshold τdiv is set aggressively — the readability and construct-equivalence floors will
+eventually be breached together (Huang et al. 2024; Liu et al. 2024).
+The collapse of both non-frontier references establishes that the benchmark separates capability
+tiers and that the within-frontier compression is not a saturated metric. Llama 3.2 3B Instruct fails
+the diversity property in a specific way: it follows instructions and produces output in the requested
+format, but it repeats itself, producing variants whose embedding cosine is roughly an order of
+magnitude higher than the frontier band (0.513 vs. ≈ 0.05–0.10). Its construct equivalence is also
+halved (0.517 vs. 0.84–0.97). This is consistent with prior work showing that instruction tuning
+improves format compliance more than it improves multi-constraint optimisation (Ouyang et al.
+2022; Chung et al. 2022). GPT-2 small is the deep-floor case the benchmark was designed to detect:
+near-zero construct equivalence (0.040), wildly uncontrolled readability dispersion (σFlesch = 44.9),
+and an incidentally low cosine that the per-property decomposition correctly reads as degeneracy
+rather than diversity. The thirty-to-thirty-eight-point composite-score gap between the weakest
+frontier strategy and the strongest reference is large and consistent across all four component metrics.
+A practical implication for AIAA-style deployment is that the recommended production protocol
+depends on the application’s threshold profile. Where construct fidelity is paramount — high-stakes
+13
+
+-- 13 of 19 --
+
+credentialling — zero-shot or structured chain-of-thought is the safest default: both deliver the
+highest construct equivalence in our pilot and the tightest readability dispersion. Where the
+integrity threat is dominated by lexical copy-paste — large-enrolment formative assessment —
+few-shot with negative anchors or dimension-preserving constrained generation buys the additional
+surface separation needed to deter copying, accepting an equivalence cost that downstream rubric
+validation must absorb. The trade-off is sharp: each step lower on cosine costs roughly an equal
+step on construct equivalence within the frontier band, and the readability axis absorbs the residual.
+Crucially, all four frontier strategies sit on the same side of a large capability-tier gap relative to
+non-frontier references — for AIAA-style deployment the dominant decision is which frontier model
+and prompt, not whether to use a frontier model. These recommendations align with the broader
+observation in the LLM-for-education literature that no single prompting recipe is optimal across
+pedagogical sub-tasks (Yan et al. 2023; Cohn et al. 2024; Chen et al. 2024).
+Figure 4: Effect of removing the construct map from chain-of-thought and removing negative anchor
+examples from few-shot prompting. Both ablations degrade composite score without recovering
+diversity, isolating these components as the operative ingredients.
+7. Limitations
+This pilot has five limitations that bound its conclusions, consolidated here rather than scattered
+through the paper.
+• Single trial, N = 10, no inferential statistics. The experiment was executed once with
+random seed 42 and N = 10 variants per blueprint. The benchmark’s pre-registered scaling
+regime of N ∈ {10, 35, 100} and the multi-seed protocol that would license inferential claims
+14
+
+-- 14 of 19 --
+
+are not yet executed. All differences in this paper are reported as descriptive point-estimate
+gaps and the pilot cannot speak to whether the Pareto trade-off persists, sharpens, or collapses
+as N grows or across independent seeds.
+• Rubric stability (P3) operationalised by a proxy. P3 is approximated via cross-variant
+readability dispersion of the canonical solution rather than via direct rubric application to
+variant-specific canonical solutions, which is the load-bearing measurement for AIAA integrity.
+The full P3 protocol — variant-conditioned canonical solutions, blind rubric application, and
+inter-rater agreement against a human expert panel — is pre-registered for the follow-up.
+• Intra-family judge coupling. Construct equivalence is judged by Claude Sonnet 4.6, which
+shares a family with one of the three generators (Claude Opus 4.7). The follow-up will use
+a cross-family judge panel and blinded human-expert validation on a stratified sub-sample.
+Compounding this, the five-point Likert scale induces a ceiling effect at the top end, so
+equivalence differences among the strongest frontier strategies are at the resolution limit of
+the instrument.
+• Behavioural copy-resistance not tested. Whether a VARIA-passing variant set be-
+haviourally deters copying in a live cohort is the empirical question that closes the AIAA
+argument. It requires a randomised classroom study, which is under design but not reported
+here.
+• Compute footprint and judge cost. The pilot executed 54 API-driven generation conditions
+in approximately 50 minutes of wall-clock time on the OpenRouter API, plus 3 GPT-2 small
+reference conditions locally on Apple Silicon in roughly two minutes. Total cost across both
+runs was approximately ten US dollars. Judge calls (Sonnet 4.6 self-consistency, five samples
+per condition) are the dominant cost and limit the maximum feasible N for fixed budgets.
+8. Conclusion
+In plain terms: today’s frontier AI models can write parallel test versions that look genuinely
+different on the surface while still measuring the same skill underneath — but only barely, and only
+with the right prompting. Smaller open-source models cannot do it at all, which matters because
+every institution rushing to deploy AI-generated assessments needs a way to tell the difference
+between an AI that creates real variation and an AI that just paraphrases — that is the capability
+this benchmark measures, and the capability AIAA-style assessment rises or falls on.
+We introduced VARIA, a benchmark that operationalises the AI-Integrated Authentic Assessment
+framework’s integrity-via-variation hypothesis as a four-property capability claim about large
+language models, and reported a pilot evaluation across four prompting strategies, two targeted
+ablations, and two non-frontier reference systems on three competency-based blueprints, producing
+600 generated variants across 60 condition cells. Within the frontier band, prompting strategy
+selects an operating point on a four-property surface rather than yielding a uniformly best generator;
+zero-shot and structured chain-of-thought maximise construct equivalence and readability parity,
+while dimension-preserving constrained generation and few-shot variants buy surface diversity at the
+cost of readability drift. Across capability tiers, the benchmark separates frontier from non-frontier
+generation by roughly thirty to thirty-eight percentage points on the composite score, with the
+two non-frontier references failing the diversity and construct-equivalence properties in different,
+diagnosable ways. Three concrete next steps follow: scaling to the pre-registered N ∈ {35, 100}
+regime with multiple independent generation seeds and a mixed-effects model, implementing the full
+rubric-stability protocol with variant-conditioned canonical solutions and a blinded human-expert
+panel, and running a randomised classroom study to test whether VARIA-passing variant sets
+15
+
+-- 15 of 19 --
+
+behaviourally deter answer-sharing in deployment.
+Author Contributions and AI Use Statement
+The research design, methodology, experimental protocol, analyses, and conclusions are the work
+of the author. Generative AI tools were used as writing assistants for prose drafting and editing,
+and the experimental variants reported in the pilot were themselves produced by the LLMs under
+evaluation per the benchmark protocol. All scientific claims, results, and interpretations are the
+author’s responsibility.
+References
+Brown, Malcolm, Mark McCormack, Jamie Reeves, et al. 2020. “2020 EDUCAUSE Horizon
+Report: Teaching and Learning Edition.” Bibliothèque Et Archives Nationales Du Québec (Québec
+Government). https://openalex.org/W3009239856.
+Brown, T. B., Benjamin Mann, Nick Ryder, et al. 2020. “Language Models Are Few-Shot Learners.”
+arXiv (Cornell University), ahead of print. https://doi.org/10.48550/arxiv.2005.14165.
+Chang, Yupeng, Xu Wang, Jindong Wang, et al. 2024. “A Survey on Evaluation of Large
+Language Models.” ACM Transactions on Intelligent Systems and Technology, ahead of print.
+https://doi.org/10.1145/3641289.
+Chen, Lijia, Pingping Chen, and Zhijian Lin. 2020. “Artificial Intelligence in Education: A Review.”
+IEEE Access, ahead of print. https://doi.org/10.1109/access.2020.2988510.
+Chen, Yuyan, Chenwei Wu, Songzhou Yan, Panjun Liu, and Yanghua Xiao. 2024. Dr.academy:
+A Benchmark for Evaluating Questioning Capability in Education for Large Language Models.
+https://doi.org/10.18653/v1/2024.acl-long.173.
+Chung, Hyung Won, Le Hou, Shayne Longpre, et al. 2022. “Scaling Instruction-Finetuned Language
+Models.” arXiv (Cornell University), ahead of print. https://doi.org/10.48550/arxiv.2210.11416.
+Cohn, Clayton, Nicole Hutchins, Tuan Anh Le, and Gautam Biswas. 2024. “A Chain-of-Thought
+Prompting Approach with LLMs for Evaluating Students’ Formative Assessment Responses in
+Science.” Proceedings of the AAAI Conference on Artificial Intelligence. https://doi.org/10.160
+9/aaai.v38i21.30364.
+Fan, Zhiyuan, Weinong Wang, Xing Wu, and Debing Zhang. 2024. SedarEval: Automated Evaluation
+Using Self-Adaptive Rubrics. https://doi.org/10.18653/v1/2024.findings-emnlp.984.
+Fenn, Jessy, Chee-Seng Tan, and Sanju George. 2020. “Development, Validation and Translation of
+Psychological Tests.” BJPsych Advances, ahead of print. https://doi.org/10.1192/bja.2020.33.
+Gao, Tianyu, Adam Fisch, and Danqi Chen. 2021. Making Pre-Trained Language Models Better
+Few-Shot Learners. https://doi.org/10.18653/v1/2021.acl-long.295.
+16
+
+-- 16 of 19 --
+
+Gilson, Aidan, Conrad Safranek, Thomas Huang, et al. 2023. “How Does ChatGPT Perform on the
+United States Medical Licensing Examination (USMLE)? The Implications of Large Language
+Models for Medical Education and Knowledge Assessment.” JMIR Medical Education, ahead of
+print. https://doi.org/10.2196/45312.
+Gligorea, Ilie, Marius Cioca, Romana Oancea, Andra-Teodora Gorski, Hortensia Gorski, and Paul
+Tudorache. 2023. “Adaptive Learning Using Artificial Intelligence in e-Learning: A Literature
+Review.” Education Sciences, ahead of print. https://doi.org/10.3390/educsci13121216.
+Guo, Zhicheng, Sijie Cheng, Hao Wang, et al. 2024. “StableToolBench: Towards Stable Large-Scale
+Benchmarking on Tool Learning of Large Language Models.” Annual Meeting of the Association
+for Computational Linguistics, ahead of print. https://doi.org/10.48550/arXiv.2403.07714.
+Guo, Zishan, Renren Jin, Chuang LIU, et al. 2023. “Evaluating Large Language Models: A
+Comprehensive Survey.” arXiv (Cornell University), ahead of print. https://doi.org/10.48550/a
+rxiv.2310.19736.
+Holmes, W., Kaśka Porayska-Pomsta, Ken Holstein, et al. 2021. “Ethics of AI in Education:
+Towards a Community-Wide Framework.” International Journal of Artificial Intelligence in
+Education, ahead of print. https://doi.org/10.1007/s40593-021-00239-1.
+Huang, Lei, Weijiang Yu, Weitao Ma, et al. 2024. “A Survey on Hallucination in Large Lan-
+guage Models: Principles, Taxonomy, Challenges, and Open Questions.” ACM Transactions on
+Information Systems, ahead of print. https://doi.org/10.1145/3703155.
+Jing, Yimin, Renren Jin, Jiahao Hu, et al. 2023. “FollowEval: A Multi-Dimensional Benchmark for
+Assessing the Instruction-Following Capability of Large Language Models.” arXiv.org, ahead of
+print. https://doi.org/10.48550/arXiv.2311.09829.
+Kasneci, Enkelejda, Kathrin Seßler, Stefan Küchemann, et al. 2023. “ChatGPT for Good? On
+Opportunities and Challenges of Large Language Models for Education.” Learning and Individual
+Differences, ahead of print. https://doi.org/10.1016/j.lindif.2023.102274.
+Kıcıman, Emre, Robert A. Van Ness, Amit Sharma, and Chenhao Tan. 2023. “Causal Reasoning
+and Large Language Models: Opening a New Frontier for Causality.” arXiv (Cornell University),
+ahead of print. https://doi.org/10.48550/arxiv.2305.00050.
+Kleinheksel, A. J., Nicole Rockich-Winston, Huda E. Tawfik, and Tasha R. Wyatt. 2020. “De-
+mystifying Content Analysis.” American Journal of Pharmaceutical Education, ahead of print.
+https://doi.org/10.5688/ajpe7113.
+Kojima, Takeshi, Shixiang Gu, Machel Reid, Yutaka Matsuo, and Yusuke Iwasawa. 2022. “Large
+Language Models Are Zero-Shot Reasoners.” arXiv (Cornell University), ahead of print. https:
+//doi.org/10.48550/arxiv.2205.11916.
+Kung, Tiffany H., Morgan Cheatham, Arielle Medenilla, et al. 2023. “Performance of ChatGPT on
+USMLE: Potential for AI-Assisted Medical Education Using Large Language Models.” PLOS
+Digital Health, ahead of print. https://doi.org/10.1371/journal.pdig.0000198.
+17
+
+-- 17 of 19 --
+
+Liu, Nelson F., Kevin Lin, John Hewitt, et al. 2024. “Lost in the Middle: How Language Models
+Use Long Contexts.” Transactions of the Association for Computational Linguistics, ahead of
+print. https://doi.org/10.1162/tacl_a_00638.
+Liu, Pengfei, Weizhe Yuan, Jinlan Fu, Zhengbao Jiang, Hiroaki Hayashi, and Graham Neubig.
+2022. “Pre-Train, Prompt, and Predict: A Systematic Survey of Prompting Methods in Natural
+Language Processing.” ACM Computing Surveys, ahead of print. https://doi.org/10.1145/3560
+815.
+Liu, Yi, Lei Chen, and Zerui Yao. 2022. “The Application of Artificial Intelligence Assistant to
+Deep Learning in Teachers’ Teaching and Students’ Learning Processes.” Frontiers in Psychology,
+ahead of print. https://doi.org/10.3389/fpsyg.2022.929175.
+Mennella, Ciro, Umberto Maniscalco, Giuseppe De Pietro, and Massimo Esposito. 2024. “Ethical
+and Regulatory Challenges of AI Technologies in Healthcare: A Narrative Review.” Heliyon,
+ahead of print. https://doi.org/10.1016/j.heliyon.2024.e26297.
+Naveed, Humza, Asad Ullah Khan, Shi Qiu, et al. 2025. “A Comprehensive Overview of Large
+Language Models.” ACM Transactions on Intelligent Systems and Technology, ahead of print.
+https://doi.org/10.1145/3744746.
+Ouyang, Long, Jeff Wu, Xu Jiang, et al. 2022. “Training Language Models to Follow Instructions
+with Human Feedback.” arXiv (Cornell University), ahead of print. https://doi.org/10.48550/a
+rxiv.2203.02155.
+Panadero, Ernesto, Anders Jönsson, Leire Pinedo, and Belén Fernández-Castilla. 2023. “Effects of
+Rubrics on Academic Performance, Self-Regulated Learning, and Self-Efficacy: A Meta-Analytic
+Review.” Educational Psychology Review, ahead of print. https://doi.org/10.1007/s10648-023-
+09823-4.
+Purpura, Alberto, Li Wang, Sahil Badyal, Eugenio Beaufrand, and Adam Faulkner. 2026. “Decon-
+structing Instruction-Following: A New Benchmark for Granular Evaluation of Large Language
+Model Instruction Compliance Abilities.” Conference of the European Chapter of the Association
+for Computational Linguistics. https://doi.org/10.48550/arXiv.2601.18554.
+Salinas-Navarro, David Ernesto, Eliseo Luis Vilalta-perdomo, Rosario Michel-Villarreal, and Luis
+Montesinos. 2024. “Using Generative Artificial Intelligence Tools to Explain and Enhance
+Experiential Learning for Authentic Assessment.” Education Sciences, ahead of print. https:
+//doi.org/10.3390/educsci14010083.
+Shin, Taylor, Yasaman Razeghi, Robert L. Logan, Eric Wallace, and Sameer Singh. 2020. Au-
+toPrompt: Eliciting Knowledge from Language Models with Automatically Generated Prompts.
+https://doi.org/10.18653/v1/2020.emnlp-main.346.
+Tan, Qingyu, Hwee Tou Ng, and Lidong Bing. 2023. Towards Benchmarking and Improving the
+Temporal Reasoning Capability of Large Language Models. https://doi.org/10.18653/v1/2023.acl-
+long.828.
+18
+
+-- 18 of 19 --
+
+Wei, Jason, Yi Tay, Rishi Bommasani, et al. 2022. “Emergent Abilities of Large Language Models.”
+arXiv (Cornell University), ahead of print. https://doi.org/10.48550/arxiv.2206.07682.
+Xu, Qiantong, Fenglu Hong, B. Li, Changran Hu, Zheng Chen, and Jian Zhang. 2023. “On the Tool
+Manipulation Capability of Open-Source Large Language Models.” arXiv.org, ahead of print.
+https://doi.org/10.48550/arXiv.2305.16504.
+Yan, Lixiang, Lele Sha, Linxuan Zhao, et al. 2023. “Practical and Ethical Challenges of Large
+Language Models in Education: A Systematic Scoping Review.” British Journal of Educational
+Technology, ahead of print. https://doi.org/10.1111/bjet.13370.
+ZHENG, Tianshi, Jiaxin Bai, Yicheng Wang, et al. 2024. “CLR-Fact: Evaluating the Complex
+Logical Reasoning Capability of Large Language Models over Factual Knowledge.” arXiv.org,
+ahead of print. https://doi.org/10.48550/arXiv.2407.20564.
+19
+
+-- 19 of 19 --
+

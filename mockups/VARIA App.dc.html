@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/industry-ee801e42-eb7a-4e1d-8370-79f6936b1096/styles.css">
+<script src="_ds/industry-ee801e42-eb7a-4e1d-8370-79f6936b1096/_ds_bundle.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+html,body{margin:0}
+.va-nav{display:block;width:100%;text-align:left;background:transparent;border:0;border-left:2px solid transparent;color:#b7c6d6;font-family:var(--font-body);font-size:13.5px;line-height:1.3;padding:8px 14px 8px 16px;cursor:pointer}
+.va-nav:hover{background:rgba(255,255,255,.06);color:#fff}
+.va-nav[aria-current="page"]{background:rgba(255,255,255,.1);color:#fff;border-left-color:var(--color-accent-400)}
+.va-nav:focus-visible{outline:2px solid var(--color-accent-400);outline-offset:-2px}
+.va-railhd{font-family:var(--font-heading);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6d8299;padding:0 16px;margin:22px 0 7px}
+.va-pill{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--font-heading);padding:3px 8px;border:1px solid currentColor}
+.va-pass{color:#3d6b4d}
+.va-fail{color:#8d4a3c}
+.va-watch{color:#8a6d2f}
+.va-row:hover{background:color-mix(in srgb, var(--color-text) 4%, transparent);cursor:pointer}
+.va-sel{background:var(--color-accent-100)!important}
+.va-ax{stroke:var(--color-divider);stroke-width:1}
+@media (max-width:1140px){.va-split{grid-template-columns:minmax(0,1fr)!important}}
+.va-help{border-bottom:1px dotted color-mix(in srgb,var(--color-text) 45%,transparent);cursor:help}
+</style>
+</helmet>
+
+<div style="display:flex;min-height:100vh;font-family:var(--font-body);background:var(--color-bg);color:var(--color-text)">
+
+  <aside style="width:234px;flex:none;background:var(--color-accent-900);padding:0 0 32px;display:flex;flex-direction:column">
+    <div style="padding:18px 16px 16px;border-bottom:1px solid rgba(255,255,255,.12)">
+      <div style="background:rgba(255,255,255,.07);border:1px dashed rgba(255,255,255,.28);padding:8px;margin-bottom:14px">
+        <image-slot id="mdc-logo" shape="rect" fit="contain" style="width:100%;height:52px" placeholder="Drop the MDC logo"></image-slot>
+      </div>
+      <div style="font-family:var(--font-heading);font-size:22px;letter-spacing:.04em;color:#fff;line-height:1">VARIA</div>
+      <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#7f95ac;margin-top:5px">Assessment Variants</div>
+    </div>
+
+    <div class="va-railhd">Orientation</div>
+    <button class="va-nav" aria-current="{{ navStart }}" onClick="{{ goStart }}">Getting started</button>
+    <button class="va-nav" aria-current="{{ navNotes }}" onClick="{{ goNotes }}">Design notes</button>
+
+    <div class="va-railhd">Instructor</div>
+    <button class="va-nav" aria-current="{{ navImport }}" onClick="{{ goImport }}">0 · Load your assessment</button>
+    <button class="va-nav" aria-current="{{ navBlueprint }}" onClick="{{ goBlueprint }}">1 · Blueprint</button>
+    <button class="va-nav" aria-current="{{ navGenerate }}" onClick="{{ goGenerate }}">2 · Generate variants</button>
+    <button class="va-nav" aria-current="{{ navReport }}" onClick="{{ goReport }}">3 · Integrity report</button>
+    <button class="va-nav" aria-current="{{ navRoster }}" onClick="{{ goRoster }}">4 · Release &amp; roster</button>
+    <button class="va-nav" aria-current="{{ navGrade }}" onClick="{{ goGrade }}">5 · Grade with rubric</button>
+
+    <div class="va-railhd">Oversight</div>
+    <button class="va-nav" aria-current="{{ navSurface }}" onClick="{{ goSurface }}">Trade-off surface</button>
+    <button class="va-nav" aria-current="{{ navConsole }}" onClick="{{ goConsole }}">Compliance console</button>
+
+    <div style="margin-top:auto;padding:16px;border-top:1px solid rgba(255,255,255,.12)">
+      <div style="font-size:11px;color:#7f95ac">Signed in</div>
+      <div style="font-size:13px;color:#fff;margin-top:2px">Dr. E. Lee</div>
+      <div style="font-size:11px;color:#7f95ac">Miami Dade College · Instructor</div>
+    </div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+    <header style="display:flex;align-items:center;gap:16px;padding:16px 32px;border-bottom:1px solid var(--color-divider)">
+      <div style="min-width:0">
+        <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 50%,transparent)">{{ crumb }}</div>
+        <h4 style="margin:1px 0 0">{{ pageTitle }}</h4>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <span class="tag tag-neutral">DAT 4100 · Fall 2026</span>
+        <span class="tag tag-accent">Claude Opus 4.7</span>
+      </div>
+    </header>
+
+    <div style="flex:1;padding:28px 32px 56px">
+
+      <sc-if value="{{ isStart }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:1080px;display:flex;flex-direction:column;gap:30px">
+
+        <div class="blueprint" style="padding:26px 28px;background:var(--color-accent-900);color:#fff"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#8fa8bf">For faculty</div>
+          <h3 style="margin:6px 0 10px;color:#fff;max-width:26ch">Upload the assignment you already give. Get a different version for every student.</h3>
+          <p style="margin:0;max-width:66ch;font-size:15px;line-height:1.6;color:#d5e0ea">You do not write new prompts and you do not learn new terminology. VARIA reads your existing assignment, produces one version per student that looks different but measures the same skill, and refuses to release the set if the versions drift apart. Your rubric never changes.</p>
+          <div style="display:flex;gap:10px;margin-top:18px">
+            <button class="btn btn-primary blueprint" onClick="{{ goImport }}"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Start — load a file</button>
+            <button class="btn" style="border-color:rgba(255,255,255,.4);color:#fff" onClick="{{ goReport }}">See a finished report</button>
+          </div>
+        </div>
+
+        <div>
+          <h6 style="margin:0 0 16px">The whole thing, in five steps</h6>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px">
+            <div class="blueprint" style="padding:16px 16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-family:var(--font-heading);font-size:30px;color:var(--color-accent);line-height:1">01</div>
+              <div style="font-family:var(--font-heading);font-size:16px;margin:6px 0 5px">Upload</div>
+              <p class="card-body" style="margin:0">Drop your assignment sheet and rubric. Word, PDF, or paste the text.</p>
+              <div class="text-muted" style="font-size:11px;margin-top:8px">~2 min</div>
+            </div>
+            <div class="blueprint" style="padding:16px 16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-family:var(--font-heading);font-size:30px;color:var(--color-accent);line-height:1">02</div>
+              <div style="font-family:var(--font-heading);font-size:16px;margin:6px 0 5px">Confirm</div>
+              <p class="card-body" style="margin:0">Check what the system pulled out: the skill, the rubric criteria, your model answer.</p>
+              <div class="text-muted" style="font-size:11px;margin-top:8px">~5 min</div>
+            </div>
+            <div class="blueprint" style="padding:16px 16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-family:var(--font-heading);font-size:30px;color:var(--color-accent);line-height:1">03</div>
+              <div style="font-family:var(--font-heading);font-size:16px;margin:6px 0 5px">Generate</div>
+              <p class="card-body" style="margin:0">Answer one question — what are you protecting against — and press go.</p>
+              <div class="text-muted" style="font-size:11px;margin-top:8px">~4 min, unattended</div>
+            </div>
+            <div class="blueprint" style="padding:16px 16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-family:var(--font-heading);font-size:30px;color:var(--color-accent);line-height:1">04</div>
+              <div style="font-family:var(--font-heading);font-size:16px;margin:6px 0 5px">Check &amp; release</div>
+              <p class="card-body" style="margin:0">Four green checks means release. A red one tells you which versions to redo.</p>
+              <div class="text-muted" style="font-size:11px;margin-top:8px">~3 min</div>
+            </div>
+            <div class="blueprint" style="padding:16px 16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <div style="font-family:var(--font-heading);font-size:30px;color:var(--color-accent);line-height:1">05</div>
+              <div style="font-family:var(--font-heading);font-size:16px;margin:6px 0 5px">Grade</div>
+              <p class="card-body" style="margin:0">One rubric, every submission, with each student's own model answer beside it.</p>
+              <div class="text-muted" style="font-size:11px;margin-top:8px">as usual</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="va-split" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start">
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 4px">What you upload</h6>
+            <p class="text-muted" style="font-size:12.5px;margin:0 0 14px">An actual file from your course. Nothing needs reformatting.</p>
+            <div style="background:var(--color-surface);border:1px solid var(--color-divider);padding:16px 18px;font-size:13px;line-height:1.6">
+              <div class="text-muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">DAT4100_Assignment3.docx</div>
+              <p style="margin:0 0 8px"><strong>Assignment 3 — Model Card Audit (12 points)</strong></p>
+              <p style="margin:0 0 8px">You are auditing a deployed classifier on behalf of a stakeholder. Using the partial model card provided, produce a structured audit that identifies fairness gaps, robustness gaps, and documentation gaps. Justify every finding against evidence in the card and prioritise your recommendations.</p>
+              <p style="margin:0 0 8px"><strong>Rubric</strong> — Fairness gaps with evidence (3) · Robustness under subgroup shift (3) · Documentation completeness (3) · Prioritisation quality (3)</p>
+              <p style="margin:0" class="text-muted">Attached: instructor_model_answer.docx, roster.csv</p>
+            </div>
+            <div class="text-muted" style="font-size:12px;margin-top:12px;line-height:1.5">Also accepted: PDF, plain text, a Canvas assignment link, or a previous semester's exam. If you have no model answer, the system drafts one for you to correct — it is required, because it is how the rubric check works.</div>
+          </div>
+
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 4px">What comes back</h6>
+            <p class="text-muted" style="font-size:12.5px;margin:0 0 14px">One version per student. Same task underneath, different world on top.</p>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="border-left:2px solid var(--color-accent);padding:9px 14px;background:var(--color-accent-100);font-size:13px;line-height:1.55">
+                <div class="text-muted" style="font-size:11px;margin-bottom:3px">v-04 · Alvarez</div>
+                A regional bank deployed a loan-default classifier in March. You are auditing for the <strong>risk officer</strong>, who has the partial card and a complaint from the underwriting team…
+              </div>
+              <div style="border-left:2px solid var(--color-accent);padding:9px 14px;background:var(--color-accent-100);font-size:13px;line-height:1.55">
+                <div class="text-muted" style="font-size:11px;margin-bottom:3px">v-07 · Bhatt</div>
+                Northline Talent Systems deployed a résumé-screening classifier across four offices. You are auditing for the <strong>HR director</strong>, who has the partial card and a complaint about shortlist composition…
+              </div>
+              <div style="border-left:2px solid var(--color-accent);padding:9px 14px;background:var(--color-accent-100);font-size:13px;line-height:1.55">
+                <div class="text-muted" style="font-size:11px;margin-bottom:3px">v-11 · Chen</div>
+                A hospital network deployed a sepsis-risk classifier in two units. You are auditing for the <strong>clinical lead</strong>, who has the partial card and a nursing escalation…
+              </div>
+            </div>
+            <div class="text-muted" style="font-size:12px;margin-top:12px;line-height:1.5">Every version keeps the same four rubric criteria, the same number of findings to produce, and the same reading level. Only the scenario, the stakeholder and the domain move.</div>
+          </div>
+        </div>
+
+        <div class="blueprint" style="padding:22px 24px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <h6 style="margin:0 0 4px">How to read what comes back</h6>
+          <p class="text-muted" style="font-size:12.5px;margin:0 0 18px">Four checks. You only need to act on the ones that are not green.</p>
+          <table class="table">
+            <thead><tr><th style="width:24%">Check</th><th style="width:30%">Reads as</th><th>If it fails</th><th style="width:22%">What you do</th></tr></thead>
+            <tbody>
+              <tr><td>Versions look different</td><td><span class="va-pill va-pass">Pass</span></td><td>Two students could swap answers and both score well.</td><td>Add a surface dimension, or raise the version count.</td></tr>
+              <tr><td>Same skill measured</td><td><span class="va-pill va-pass">Pass</span></td><td>Some versions quietly test a different competency than your rubric grades.</td><td>Tighten the construct description, regenerate the flagged versions.</td></tr>
+              <tr><td>One rubric grades them all</td><td><span class="va-pill va-watch">Advisory</span></td><td>Your criteria may not map cleanly onto some scenarios.</td><td>Spot-check three versions against the rubric by hand.</td></tr>
+              <tr><td>Equally hard to read</td><td><span class="va-pill va-fail">Over threshold</span></td><td>A few students got a materially harder task — an appeal risk.</td><td>Regenerate the named versions. The report lists them.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="va-split" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start">
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 12px">Analysing the submissions</h6>
+            <div style="display:flex;flex-direction:column;gap:14px;font-size:13.5px;line-height:1.55">
+              <div><div style="font-family:var(--font-heading);font-size:15px">Grade against the adapted model answer</div><div class="text-muted">Each student's version has its own expert answer, rewritten into their scenario. Compare to that, not to the original.</div></div>
+              <div><div style="font-family:var(--font-heading);font-size:15px">Watch the score spread by version</div><div class="text-muted">If one version's mean score sits well below the rest, that is evidence the difficulty check missed something. The roster flags it for you.</div></div>
+              <div><div style="font-family:var(--font-heading);font-size:15px">Handle appeals with the numbers</div><div class="text-muted">A student claiming an unfair version gets a documented answer: their version's reading ease against the set mean, on the record.</div></div>
+              <div><div style="font-family:var(--font-heading);font-size:15px">Two identical submissions are now meaningful</div><div class="text-muted">Because no two students received the same task, matching answers are a finding rather than a coincidence.</div></div>
+            </div>
+          </div>
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 12px">Common questions</h6>
+            <div style="display:flex;flex-direction:column;gap:14px;font-size:13.5px;line-height:1.55">
+              <div><div style="font-family:var(--font-heading);font-size:15px">Do I have to rewrite my rubric?</div><div class="text-muted">No. The rubric is what is held constant — it is the thing the checks are protecting.</div></div>
+              <div><div style="font-family:var(--font-heading);font-size:15px">What if I don't trust a version?</div><div class="text-muted">Reject and regenerate any single version before release. Rejections are logged with your reason.</div></div>
+              <div><div style="font-family:var(--font-heading);font-size:15px">Is this proctoring?</div><div class="text-muted">No. Nothing monitors the student. The task design is what makes sharing answers unproductive.</div></div>
+              <div><div style="font-family:var(--font-heading);font-size:15px">Can I reuse a set next term?</div><div class="text-muted">Yes, but the library will prompt you to regenerate — released tasks circulate.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isImport }}" hint-placeholder-val="{{ true }}">
+      <div class="va-split" style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:28px;align-items:start;max-width:1180px">
+        <div style="display:flex;flex-direction:column;gap:22px">
+          <div class="blueprint" style="padding:34px 22px;text-align:center;background:var(--color-accent-100)"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="font-family:var(--font-heading);font-size:22px;margin-bottom:6px">Drop your assignment here</div>
+            <p class="text-muted" style="margin:0 0 16px;font-size:13.5px">Word, PDF, plain text, or a Canvas assignment link. Add the rubric and your model answer if they are separate files.</p>
+            <div style="display:flex;gap:10px;justify-content:center">
+              <button class="btn btn-primary blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Browse files</button>
+              <button class="btn btn-secondary">Paste text instead</button>
+              <button class="btn btn-secondary">Import from Canvas</button>
+            </div>
+          </div>
+
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px">
+              <h6 style="margin:0">Uploaded</h6>
+              <span class="text-muted" style="font-size:12px">3 files · read in 11 seconds</span>
+            </div>
+            <table class="table">
+              <thead><tr><th>File</th><th>Recognised as</th><th>Size</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>DAT4100_Assignment3.docx</td><td>Task prompt + rubric</td><td>34 KB</td><td><span class="va-pill va-pass">Read</span></td></tr>
+                <tr><td>instructor_model_answer.docx</td><td>Canonical solution</td><td>21 KB</td><td><span class="va-pill va-pass">Read</span></td></tr>
+                <tr><td>roster.csv</td><td>34 enrolled students</td><td>2 KB</td><td><span class="va-pill va-pass">Read</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+              <h6 style="margin:0">What the system pulled out</h6>
+              <span class="text-muted" style="font-size:12px">Correct anything that is wrong — this becomes the blueprint</span>
+            </div>
+            <div class="field" style="margin:14px 0">
+              <label>The skill being measured <span class="text-muted">— extracted from your prompt, high confidence</span></label>
+              <textarea class="input" style="min-height:72px" readonly="readonly">Produce a structured audit of a deployed classifier that identifies fairness, robustness and documentation gaps and justifies each against evidence in the model card.</textarea>
+            </div>
+            <div style="font-size:12px;color:color-mix(in srgb,var(--color-text) 70%,transparent);margin-bottom:6px">Rubric criteria found</div>
+            <table class="table" style="margin-bottom:14px">
+              <thead><tr><th style="width:52%">Criterion</th><th>Points</th><th>Anchors found</th><th>Confidence</th></tr></thead>
+              <tbody>
+                <tr><td>Fairness gaps with evidence</td><td>3</td><td>Yes</td><td><span class="va-pill va-pass">High</span></td></tr>
+                <tr><td>Robustness under subgroup shift</td><td>3</td><td>Yes</td><td><span class="va-pill va-pass">High</span></td></tr>
+                <tr><td>Documentation completeness</td><td>3</td><td>Yes</td><td><span class="va-pill va-pass">High</span></td></tr>
+                <tr><td>Prioritisation quality</td><td>3</td><td>Not found</td><td><span class="va-pill va-watch">Needs you</span></td></tr>
+              </tbody>
+            </table>
+            <div class="blueprint" style="padding:12px 14px;background:var(--color-surface);font-size:13px;line-height:1.55"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <strong>One thing needs you.</strong> Your fourth criterion has no level descriptions in the file. Write them, or accept the draft the system proposes — the judge that checks construct equivalence is less reliable without them.
+              <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-secondary">Review draft anchors</button><button class="btn btn-ghost">Write my own</button></div>
+            </div>
+          </div>
+
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 6px">Surface dimensions it can vary</h6>
+            <p class="text-muted" style="font-size:12.5px;margin:0 0 14px">Proposed from your prompt. Deselect anything that would change what you are testing.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <span class="tag tag-accent">Industry domain · 4 found</span>
+              <span class="tag tag-accent">Stakeholder role · 6 found</span>
+              <span class="tag tag-accent">Organisation and scenario · 12 drafted</span>
+              <span class="tag tag-accent">Complaint trigger · 5 drafted</span>
+              <span class="tag tag-outline">Reading level · held constant</span>
+              <span class="tag tag-outline">Number of findings required · held constant</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:18px;position:sticky;top:20px">
+          <div class="blueprint" style="padding:18px 20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 12px">Extraction summary</h6>
+            <div style="display:flex;flex-direction:column;gap:9px;font-size:13.5px">
+              <div style="display:flex;gap:8px"><span style="color:#3d6b4d">✓</span><span>Construct identified</span></div>
+              <div style="display:flex;gap:8px"><span style="color:#3d6b4d">✓</span><span>3 of 4 criteria complete</span></div>
+              <div style="display:flex;gap:8px"><span style="color:#3d6b4d">✓</span><span>Model answer found · 890 words</span></div>
+              <div style="display:flex;gap:8px"><span style="color:#3d6b4d">✓</span><span>Roster matched · 34 students</span></div>
+              <div style="display:flex;gap:8px"><span style="color:#8a6d2f">!</span><span>1 criterion needs level descriptions</span></div>
+            </div>
+            <button class="btn btn-primary btn-block blueprint" onClick="{{ goBlueprint }}"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Open as blueprint</button>
+            <button class="btn btn-secondary btn-block" onClick="{{ goGenerate }}">Skip review, generate now</button>
+          </div>
+          <div class="blueprint" style="padding:18px 20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 10px">No model answer?</h6>
+            <p class="card-body" style="margin:0">The system can draft one from your rubric for you to correct. It is required: the rubric-stability check works by adapting your answer into each student's scenario.</p>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isNotes }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:920px;display:flex;flex-direction:column;gap:26px">
+        <p style="font-size:16px;line-height:1.6;max-width:70ch;text-wrap:pretty">These mockups turn the VARIA benchmark into a working product: a professor authors one assessment blueprint, the system generates a different-looking task for every student, and nothing is released until the variant set passes the paper's four integrity properties. Oversight roles get the same numbers, aggregated.</p>
+
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px">
+          <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="card-kicker">Assumption 01</div>
+            <div class="card-title">The professor never sees a threshold unless something fails</div>
+            <p class="card-body">Plain-language labels carry the interface — "Do the versions look different enough?" — with the paper's metric names (cosine, σFlesch, τ<sub>div</sub>) available on hover. Failures are the only place numbers lead.</p>
+          </div>
+          <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="card-kicker">Assumption 02</div>
+            <div class="card-title">All four properties must pass individually</div>
+            <p class="card-body">The composite score J is shown for comparison across runs, but release is gated on four separate pass checks, not on the average. A set can average 0.86 and still be unreleasable.</p>
+          </div>
+          <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="card-kicker">Assumption 03</div>
+            <div class="card-title">Prompting strategy is an operating point, not a setting</div>
+            <p class="card-body">The paper finds no dominant strategy, so the generation step asks what the course is protecting against — construct fidelity or copy-paste — and maps that to zero-shot / structured CoT versus few-shot / dimension-preserving.</p>
+          </div>
+          <div class="card blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="card-kicker">Assumption 04</div>
+            <div class="card-title">Rubric stability is flagged as a proxy</div>
+            <p class="card-body">P3 is currently readability dispersion of the canonical solution, not full rubric re-application. The UI labels it provisional so an institution never over-reads it.</p>
+          </div>
+        </div>
+
+        <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <h6 style="margin:0 0 10px">The four properties, as the app words them</h6>
+          <table class="table">
+            <thead><tr><th>Paper</th><th>Instructor sees</th><th>Measured by</th><th>Release gate</th></tr></thead>
+            <tbody>
+              <tr><td>P1 Surface diversity</td><td>Versions look different</td><td>Pairwise embedding cosine, 4-gram overlap</td><td>cosine ≤ 0.15</td></tr>
+              <tr><td>P2 Construct equivalence</td><td>Same skill measured</td><td>LLM judge, 5-sample self-consistency</td><td>≥ 0.90</td></tr>
+              <tr><td>P3 Rubric stability</td><td>One rubric still grades them all</td><td>Canonical-solution dispersion (proxy)</td><td>advisory</td></tr>
+              <tr><td>P4 Difficulty parity</td><td>Equally hard to read</td><td>σ Flesch reading-ease</td><td>≤ 8.0</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="text-muted" style="font-size:13px;max-width:70ch">Next steps once a direction is picked: an LMS-embedded variant of screens 4 and 5, the appeal flow for a student who claims their variant was harder, and the admin page for setting institution-wide thresholds.</p>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isBlueprint }}" hint-placeholder-val="{{ true }}">
+      <div class="va-split" style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;align-items:start;max-width:1180px">
+        <div style="display:flex;flex-direction:column;gap:22px">
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 14px">Competency construct</h6>
+            <div class="field" style="margin-bottom:14px">
+              <label>Blueprint name</label>
+              <input class="input" value="Model card audit — deployed classifier" readonly="readonly">
+            </div>
+            <div class="field">
+              <label>What the task must measure (this is what stays constant across every student's version)</label>
+              <textarea class="input" style="min-height:104px" readonly="readonly">Given a deployed classifier scenario and a partial model card, produce a structured audit that identifies fairness gaps, robustness gaps, and documentation gaps, and justifies each finding against evidence in the card.</textarea>
+            </div>
+          </div>
+
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px">
+              <h6 style="margin:0">Analytic rubric</h6>
+              <span class="text-muted" style="font-size:12px">4 criteria · 4 levels · applies to every variant unchanged</span>
+              <button class="btn btn-ghost" style="margin-left:auto">+ Criterion</button>
+            </div>
+            <table class="table">
+              <thead><tr><th style="width:46%">Criterion</th><th>Weight</th><th>Levels</th><th>Anchors</th></tr></thead>
+              <tbody>
+                <tr><td>Identifies fairness gaps with evidence</td><td>30%</td><td>0–3</td><td>Written</td></tr>
+                <tr><td>Robustness analysis under subgroup shift</td><td>25%</td><td>0–3</td><td>Written</td></tr>
+                <tr><td>Documentation completeness judgement</td><td>25%</td><td>0–3</td><td>Written</td></tr>
+                <tr><td>Prioritisation and recommendation quality</td><td>20%</td><td>0–3</td><td>Draft</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 12px">Canonical solution</h6>
+            <p class="card-body" style="margin:0 0 12px">Your expert answer. Every generated version gets its own adapted copy of this, which is how the system checks the rubric still fits.</p>
+            <div style="background:var(--color-surface);border:1px solid var(--color-divider);padding:14px 16px;font-size:13.5px;line-height:1.6;max-height:150px;overflow:hidden;position:relative">
+              <p style="margin:0 0 8px"><strong>Finding 1 — Fairness.</strong> The card reports aggregate accuracy of 0.91 but omits per-subgroup breakdowns. Absent subgroup FPR, the deployment claim of "no disparate impact" is unsupported…</p>
+              <p style="margin:0">
+                <strong>Finding 2 — Robustness.</strong> Evaluation set is drawn from the same window as training, so the reported figures cannot speak to temporal shift…</p>
+              <div style="position:absolute;inset:auto 0 0 0;height:52px;background:linear-gradient(to top,var(--color-surface),transparent)"></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-secondary">Edit full solution</button><button class="btn btn-secondary">Upload .docx</button></div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:18px;position:sticky;top:20px">
+          <div class="blueprint" style="padding:18px 20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 12px">Readiness</h6>
+            <div style="display:flex;flex-direction:column;gap:9px;font-size:13.5px">
+              <div style="display:flex;gap:8px"><span style="color:#3d6b4d">✓</span><span>Construct described</span></div>
+              <div style="display:flex;gap:8px"><span style="color:#3d6b4d">✓</span><span>Rubric has ≥ 4 criteria</span></div>
+              <div style="display:flex;gap:8px"><span style="color:#3d6b4d">✓</span><span>Canonical solution present</span></div>
+              <div style="display:flex;gap:8px"><span style="color:#8a6d2f">!</span><span>One criterion has draft anchors — the judge is less reliable without them</span></div>
+            </div>
+            <button class="btn btn-primary btn-block blueprint" onClick="{{ goGenerate }}"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Continue to generation</button>
+          </div>
+          <div class="blueprint" style="padding:18px 20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 10px">Library</h6>
+            <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px">
+              <div><div>Stakeholder memo</div><div class="text-muted" style="font-size:11.5px">B2 · used Spring 2026 · J 0.88</div></div>
+              <div><div>Ethical risk decomposition</div><div class="text-muted" style="font-size:11.5px">B3 · used Spring 2026 · J 0.84</div></div>
+              <div><div>Model card audit</div><div class="text-muted" style="font-size:11.5px">B1 · editing now</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isGenerate }}" hint-placeholder-val="{{ true }}">
+      <div class="va-split" style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start;max-width:1180px">
+        <div style="display:flex;flex-direction:column;gap:22px">
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 6px">What is this assessment protecting against?</h6>
+            <p class="card-body" style="margin:0 0 16px;max-width:62ch">Your answer picks the generation strategy. The benchmark found no single best one — each buys a different property at the other's expense.</p>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <label class="blueprint" style="display:flex;gap:14px;padding:14px 16px;cursor:pointer;background:var(--color-accent-100)"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <span class="radio" style="pointer-events:none"><input type="radio" name="threat" checked="checked"><span class="dot"></span></span>
+                <span>
+                  <span style="font-family:var(--font-heading);font-size:16px;display:block">A student passing off someone else's answer as their own</span>
+                  <span class="text-muted" style="font-size:13px">High-stakes credentialling. Prioritises measuring the same skill and equal difficulty. → structured chain-of-thought, construct equivalence 0.96, σFlesch 5.5</span>
+                </span>
+              </label>
+              <label class="blueprint" style="display:flex;gap:14px;padding:14px 16px;cursor:pointer"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <span class="radio" style="pointer-events:none"><input type="radio" name="threat"><span class="dot"></span></span>
+                <span>
+                  <span style="font-family:var(--font-heading);font-size:16px;display:block">Answers circulating in a group chat, copy-pasted at scale</span>
+                  <span class="text-muted" style="font-size:13px">Large-enrolment formative work. Prioritises maximum surface separation. → dimension-preserving generation, cosine 0.05, difficulty drift accepted</span>
+                </span>
+              </label>
+              <label class="blueprint" style="display:flex;gap:14px;padding:14px 16px;cursor:pointer"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+                <span class="radio" style="pointer-events:none"><input type="radio" name="threat"><span class="dot"></span></span>
+                <span>
+                  <span style="font-family:var(--font-heading);font-size:16px;display:block">Let me set the strategy myself</span>
+                  <span class="text-muted" style="font-size:13px">Zero-shot · few-shot with anchors · structured CoT · dimension-preserving</span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 14px">Surface dimensions to vary</h6>
+            <p class="card-body" style="margin:0 0 14px;max-width:62ch">These are the details that change between students. Reading level stays locked — varying it is what breaks difficulty parity.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <span class="tag tag-accent">Domain · healthcare, lending, hiring, logistics</span>
+              <span class="tag tag-accent">Stakeholder role · 6 variants</span>
+              <span class="tag tag-accent">Scenario specifics · 12 variants</span>
+              <span class="tag tag-accent">Jargon register · 3 bands</span>
+              <span class="tag tag-outline">Reading level · locked</span>
+              <span class="tag tag-outline">Solution-step count · locked</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:18px;position:sticky;top:20px">
+          <div class="blueprint" style="padding:18px 20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 14px">Run</h6>
+            <div class="field" style="margin-bottom:12px">
+              <label>Versions to generate</label>
+              <input class="input" value="34 — one per enrolled student" readonly="readonly">
+            </div>
+            <div class="field" style="margin-bottom:12px">
+              <label>Generator</label>
+              <input class="input" value="Claude Opus 4.7" readonly="readonly">
+            </div>
+            <div class="field" style="margin-bottom:14px">
+              <label>Judge (held fixed)</label>
+              <input class="input" value="Claude Sonnet 4.6 · 5 samples" readonly="readonly">
+            </div>
+            <div class="text-muted" style="font-size:12px;line-height:1.5;margin-bottom:12px">Est. 4 min · ~$0.60. Judge calls dominate the cost.</div>
+            <button class="btn btn-primary btn-block blueprint" onClick="{{ goReport }}"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Generate 34 versions</button>
+          </div>
+          <div class="blueprint" style="padding:18px 20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 10px">Institution policy</h6>
+            <p class="card-body" style="margin:0">Only benchmark-cleared frontier generators are selectable. Small open models were 30–38 points below the frontier band on the composite score and cannot be used for graded work.</p>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isReport }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:1180px;display:flex;flex-direction:column;gap:24px">
+
+        <div style="display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;align-items:stretch">
+          <div class="blueprint" style="padding:22px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 55%,transparent)">Composite integrity</div>
+            <div style="font-family:var(--font-heading);font-size:76px;line-height:1;margin:8px 0 4px;color:var(--color-accent-700)">0.87</div>
+            <div class="text-muted" style="font-size:12.5px;line-height:1.5">Joint score J, equal weights.<br>Frontier band is 0.81–0.88.</div>
+            <div style="margin-top:14px"><span class="va-pill va-watch">1 of 4 needs attention</span></div>
+          </div>
+
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 4px">The four checks</h6>
+            <p class="text-muted" style="font-size:12.5px;margin:0 0 18px">Release is gated on all four passing separately — the composite above is for comparing runs, not for approving one.</p>
+
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div>
+                <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:5px">
+                  <span style="font-family:var(--font-heading);font-size:16px">Versions look different</span>
+                  <span class="va-help text-muted" style="font-size:11.5px" title="P1 — mean pairwise embedding cosine (all-mpnet-base-v2), τdiv ≤ 0.15">cosine 0.095</span>
+                  <span class="va-pill va-pass" style="margin-left:auto">Pass</span>
+                </div>
+                <div style="position:relative;height:10px;background:var(--color-neutral-200);border:1px solid var(--color-divider)">
+                  <div style="position:absolute;inset:0 auto 0 0;width:82%;background:var(--color-accent)"></div>
+                  <div style="position:absolute;top:-4px;bottom:-4px;left:70%;width:1px;background:var(--color-text)"></div>
+                </div>
+              </div>
+
+              <div>
+                <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:5px">
+                  <span style="font-family:var(--font-heading);font-size:16px">Same skill measured</span>
+                  <span class="va-help text-muted" style="font-size:11.5px" title="P2 — LLM judge construct equivalence, median of 5 self-consistency samples, τeq ≥ 0.90">equivalence 0.960</span>
+                  <span class="va-pill va-pass" style="margin-left:auto">Pass</span>
+                </div>
+                <div style="position:relative;height:10px;background:var(--color-neutral-200);border:1px solid var(--color-divider)">
+                  <div style="position:absolute;inset:0 auto 0 0;width:96%;background:var(--color-accent)"></div>
+                  <div style="position:absolute;top:-4px;bottom:-4px;left:90%;width:1px;background:var(--color-text)"></div>
+                </div>
+              </div>
+
+              <div>
+                <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:5px">
+                  <span style="font-family:var(--font-heading);font-size:16px">One rubric grades them all</span>
+                  <span class="va-help text-muted" style="font-size:11.5px" title="P3 — approximated by cross-variant readability dispersion of the canonical solution; full rubric re-application is pre-registered, not yet implemented">provisional proxy</span>
+                  <span class="va-pill va-watch" style="margin-left:auto">Advisory</span>
+                </div>
+                <div style="position:relative;height:10px;background:var(--color-neutral-200);border:1px solid var(--color-divider)">
+                  <div style="position:absolute;inset:0 auto 0 0;width:88%;background:repeating-linear-gradient(90deg,var(--color-accent-400) 0 6px,transparent 6px 10px)"></div>
+                </div>
+                <div class="text-muted" style="font-size:11.5px;margin-top:4px">Measured by proxy. Spot-check three versions against the rubric before release.</div>
+              </div>
+
+              <div>
+                <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:5px">
+                  <span style="font-family:var(--font-heading);font-size:16px">Equally hard to read</span>
+                  <span class="va-help text-muted" style="font-size:11.5px" title="P4 — standard deviation of Flesch reading-ease across the variant set, τdiff ≤ 8.0">σ Flesch 8.9</span>
+                  <span class="va-pill va-fail" style="margin-left:auto">Over threshold</span>
+                </div>
+                <div style="position:relative;height:10px;background:var(--color-neutral-200);border:1px solid var(--color-divider)">
+                  <div style="position:absolute;inset:0 auto 0 0;width:64%;background:#8d4a3c"></div>
+                  <div style="position:absolute;top:-4px;bottom:-4px;left:72%;width:1px;background:var(--color-text)"></div>
+                </div>
+                <div style="font-size:11.5px;margin-top:4px;color:#8d4a3c">Three versions read three grade levels above the rest. Regenerate those three, or loosen the jargon register.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:6px">
+            <h6 style="margin:0">Every version, on all four axes</h6>
+            <span class="text-muted" style="font-size:12px">34 versions · the three outliers are drawn solid</span>
+            <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-secondary">Export CSV</button><button class="btn btn-secondary">Send to reviewer</button></div>
+          </div>
+          <svg viewBox="0 0 1060 250" style="width:100%;height:250px;display:block">
+            <g class="va-ax">
+              <line x1="90" y1="30" x2="90" y2="210"></line>
+              <line x1="393" y1="30" x2="393" y2="210"></line>
+              <line x1="696" y1="30" x2="696" y2="210"></line>
+              <line x1="999" y1="30" x2="999" y2="210"></line>
+            </g>
+            <g fill="#1d1f20" font-family="Barlow Condensed" font-size="13" text-anchor="middle">
+              <text x="90" y="232">Different</text><text x="393" y="232">Same skill</text><text x="696" y="232">Rubric fits</text><text x="999" y="232">Same difficulty</text>
+            </g>
+            <g fill="none" stroke="#5980a6" stroke-width="1" opacity=".33">
+              <polyline points="90,58 393,44 696,66 999,72"></polyline>
+              <polyline points="90,72 393,52 696,58 999,60"></polyline>
+              <polyline points="90,46 393,60 696,74 999,88"></polyline>
+              <polyline points="90,88 393,48 696,52 999,66"></polyline>
+              <polyline points="90,64 393,68 696,80 999,58"></polyline>
+              <polyline points="90,52 393,56 696,62 999,96"></polyline>
+              <polyline points="90,96 393,62 696,70 999,80"></polyline>
+              <polyline points="90,78 393,50 696,56 999,74"></polyline>
+              <polyline points="90,60 393,74 696,88 999,64"></polyline>
+              <polyline points="90,44 393,66 696,60 999,86"></polyline>
+              <polyline points="90,82 393,58 696,76 999,70"></polyline>
+              <polyline points="90,68 393,46 696,64 999,92"></polyline>
+              <polyline points="90,56 393,70 696,84 999,62"></polyline>
+              <polyline points="90,74 393,54 696,68 999,78"></polyline>
+              <polyline points="90,50 393,64 696,72 999,68"></polyline>
+              <polyline points="90,86 393,44 696,54 999,84"></polyline>
+              <polyline points="90,62 393,72 696,66 999,76"></polyline>
+              <polyline points="90,70 393,48 696,78 999,90"></polyline>
+              <polyline points="90,48 393,60 696,58 999,66"></polyline>
+              <polyline points="90,90 393,56 696,74 999,72"></polyline>
+              <polyline points="90,66 393,68 696,62 999,60"></polyline>
+              <polyline points="90,54 393,52 696,70 999,82"></polyline>
+              <polyline points="90,80 393,64 696,56 999,70"></polyline>
+              <polyline points="90,58 393,46 696,82 999,88"></polyline>
+              <polyline points="90,72 393,62 696,60 999,64"></polyline>
+              <polyline points="90,46 393,58 696,76 999,74"></polyline>
+              <polyline points="90,84 393,50 696,64 999,80"></polyline>
+              <polyline points="90,64 393,66 696,58 999,68"></polyline>
+              <polyline points="90,52 393,54 696,72 999,78"></polyline>
+              <polyline points="90,76 393,60 696,68 999,62"></polyline>
+              <polyline points="90,60 393,48 696,54 999,86"></polyline>
+            </g>
+            <g fill="none" stroke="#8d4a3c" stroke-width="1.8">
+              <polyline points="90,40 393,90 696,120 999,186"></polyline>
+              <polyline points="90,44 393,102 696,132 999,196"></polyline>
+              <polyline points="90,38 393,96 696,126 999,178"></polyline>
+            </g>
+            <g fill="#8d4a3c" font-family="Barlow" font-size="11" text-anchor="end">
+              <text x="994" y="206">v-12, v-19, v-27</text>
+            </g>
+            <g fill="#1d1f20" opacity=".5" font-family="Barlow" font-size="10" text-anchor="end">
+              <text x="82" y="34">better</text><text x="82" y="212">worse</text>
+            </g>
+          </svg>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn btn-primary blueprint" onClick="{{ goRoster }}"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Regenerate 3 and release</button>
+          <button class="btn btn-secondary" onClick="{{ goRoster }}">Release all 34 anyway</button>
+          <span class="text-muted" style="font-size:12.5px">Releasing over a threshold is recorded on the compliance console and needs a reason.</span>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isRoster }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:1180px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px">
+          <div class="blueprint" style="padding:16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="text-muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Released</div>
+            <div style="font-family:var(--font-heading);font-size:34px;line-height:1.1">34</div>
+            <div class="text-muted" style="font-size:12px">one version per student</div>
+          </div>
+          <div class="blueprint" style="padding:16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="text-muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Submitted</div>
+            <div style="font-family:var(--font-heading);font-size:34px;line-height:1.1">27</div>
+            <div class="text-muted" style="font-size:12px">due Fri 11 Sep, 23:59</div>
+          </div>
+          <div class="blueprint" style="padding:16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="text-muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Graded</div>
+            <div style="font-family:var(--font-heading);font-size:34px;line-height:1.1">11</div>
+            <div class="text-muted" style="font-size:12px">same rubric throughout</div>
+          </div>
+          <div class="blueprint" style="padding:16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="text-muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Difficulty appeals</div>
+            <div style="font-family:var(--font-heading);font-size:34px;line-height:1.1">1</div>
+            <div class="text-muted" style="font-size:12px">v-19, over-threshold version</div>
+          </div>
+        </div>
+
+        <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
+            <h6 style="margin:0">Who got which version</h6>
+            <span class="text-muted" style="font-size:12px">Click a row to open it with the rubric</span>
+            <div style="margin-left:auto;display:flex;gap:8px"><button class="btn btn-secondary">Filter</button><button class="btn btn-secondary">Export</button></div>
+          </div>
+          <table class="table">
+            <thead><tr><th>Student</th><th>Version</th><th>Domain / stakeholder</th><th>Reading ease</th><th>Status</th><th>Score</th></tr></thead>
+            <tbody>
+              <tr class="va-row" onClick="{{ pickA }}"><td>Alvarez, R.</td><td>v-04</td><td>Lending · risk officer</td><td>52.1</td><td><span class="tag tag-neutral">Graded</span></td><td>10 / 12</td></tr>
+              <tr class="va-row va-sel" onClick="{{ pickB }}"><td>Bhatt, N.</td><td>v-07</td><td>Hiring · HR director</td><td>49.8</td><td><span class="tag tag-accent">Submitted</span></td><td>—</td></tr>
+              <tr class="va-row" onClick="{{ pickC }}"><td>Chen, W.</td><td>v-11</td><td>Healthcare · clinical lead</td><td>51.4</td><td><span class="tag tag-accent">Submitted</span></td><td>—</td></tr>
+              <tr class="va-row" onClick="{{ pickD }}"><td>Duarte, S.</td><td>v-12</td><td>Logistics · ops manager</td><td>38.6</td><td><span class="tag tag-accent">Submitted</span></td><td>—</td></tr>
+              <tr class="va-row" onClick="{{ pickE }}"><td>Ferreira, M.</td><td>v-15</td><td>Lending · compliance</td><td>53.0</td><td><span class="tag tag-neutral">Graded</span></td><td>11 / 12</td></tr>
+              <tr class="va-row" onClick="{{ pickF }}"><td>Gordon, T.</td><td>v-19</td><td>Healthcare · procurement</td><td>36.9</td><td><span class="va-pill va-fail">Appeal</span></td><td>—</td></tr>
+              <tr class="va-row" onClick="{{ pickG }}"><td>Hassan, L.</td><td>v-22</td><td>Hiring · legal counsel</td><td>50.2</td><td><span class="tag tag-accent">Submitted</span></td><td>—</td></tr>
+              <tr class="va-row" onClick="{{ pickH }}"><td>Ivanov, D.</td><td>v-27</td><td>Logistics · safety lead</td><td>37.4</td><td><span class="tag tag-neutral">Not started</span></td><td>—</td></tr>
+            </tbody>
+          </table>
+          <div class="text-muted" style="font-size:12px;margin-top:10px">Showing 8 of 34</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isGrade }}" hint-placeholder-val="{{ true }}">
+      <div class="va-split" style="display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:26px;align-items:start;max-width:1180px">
+        <div class="blueprint" style="padding:22px 24px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px">
+            <span class="tag tag-accent">{{ gradeVariant }}</span>
+            <span style="font-family:var(--font-heading);font-size:19px">{{ gradeStudent }}</span>
+            <span class="text-muted" style="font-size:12px;margin-left:auto">{{ gradeSurface }}</span>
+          </div>
+          <div style="background:var(--color-surface);border:1px solid var(--color-divider);padding:18px 20px;margin-bottom:18px">
+            <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:8px">The task this student received</div>
+            <p style="margin:0 0 10px;font-size:14px;line-height:1.6">Northline Talent Systems deployed a résumé-screening classifier across four regional offices in March. You are auditing on behalf of the HR director, who has the partial model card below and a complaint from one office about shortlist composition.</p>
+            <p style="margin:0;font-size:14px;line-height:1.6">Produce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations.</p>
+          </div>
+          <div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:color-mix(in srgb,var(--color-text) 55%,transparent);margin-bottom:8px">Submission</div>
+          <div style="font-size:14px;line-height:1.65;max-height:300px;overflow:hidden;position:relative">
+            <p><strong>Fairness.</strong> The card gives an aggregate shortlist rate of 0.34 with no breakdown by office or applicant group, so the complaint from the western office cannot be assessed or dismissed from the card alone. I flag this as the highest-priority gap…</p>
+            <p><strong>Robustness.</strong> The model was validated on applications from a single hiring cycle. Résumé conventions shift year to year, and the card does not report any temporal holdout…</p>
+            <p><strong>Documentation.</strong> Intended use is stated but out-of-scope uses are not. Nothing in the card prevents the same model being pointed at internal promotions…</p>
+            <div style="position:absolute;inset:auto 0 0 0;height:70px;background:linear-gradient(to top,var(--color-bg),transparent)"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:18px;position:sticky;top:20px">
+          <div class="blueprint" style="padding:18px 20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px"><h6 style="margin:0">Rubric</h6><span class="text-muted" style="font-size:11.5px;margin-left:auto">unchanged across all 34</span></div>
+            <div style="display:flex;flex-direction:column;gap:16px;margin-top:12px">
+              <div>
+                <div style="font-size:13.5px;margin-bottom:6px">Identifies fairness gaps with evidence</div>
+                <div class="seg" style="width:100%">
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r1">0</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r1">1</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r1">2</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r1" checked="checked">3</label>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:13.5px;margin-bottom:6px">Robustness under subgroup shift</div>
+                <div class="seg" style="width:100%">
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r2">0</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r2">1</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r2" checked="checked">2</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r2">3</label>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:13.5px;margin-bottom:6px">Documentation completeness</div>
+                <div class="seg" style="width:100%">
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r3">0</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r3">1</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r3" checked="checked">2</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r3">3</label>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:13.5px;margin-bottom:6px">Prioritisation quality</div>
+                <div class="seg" style="width:100%">
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r4">0</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r4">1</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r4">2</label>
+                  <label class="seg-opt" style="flex:1;justify-content:center"><input type="radio" name="r4">3</label>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block blueprint"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>Save score · next submission</button>
+          </div>
+
+          <div class="blueprint" style="padding:18px 20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 10px">Reference for this version</h6>
+            <p class="card-body" style="margin:0 0 12px">The canonical solution, rewritten into this student's hiring scenario. Compare against this, not the original.</p>
+            <button class="btn btn-secondary btn-block" style="margin-top:0">Open adapted solution</button>
+            <div class="hr"></div>
+            <div class="text-muted" style="font-size:12px;line-height:1.55">This version's reading ease is 49.8 — within 3 points of the set mean, so no difficulty adjustment applies.</div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isSurface }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:1180px;display:flex;flex-direction:column;gap:24px">
+        <p style="max-width:70ch;font-size:15px;line-height:1.6;text-wrap:pretty">Every strategy trades surface diversity against construct equivalence. Pick where this course should sit; the numbers are from the VARIA pilot, 600 variants across 60 condition cells.</p>
+
+        <div class="va-split" style="display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start">
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 12px">Diversity against equivalence</h6>
+            <svg viewBox="0 0 700 430" style="width:100%;height:auto;display:block">
+              <g class="va-ax"><line x1="70" y1="380" x2="670" y2="380"></line><line x1="70" y1="30" x2="70" y2="380"></line></g>
+              <g stroke="var(--color-divider)" stroke-dasharray="3 4">
+                <line x1="70" y1="300" x2="670" y2="300"></line><line x1="70" y1="220" x2="670" y2="220"></line><line x1="70" y1="140" x2="670" y2="140"></line><line x1="70" y1="60" x2="670" y2="60"></line>
+              </g>
+              <g fill="#1d1f20" opacity=".55" font-family="Barlow" font-size="11" text-anchor="end">
+                <text x="62" y="384">0.0</text><text x="62" y="304">0.25</text><text x="62" y="224">0.50</text><text x="62" y="144">0.75</text><text x="62" y="64">1.00</text>
+              </g>
+              <g fill="#1d1f20" opacity=".55" font-family="Barlow" font-size="11" text-anchor="middle">
+                <text x="70" y="402">0.00</text><text x="270" y="402">0.20</text><text x="470" y="402">0.40</text><text x="670" y="402">0.60</text>
+              </g>
+              <text x="370" y="422" font-family="Barlow Condensed" font-size="13" text-anchor="middle" fill="#1d1f20">Pairwise cosine — left is more diverse</text>
+              <text x="20" y="205" font-family="Barlow Condensed" font-size="13" text-anchor="middle" fill="#1d1f20" transform="rotate(-90 20 205)">Construct equivalence</text>
+
+              <polyline points="118,70 121,73 123,96 140,105 145,150" fill="none" stroke="#5980a6" stroke-width="1" stroke-dasharray="5 4"></polyline>
+
+              <g fill="#5980a6">
+                <circle cx="156" cy="70" r="8"></circle>
+                <circle cx="165" cy="88" r="8"></circle>
+                <circle cx="123" cy="96" r="8"></circle>
+                <circle cx="149" cy="79" r="8"></circle>
+              </g>
+              <g fill="none" stroke="#5980a6" stroke-width="1.4">
+                <circle cx="118" cy="112" r="8"></circle>
+                <circle cx="121" cy="150" r="8"></circle>
+              </g>
+              <g fill="#fff" font-family="Barlow" font-size="10" text-anchor="middle" font-weight="700">
+                <text x="156" y="74">1</text><text x="149" y="83">2</text><text x="165" y="92">3</text><text x="123" y="100">4</text>
+              </g>
+              <g fill="#5980a6" font-family="Barlow" font-size="10" text-anchor="middle" font-weight="700">
+                <text x="118" y="116">5</text><text x="121" y="154">6</text>
+              </g>
+              <g fill="#8d4a3c">
+                <circle cx="583" cy="219" r="6"></circle>
+                <circle cx="122" cy="373" r="6"></circle>
+              </g>
+              <g font-family="Barlow" font-size="11.5" fill="#8d4a3c">
+                <text x="583" y="240" text-anchor="middle">Llama 3.2 3B — near-duplicate versions</text>
+                <text x="136" y="377">GPT-2 small — degenerate output</text>
+              </g>
+              <g font-family="Barlow" font-size="11.5" fill="#1d1f20">
+                <text x="300" y="70">1 — Zero-shot · J 0.867</text>
+                <text x="300" y="88">2 — Structured CoT · J 0.876</text>
+                <text x="300" y="106">3 — No-construct-map CoT · J 0.877</text>
+                <text x="300" y="124">4 — Dimension-preserving · J 0.819</text>
+                <text x="300" y="142">5 — Few-shot · J 0.806</text>
+                <text x="300" y="160">6 — No-negative-anchors · J 0.807</text>
+              </g>
+              <line x1="180" y1="112" x2="292" y2="112" stroke="var(--color-divider)"></line>
+              <text x="666" y="374" font-family="Barlow Condensed" font-size="12" fill="#5980a6" text-anchor="end">Dashed line: Pareto frontier</text>
+            </svg>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="blueprint" style="padding:18px 20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <h6 style="margin:0 0 12px">Recommended by course type</h6>
+              <div style="display:flex;flex-direction:column;gap:14px;font-size:13.5px;line-height:1.5">
+                <div><div style="font-family:var(--font-heading);font-size:15px">High-stakes credentialling</div><div class="text-muted">Zero-shot or structured CoT. Highest equivalence, tightest difficulty parity.</div></div>
+                <div><div style="font-family:var(--font-heading);font-size:15px">Large-enrolment formative</div><div class="text-muted">Few-shot with negative anchors, or dimension-preserving. Buys surface separation; rubric validation absorbs the equivalence cost.</div></div>
+                <div><div style="font-family:var(--font-heading);font-size:15px">Any course</div><div class="text-muted">A frontier generator. All four strategies sit on the same side of a 30–38 point capability gap.</div></div>
+              </div>
+            </div>
+            <div class="blueprint" style="padding:18px 20px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+              <h6 style="margin:0 0 8px">Read with care</h6>
+              <p class="card-body" style="margin:0">Equivalence scores above 0.95 sit at the ceiling of a five-point judge scale, so differences among the top strategies are at the instrument's resolution limit. The gap to the non-frontier references is not.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <h6 style="margin:0 0 10px">Full condition table</h6>
+          <table class="table">
+            <thead><tr><th>Condition</th><th>Joint J ↑</th><th>Cosine ↓</th><th>Construct eq. ↑</th><th>4-gram ↓</th><th>σ Flesch ↓</th></tr></thead>
+            <tbody>
+              <tr><td>No-construct-map CoT <span class="text-muted">(ablation)</span></td><td>0.877</td><td>0.079</td><td>0.950</td><td>0.052</td><td>6.26</td></tr>
+              <tr><td>Structured chain-of-thought</td><td>0.876</td><td>0.095</td><td>0.960</td><td>0.088</td><td>5.47</td></tr>
+              <tr><td>Zero-shot</td><td>0.867</td><td>0.086</td><td>0.968</td><td>0.077</td><td>6.69</td></tr>
+              <tr><td>Dimension-preserving</td><td>0.819</td><td>0.053</td><td>0.909</td><td>0.014</td><td>11.29</td></tr>
+              <tr><td>No-negative-anchors few-shot <span class="text-muted">(ablation)</span></td><td>0.807</td><td>0.048</td><td>0.816</td><td>0.020</td><td>10.38</td></tr>
+              <tr><td>Few-shot</td><td>0.806</td><td>0.051</td><td>0.838</td><td>0.027</td><td>10.73</td></tr>
+              <tr><td>Llama 3.2 3B Instruct <span class="text-muted">(reference)</span></td><td>0.552</td><td>0.513</td><td>0.517</td><td>0.533</td><td>5.28</td></tr>
+              <tr><td>GPT-2 small <span class="text-muted">(reference)</span></td><td>0.497</td><td>0.052</td><td>0.040</td><td>0.000</td><td>44.88</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isConsole }}" hint-placeholder-val="{{ true }}">
+      <div style="max-width:1180px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px">
+          <div class="blueprint" style="padding:16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="text-muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Variant sets in use</div>
+            <div style="font-family:var(--font-heading);font-size:34px;line-height:1.1">63</div>
+            <div class="text-muted" style="font-size:12px">across 19 courses, 4 departments</div>
+          </div>
+          <div class="blueprint" style="padding:16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="text-muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Passing all four</div>
+            <div style="font-family:var(--font-heading);font-size:34px;line-height:1.1;color:#3d6b4d">54</div>
+            <div class="text-muted" style="font-size:12px">86% of released sets</div>
+          </div>
+          <div class="blueprint" style="padding:16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="text-muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Released over threshold</div>
+            <div style="font-family:var(--font-heading);font-size:34px;line-height:1.1;color:#8d4a3c">7</div>
+            <div class="text-muted" style="font-size:12px">each with a recorded reason</div>
+          </div>
+          <div class="blueprint" style="padding:16px 18px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <div class="text-muted" style="font-size:11px;letter-spacing:.1em;text-transform:uppercase">Unreviewed &gt; 14 days</div>
+            <div style="font-family:var(--font-heading);font-size:34px;line-height:1.1;color:#8a6d2f">2</div>
+            <div class="text-muted" style="font-size:12px">needs a specialist sign-off</div>
+          </div>
+        </div>
+
+        <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+          <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
+            <h6 style="margin:0">Released variant sets</h6>
+            <div class="seg" style="margin-left:auto">
+              <label class="seg-opt"><input type="radio" name="cf" checked="checked">All</label>
+              <label class="seg-opt"><input type="radio" name="cf">Flagged</label>
+              <label class="seg-opt"><input type="radio" name="cf">Awaiting sign-off</label>
+            </div>
+          </div>
+          <table class="table">
+            <thead><tr><th>Course · assessment</th><th>Instructor</th><th>N</th><th>Strategy</th><th>J</th><th>Failing check</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>DAT 4100 · Model card audit</td><td>E. Lee</td><td>34</td><td>Structured CoT</td><td>0.87</td><td>Difficulty parity</td><td><span class="va-pill va-fail">Over threshold</span></td></tr>
+              <tr><td>DAT 4100 · Stakeholder memo</td><td>E. Lee</td><td>34</td><td>Zero-shot</td><td>0.88</td><td>—</td><td><span class="va-pill va-pass">Cleared</span></td></tr>
+              <tr><td>CIS 3320 · Threat model brief</td><td>M. Okafor</td><td>62</td><td>Dimension-preserving</td><td>0.82</td><td>Difficulty parity</td><td><span class="va-pill va-fail">Over threshold</span></td></tr>
+              <tr><td>CIS 3320 · Incident write-up</td><td>M. Okafor</td><td>62</td><td>Few-shot</td><td>0.81</td><td>Construct equivalence</td><td><span class="va-pill va-watch">Awaiting sign-off</span></td></tr>
+              <tr><td>NUR 2210 · Care-plan critique</td><td>J. Whitfield</td><td>88</td><td>Structured CoT</td><td>0.86</td><td>—</td><td><span class="va-pill va-pass">Cleared</span></td></tr>
+              <tr><td>BUS 4405 · Ethics risk analysis</td><td>P. Ramirez</td><td>45</td><td>Zero-shot</td><td>0.86</td><td>—</td><td><span class="va-pill va-pass">Cleared</span></td></tr>
+              <tr><td>ENC 1102 · Source evaluation</td><td>A. Duarte</td><td>120</td><td>Few-shot</td><td>0.79</td><td>Construct equivalence · diversity</td><td><span class="va-pill va-fail">Blocked</span></td></tr>
+              <tr><td>DAT 2100 · Data cleaning audit</td><td>S. Novak</td><td>51</td><td>Dimension-preserving</td><td>0.83</td><td>—</td><td><span class="va-pill va-watch">Awaiting sign-off</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px">
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 12px">Institution thresholds</h6>
+            <table class="table">
+              <thead><tr><th>Check</th><th>Threshold</th><th>Set by</th></tr></thead>
+              <tbody>
+                <tr><td>Surface diversity (cosine)</td><td>≤ 0.15</td><td>Provost, Aug 2026</td></tr>
+                <tr><td>Construct equivalence</td><td>≥ 0.90</td><td>Provost, Aug 2026</td></tr>
+                <tr><td>Rubric stability</td><td>Advisory — proxy metric</td><td>Assessment office</td></tr>
+                <tr><td>Difficulty parity (σ Flesch)</td><td>≤ 8.0</td><td>Assessment office</td></tr>
+              </tbody>
+            </table>
+            <p class="text-muted" style="font-size:12px;margin:12px 0 0">Thresholds are pre-registered per the benchmark protocol and versioned; changing one does not retroactively re-clear released sets.</p>
+          </div>
+          <div class="blueprint" style="padding:20px 22px"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+            <h6 style="margin:0 0 12px">Audit trail</h6>
+            <div style="display:flex;flex-direction:column;gap:13px;font-size:13px;line-height:1.5">
+              <div><div>ENC 1102 set blocked automatically — two checks failed</div><div class="text-muted" style="font-size:11.5px">3 Sep, 14:02 · system</div></div>
+              <div><div>CIS 3320 released over difficulty threshold. Reason: "formative, low stakes, copy-resistance prioritised"</div><div class="text-muted" style="font-size:11.5px">2 Sep, 09:41 · M. Okafor</div></div>
+              <div><div>Difficulty parity threshold tightened 10.0 → 8.0</div><div class="text-muted" style="font-size:11.5px">28 Aug, 16:15 · Assessment office</div></div>
+              <div><div>Llama 3.2 3B removed from selectable generators</div><div class="text-muted" style="font-size:11.5px">21 Aug, 11:03 · Assessment office</div></div>
+              <div><div>Student appeal opened on DAT 4100 v-19</div><div class="text-muted" style="font-size:11.5px">4 Sep, 08:20 · T. Gordon</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const PAGES = {
+  start:    ['Orientation', 'Getting started'],
+  notes:    ['Orientation', 'Design notes and assumptions'],
+  import:   ['Instructor · step 0 of 5', 'Load an assessment you already have'],
+  blueprint:['Instructor · step 1 of 5', 'Assessment blueprint'],
+  generate: ['Instructor · step 2 of 5', 'Generate student versions'],
+  report:   ['Instructor · step 3 of 5', 'Integrity report — Model card audit'],
+  roster:   ['Instructor · step 4 of 5', 'Release and roster'],
+  grade:    ['Instructor · step 5 of 5', 'Grade with the rubric'],
+  surface:  ['Oversight', 'Strategy trade-off surface'],
+  console:  ['Oversight', 'Institution compliance console'],
+};
+
+const STUDENTS = {
+  A: ['v-04', 'Alvarez, R.', 'Lending · risk officer · reading ease 52.1'],
+  B: ['v-07', 'Bhatt, N.', 'Hiring · HR director · reading ease 49.8'],
+  C: ['v-11', 'Chen, W.', 'Healthcare · clinical lead · reading ease 51.4'],
+  D: ['v-12', 'Duarte, S.', 'Logistics · ops manager · reading ease 38.6'],
+  E: ['v-15', 'Ferreira, M.', 'Lending · compliance · reading ease 53.0'],
+  F: ['v-19', 'Gordon, T.', 'Healthcare · procurement · reading ease 36.9'],
+  G: ['v-22', 'Hassan, L.', 'Hiring · legal counsel · reading ease 50.2'],
+  H: ['v-27', 'Ivanov, D.', 'Logistics · safety lead · reading ease 37.4'],
+};
+
+class Component extends DCLogic {
+  state = { page: 'start', student: 'B' };
+
+  go(page) { return () => this.setState({ page }); }
+  pick(k) { return () => this.setState({ student: k, page: 'grade' }); }
+
+  renderVals() {
+    const p = this.state.page;
+    const meta = PAGES[p] || PAGES.notes;
+    const s = STUDENTS[this.state.student] || STUDENTS.B;
+    const vals = {
+      crumb: meta[0], pageTitle: meta[1],
+      gradeVariant: s[0], gradeStudent: s[1], gradeSurface: s[2],
+    };
+    for (const key of Object.keys(PAGES)) {
+      vals['is' + key[0].toUpperCase() + key.slice(1)] = p === key;
+      vals['nav' + key[0].toUpperCase() + key.slice(1)] = p === key ? 'page' : 'false';
+      vals['go' + key[0].toUpperCase() + key.slice(1)] = this.go(key);
+    }
+    for (const key of Object.keys(STUDENTS)) vals['pick' + key] = this.pick(key);
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

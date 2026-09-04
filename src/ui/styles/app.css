@@ -1,0 +1,265 @@
+/* VARIA app layer — sits on top of tokens.css (the verbatim Industry design
+   system). The va-* helper classes are ported from the mockup's <helmet>
+   block with the same names so pages can copy mockup markup directly. */
+
+html, body { margin: 0; }
+body { background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); }
+#root { min-height: 100vh; }
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+.va-app {
+  display: flex;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+.va-rail {
+  width: 234px;
+  flex: none;
+  background: var(--color-accent-900);
+  padding: 0 0 32px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.va-rail-brand {
+  padding: 18px 16px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.va-rail-logo {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px dashed rgba(255, 255, 255, 0.28);
+  padding: 8px;
+  margin-bottom: 14px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7f95ac;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: var(--font-heading);
+}
+.va-rail-word {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: #fff;
+  line-height: 1;
+}
+.va-rail-sub {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7f95ac;
+  margin-top: 5px;
+}
+.va-rail-foot {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.va-rail-foot-k { font-size: 11px; color: #7f95ac; }
+.va-rail-foot-name { font-size: 13px; color: #fff; margin-top: 2px; }
+
+.va-nav {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  color: #b7c6d6;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 1.3;
+  padding: 8px 14px 8px 16px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.va-nav:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+.va-nav[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-left-color: var(--color-accent-400);
+}
+.va-nav:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: -2px; }
+.va-railhd {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #6d8299;
+  padding: 0 16px;
+  margin: 22px 0 7px;
+}
+
+.va-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.va-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--color-divider);
+}
+.va-header-left { min-width: 0; }
+.va-header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.va-header h4 { margin: 1px 0 0; }
+.va-crumb {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+.va-content { flex: 1; padding: 28px 32px 56px; }
+a.tag { text-decoration: none; }
+
+/* ── Mockup helpers (verbatim names) ───────────────────────────────────── */
+.va-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: var(--font-heading);
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+.va-pass { color: #3d6b4d; }
+.va-fail { color: #8d4a3c; }
+.va-watch { color: #8a6d2f; }
+.va-row:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); cursor: pointer; }
+.va-sel { background: var(--color-accent-100) !important; }
+.va-ax { stroke: var(--color-divider); stroke-width: 1; }
+.va-split { display: grid; gap: 24px; align-items: start; }
+@media (max-width: 1140px) { .va-split { grid-template-columns: minmax(0, 1fr) !important; } }
+.va-help {
+  border-bottom: 1px dotted color-mix(in srgb, var(--color-text) 45%, transparent);
+  cursor: help;
+}
+
+/* ── Recurring inline styles from the mockup ───────────────────────────── */
+.va-kicker {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.va-kicker-11 {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.va-stat-number { font-family: var(--font-heading); font-size: 34px; line-height: 1.1; }
+.va-big-number { font-family: var(--font-heading); font-size: 76px; line-height: 1; color: var(--color-accent-700); }
+.va-step-number { font-family: var(--font-heading); font-size: 30px; color: var(--color-accent); line-height: 1; }
+.va-muted-12 { font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.va-muted-125 { font-size: 12.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.va-muted-115 { font-size: 11.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.va-muted-11 { font-size: 11px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.va-heading-15 { font-family: var(--font-heading); font-size: 15px; }
+.va-heading-16 { font-family: var(--font-heading); font-size: 16px; }
+.va-heading-19 { font-family: var(--font-heading); font-size: 19px; }
+.va-heading-22 { font-family: var(--font-heading); font-size: 22px; }
+.va-surface-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  padding: 16px 18px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.va-surface-box p:last-child { margin-bottom: 0; }
+.va-clip { position: relative; overflow: hidden; }
+.va-fade {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 52px;
+  background: linear-gradient(to top, var(--color-surface), transparent);
+  pointer-events: none;
+}
+.va-fade-bg { background: linear-gradient(to top, var(--color-bg), transparent); height: 70px; }
+.va-quote {
+  border-left: 2px solid var(--color-accent);
+  padding: 9px 14px;
+  background: var(--color-accent-100);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.va-stack { display: flex; flex-direction: column; }
+.va-row-flex { display: flex; align-items: baseline; gap: 10px; }
+.va-check { display: flex; gap: 8px; font-size: 13.5px; }
+.va-check-ok { color: #3d6b4d; }
+.va-check-warn { color: #8a6d2f; }
+.va-check-bad { color: #8d4a3c; }
+.va-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+@media (max-width: 1140px) { .va-tiles { grid-template-columns: repeat(2, 1fr); } }
+.va-two { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+@media (max-width: 1140px) { .va-two { grid-template-columns: 1fr; } }
+.va-page { max-width: 1180px; display: flex; flex-direction: column; gap: 24px; }
+.va-page-narrow { max-width: 1080px; }
+.va-sticky { display: flex; flex-direction: column; gap: 18px; position: sticky; top: 20px; }
+.va-dark {
+  background: var(--color-accent-900);
+  color: #fff;
+}
+.va-dark h3 { color: #fff; }
+.va-dark p { color: #d5e0ea; }
+.va-dark .va-kicker { color: #8fa8bf; }
+.va-btn-onDark { border-color: rgba(255, 255, 255, 0.4); color: #fff; }
+.va-btn-onDark:hover { background: rgba(255, 255, 255, 0.1); }
+.va-textarea { min-height: 72px; resize: vertical; font-family: var(--font-body); }
+
+/* ── Check bar (report) ────────────────────────────────────────────────── */
+.va-checkbar { position: relative; height: 10px; background: var(--color-neutral-200); border: 1px solid var(--color-divider); }
+.va-checkbar-fill { position: absolute; inset: 0 auto 0 0; background: var(--color-accent); }
+.va-checkbar-fill.is-fail { background: #8d4a3c; }
+.va-checkbar-fill.is-advisory { background: repeating-linear-gradient(90deg, var(--color-accent-400) 0 6px, transparent 6px 10px); }
+.va-checkbar-tick { position: absolute; top: -4px; bottom: -4px; width: 1px; background: var(--color-text); }
+.va-check-note { font-size: 11.5px; margin-top: 4px; }
+.va-check-note.is-fail { color: #8d4a3c; }
+
+/* ── Progress ──────────────────────────────────────────────────────────── */
+.va-progress { position: relative; height: 6px; background: var(--color-neutral-200); border: 1px solid var(--color-divider); }
+.va-progress-fill { position: absolute; inset: 0 auto 0 0; background: var(--color-accent); transition: width 240ms ease; }
+
+/* ── File drop ─────────────────────────────────────────────────────────── */
+.va-drop { padding: 34px 22px; text-align: center; background: var(--color-accent-100); }
+.va-drop.is-over { background: var(--color-accent-200); }
+.va-drop-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+/* ── Dialog ────────────────────────────────────────────────────────────── */
+.va-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--color-accent-900) 55%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+}
+.va-dialog {
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  box-shadow: var(--shadow-lg);
+  padding: 22px 24px;
+  width: min(520px, 100%);
+}
+.va-dialog .dialog-title { font-family: var(--font-heading); font-size: 19px; margin: 0 0 8px; }
+.va-dialog .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+/* ── Misc ──────────────────────────────────────────────────────────────── */
+.va-btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.va-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag.is-toggle { cursor: pointer; }
+.tag.is-toggle:hover { filter: brightness(0.96); }
+.va-key-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.02em; }
+code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
