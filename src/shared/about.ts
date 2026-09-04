@@ -113,3 +113,30 @@ export const GAPS = {
     "Live generation at class scale has been tested in demo mode only.",
   ],
 };
+
+/** People to acknowledge by name. Shown on the About page. */
+export const PEOPLE = {
+  heading: "Project team",
+  groups: [
+    {
+      name: "Miami Dade College participants",
+      members: [
+        { name: "Madeline Pumariega" },
+        { name: "Antonio Delgado" },
+        { name: "Ernesto Lee", note: "Lead faculty" },
+        { name: "Amy Crowley-Gonsoulin" },
+        { name: "Mariah Schuemann" },
+        { name: "Nadia Berbick" },
+      ],
+    },
+    {
+      name: "External project team",
+      members: [
+        { name: "Dipika Mouli", note: "Common Group" },
+        { name: "Elizabeth Gordon", note: "Axim Collaborative" },
+        { name: "Scott Durand", note: "Axim Collaborative" },
+        { name: "Grace Gardner", note: "Common Group" },
+      ],
+    },
+  ],
+};

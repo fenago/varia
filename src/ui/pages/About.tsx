@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Blueprint, Corners } from "@ui/components";
-import { ACKNOWLEDGEMENTS, APP_SUMMARY, CITATION, FIT, GAPS, GRANT, PAPER } from "@shared/about";
+import { ACKNOWLEDGEMENTS, APP_SUMMARY, CITATION, FIT, GAPS, GRANT, PAPER, PEOPLE } from "@shared/about";
 
 export default function About() {
   const [copied, setCopied] = useState(false);
@@ -119,6 +119,25 @@ export default function About() {
             ))}
           </tbody>
         </table>
+      </Blueprint>
+
+      <Blueprint style={{ padding: "22px 24px" }}>
+        <h6 style={{ margin: "0 0 14px" }}>{PEOPLE.heading}</h6>
+        <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 24, alignItems: "start" }}>
+          {PEOPLE.groups.map((g) => (
+            <div key={g.name}>
+              <div className="va-kicker" style={{ marginBottom: 8 }}>{g.name}</div>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6, fontSize: 14 }}>
+                {g.members.map((m) => (
+                  <li key={m.name}>
+                    {m.name}
+                    {m.note ? <span className="text-muted" style={{ fontSize: 12.5 }}> · {m.note}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </Blueprint>
 
       <Blueprint style={{ padding: "20px 22px" }}>
