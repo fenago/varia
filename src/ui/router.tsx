@@ -3,6 +3,7 @@ import { Layout } from "./shell/Layout";
 import { ReviewLayout } from "./shell/ReviewLayout";
 import { PageTitleProvider } from "./shell/PageTitleContext";
 import Start from "./pages/Start";
+import Home from "./pages/Home";
 import Notes from "./pages/Notes";
 import About from "./pages/About";
 import Import from "./pages/Import";
@@ -24,6 +25,7 @@ import Portfolio from "./pages/Portfolio";
 import Talent from "./pages/Talent";
 
 export type PageKey =
+  | "home"
   | "start"
   | "notes"
   | "about"
@@ -47,7 +49,8 @@ export type PageKey =
 
 /** Crumb + title per page, copied from the mockup's PAGES map. */
 export const PAGES: Record<PageKey, { crumb: string; title: string; path: string }> = {
-  start: { crumb: "Orientation", title: "Getting started", path: "/" },
+  home: { crumb: "VARIA", title: "Proof an employer can verify", path: "/" },
+  start: { crumb: "Orientation", title: "Getting started", path: "/start" },
   notes: { crumb: "Orientation", title: "Design notes and assumptions", path: "/notes" },
   about: { crumb: "Orientation", title: "About VARIA", path: "/about" },
   import: { crumb: "Instructor · step 0 of 5", title: "Load an assessment you already have", path: "/import" },
@@ -71,10 +74,11 @@ export const PAGES: Record<PageKey, { crumb: string; title: string; path: string
 
 /** Resolve the page key for a pathname (so /grade/v-07 → "grade", /review/b1 → "review"). */
 export function pageKeyForPath(pathname: string): PageKey {
-  if (pathname === "/") return "start";
+  if (pathname === "/") return "home";
+  if (pathname === "/start" || pathname.startsWith("/start/")) return "start";
   const seg = "/" + pathname.split("/").filter(Boolean)[0];
   const hit = (Object.keys(PAGES) as PageKey[]).find((k) => PAGES[k].path === seg);
-  return hit ?? "start";
+  return hit ?? "home";
 }
 
 export function App() {
@@ -82,7 +86,8 @@ export function App() {
     <PageTitleProvider>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<Start />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/start" element={<Start />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/about" element={<About />} />
           <Route path="/import" element={<Import />} />
@@ -98,7 +103,7 @@ export function App() {
           <Route path="/employer" element={<Employer />} />
           <Route path="/for" element={<For />} />
           <Route path="/for/:audience" element={<For />} />
-          <Route path="*" element={<Start />} />
+          <Route path="*" element={<Home />} />
         </Route>
         <Route element={<ReviewLayout />}>
           <Route path="/review" element={<Review />} />

@@ -50,7 +50,8 @@ async function snapshotText(tag) {
 async function shot(name) { await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true }); }
 
 const ROUTES = {
-  "/": ["Orientation", "Getting started"],
+  "/": ["VARIA", "Proof an employer can verify"],
+  "/start": ["Orientation", "Getting started"],
   "/notes": ["Orientation", "Design notes and assumptions"],
   "/about": ["Orientation", "About VARIA"],
   "/import": ["Instructor · step 0 of 5", "Load an assessment you already have"],
@@ -73,7 +74,7 @@ for (const [path, [crumb, title]] of Object.entries(ROUTES)) {
     assert(header.toLowerCase().includes(crumb.toLowerCase()), `crumb missing: ${header}`);
     assert(header.includes(title), `title missing: ${header}`);
     assert(await page.locator("aside, .va-rail").count() > 0, "rail missing");
-    await shot(path === "/" ? "start" : path.slice(1).replace(/\//g, "_"));
+    await shot(path === "/" ? "home" : path.slice(1).replace(/\//g, "_"));
   });
 }
 await check("deep-link hard reload on /roster", async () => {
@@ -98,7 +99,7 @@ await check("rail sections and labels", async () => {
   await go("/notes");
   const rail = await page.locator("aside, .va-rail").first().innerText();
   for (const s of ["Orientation", "Instructor", "Oversight", "Setup"]) assert(rail.toLowerCase().includes(s.toLowerCase()), `section ${s}`);
-  for (const l of ["Getting started", "Who it's for", "Design notes", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "API key & models"]) assert(rail.includes(l), `label ${l}`);
+  for (const l of ["Home", "Getting started", "Who it's for", "Design notes", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "API key & models"]) assert(rail.includes(l), `label ${l}`);
   const current = await page.locator('[aria-current="page"]').innerText();
   assert(current.includes("Design notes"), `aria-current is ${current}`);
 });
@@ -652,10 +653,31 @@ await check("/for overview and the four audience pages", async () => {
   }
   await go("/for/unknown");
   assert(/\/for\/?$/.test(page.url()), `unknown audience url ${page.url()}`);
-  await go("/");
+  await go("/start");
   const st = await page.locator("body").innerText();
   const stl = st.toLowerCase(); const i1 = stl.indexOf("who this is for"), i2 = stl.indexOf("the whole thing, in five steps");
   assert(i1 > 0 && i2 > i1, `start strip order ${i1} ${i2}`);
+});
+
+console.log("\n27b. Home page demonstrates value");
+await check("home: north star, six live path panels, bottom line, four shift columns, trust", async () => {
+  await go("/");
+  const t = (await page.locator("body").innerText()).toLowerCase();
+  assert(t.includes("every student does real work on an employer's problem"), "north star line");
+  assert(t.includes("one student's path, with the real records"), "path heading");
+  for (const k of ["brings a real problem", "gets a version that is theirs", "releases a set that measured fair", "grades the work", "verifies and endorses it", "gets the interview, then the offer"]) assert(t.includes(k), `path step ${k}`);
+  assert(t.includes("bayfront regional bank"), "live challenge organisation");
+  assert(t.includes("10 / 12"), "live grade");
+  assert(t.includes("leave with proof, not a promise."), "students bottom line");
+  assert(t.includes("hire from work, not transcripts."), "employers bottom line");
+  for (const k of ["students", "instructors", "institutions", "employers"]) assert(t.includes(`for ${k} →`), `shift link ${k}`);
+  assert(t.includes("why an employer can trust it"), "trust block");
+  await page.getByRole("link", { name: /the work sample/i }).first().click();
+  await page.waitForURL("**/evidence/v-04");
+  await go("/");
+  await page.getByRole("button", { name: /how to run it/i }).click();
+  await page.waitForURL("**/start");
+  await shot("home");
 });
 
 console.log("\n28. Employer funnel and challenges");
