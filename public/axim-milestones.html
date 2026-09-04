@@ -137,7 +137,7 @@
     <div>
       <div class="kicker">Axim Collaborative · Dynamic Assessments in the Age of AI · Miami Dade College</div>
       <h1>VARIA on the partner journey: what to say at each milestone</h1>
-      <p>Talking points for the September 2026 partner discussion and the learning sessions that follow. VARIA is the working prototype behind the paper: one blueprint in, one equivalent version per student out, released only when four integrity checks pass.</p>
+      <p>Talking points for the September 2026 partner discussion and the learning sessions that follow. VARIA is the working product behind the paper: one employer problem becomes a different version for every student, four measured checks gate the release, and every graded task becomes a signed work sample the student controls and an employer can verify, endorse, and hire from.</p>
     </div>
     <div class="dates">
       <div class="date"><div class="when">Mon 14 Sep · EOD</div><div class="what">Assessment Concept Intake form due</div></div>
@@ -149,13 +149,14 @@
     <section class="bp card">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <h2>How VARIA fits</h2>
-      <p class="lede">VARIA is not just one more authentic assessment. It is the trust layer the cohort's own framing requires and nobody else in the cohort is likely to bring.</p>
+      <p class="lede">VARIA is not just one more authentic assessment. It is the trust layer the cohort's own framing requires and nobody else in the cohort is likely to bring, and it now runs all the way to a hire.</p>
       <div class="points">
         <div class="point"><b>Application over recall.</b><span>Every VARIA blueprint is a performance task with an analytic rubric. There is no recall item type in the system.</span></div>
         <div class="point"><b>How over what.</b><span>Rubric criteria score process (evidence, prioritisation, reasoning under shift), and each student's adapted model answer lets faculty grade the reasoning path, not a fixed key.</span></div>
-        <div class="point"><b>Employer-valued.</b><span>The surface dimensions (domain, stakeholder, scenario) are exactly where employer partners plug in. An employer contributes real scenarios and stakeholder roles, and every student gets a workplace-shaped task.</span></div>
-        <div class="point"><b>Evidence all parties can trust.</b><span>The four integrity checks and the compliance console are the mechanism. If assessments become personalised and AI-generated, every partner will be asked "how do you know two students got an equivalent task?" VARIA is the only answer in the room with a benchmark behind it.</span></div>
-        <div class="point"><b>Portable signal.</b><span>A released variant set plus its integrity report is a defensible artifact: the task, the rubric, the score, and the equivalence evidence travel together.</span></div>
+        <div class="point"><b>Employer-valued.</b><span>Employer partners contribute real problem briefs. One brief becomes a different version per student, so every student does a slice of that employer's work.</span></div>
+        <div class="point"><b>Evidence all parties can trust.</b><span>Four integrity checks gate every release and the compliance console records why each set went out. When assessments are personalised and AI-generated, every partner will be asked "how do you know two students got an equivalent task?" VARIA is the only answer in the room with a benchmark behind it.</span></div>
+        <div class="point"><b>Portable signal.</b><span>A graded task becomes a signed work sample: the task, the rubric result, the skills, the integrity proof and the employer's validation, exported as an Open Badges 3.0 credential with a verify link.</span></div>
+        <div class="point"><b>Challenge → version → work sample → portfolio → talent view → outcome.</b><span>Students choose which employers see which samples. Employers read the work, endorse it against their own bar, and log interviews, offers, hires and ramp time where they happen.</span></div>
       </div>
     </section>
 
@@ -163,22 +164,40 @@
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <h2>Honest gaps to name before someone else does</h2>
       <ul class="plain">
-        <li>No employer-facing role or validation workflow yet. Employer validation happens outside the tool today.</li>
-        <li>No learner-facing delivery. Students receive tasks through Canvas, not VARIA. Canvas integration is a disabled button.</li>
+        <li>Records live in one browser until a student shares them. Institution-wide numbers need a durable, college-held record store. That decision is open.</li>
+        <li>Work samples are signed with a demonstration key. Production needs a college-held key and a public verify endpoint.</li>
+        <li>Students and employer reviewers are not authenticated. Reviewer identity is a work email; the student share page stands in for a student login.</li>
+        <li>No learner-facing delivery inside the LMS. Students receive tasks through Canvas; Canvas integration is still a disabled button.</li>
         <li>Rubric stability (P3) is a proxy. The full protocol is pre-registered, not built.</li>
-        <li>Outcomes instrumentation (engagement, time on task, persistence) is not collected by the app.</li>
         <li>Live generation at class scale has been tested in demo mode only.</li>
       </ul>
-      <h2 style="margin-top:18px">Outcomes the app produces natively</h2>
+      <h2 style="margin-top:18px">What the app now measures natively</h2>
       <ul class="plain">
-        <li>Rubric scores by criterion and score spread by version (student mastery).</li>
-        <li>Integrity report per set and audit trail (institution, employer trust).</li>
-        <li>Difficulty appeals count: zero on a released set is a headline.</li>
-        <li>Blueprints as portable JSON: the "shared assets adopted by 15+ institutions" path.</li>
+        <li>Rubric scores by criterion, score spread by version, difficulty appeals (student mastery and fairness).</li>
+        <li>Integrity report per set, thresholds, audit trail (institution).</li>
+        <li>Blueprints validated by employers, partners adopting evidence records, adoption observed through verification events, and the five-question employer satisfaction survey (the three required employer rows).</li>
+        <li>Endorsements, interviews, offers, hires and hours-to-productive, logged against the record (the optional employer rows, collected where they happen).</li>
+        <li>Skills per work sample, mapped from rubric criteria to employer and O*NET-style tags; portfolios per learner ID.</li>
       </ul>
     </section>
   </div>
 
+  <section class="bp card">
+    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
+    <h2>Employer outcomes, as the app measures them</h2>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>Required outcome (Axim)</th><th>Metric in VARIA</th><th>Where it is computed</th><th>Demo cohort today</th></tr></thead>
+      <tbody>
+        <tr><td>Assessments are validated by employer partners · goal 75%</td><td>Validated blueprints ÷ blueprints. Validation happens once at the blueprint; every version inherits it.</td><td>Employer validation page, compliance console</td><td>2 of 3 · 67%</td></tr>
+        <tr><td>Employers adopt portable skill indicators · goal 50%</td><td>Partners that accept evidence records (declared), and partners that verified a record (observed).</td><td>Employer validation page</td><td>1 of 3 declared · 1 of 3 observed</td></tr>
+        <tr><td>Employers are satisfied with assessment outcomes</td><td>Mean of the five-question survey each reviewer completes at sign-off.</td><td>Employer validation page, compliance console</td><td>4.3 / 5 from 2 reviews</td></tr>
+        <tr><td>Graduates ramp faster · optional</td><td>Hours-to-productive reported by the employer when logging a "ramped" outcome.</td><td>Talent view, compliance console</td><td>logged per hire</td></tr>
+        <tr><td>Placement, promotion, salary · optional</td><td>Interview, offer, hire and promotion events on the record. Salary is not collected; the learner ID is the join key for institutional research.</td><td>Talent view, portfolio, console</td><td>1 interviewed · 1 offered</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
 
   <section class="bp card">
     <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
@@ -192,36 +211,36 @@
           <td class="when">Sep 2026</td>
           <td class="due"><span class="tag">Due</span><br>Finalise assessment concepts; begin prototype design and development</td>
           <td class="talk"><ul>
-            <li>We are ahead of the milestone: the prototype exists, is deployed, and every screen works today.</li>
-            <li>Concept: DAT 4100 with three blueprints (model card audit, stakeholder memo, ethical risk analysis). Open-response performance tasks with per-student variation.</li>
-            <li>Design rationale is published research, not a hunch: cite the preprint and the 30 to 38 point frontier gap.</li>
-            <li>Framework link: mastery (student), shared rubric (faculty), shared assets (institution), employer-validated scenarios (employer).</li>
+            <li>We are ahead of the milestone: the prototype is deployed, and it already covers instructor, institution, employer and student roles end to end.</li>
+            <li>Concept: DAT 4100 with three blueprints (model card audit, stakeholder memo, ethical risk analysis). Open-response performance tasks with per-student variation drawn from employer problem briefs.</li>
+            <li>Design rationale is published research: cite the preprint and the 30 to 38 point frontier gap.</li>
+            <li>Framework link: mastery (student), shared rubric (faculty), shared assets (institution), validated blueprints, adoption, satisfaction and hires (employer).</li>
           </ul></td>
         </tr>
         <tr>
           <td class="when">Oct 2026</td>
           <td class="due"><span class="tag">Due</span><br>Finalise employer validation approach</td>
           <td class="talk"><ul>
-            <li>Employers validate the surface dimensions and the rubric, not each variant. They supply scenarios, stakeholder roles and complaint triggers, and sign off that the rubric reflects what they hire for.</li>
-            <li>Offer a one-page employer validation checkpoint export: construct, rubric, scenario bank.</li>
-            <li>Ask whether the cohort has a shared employer sign-off form so MDC does not invent one.</li>
+            <li>The approach is built, not proposed: an employer contributes a problem brief, then validates the rubric and scenario bank once through a self-contained review link, signs off with a work email, and answers the five-question survey. Every version inherits the validation.</li>
+            <li>Show the review page live; it needs no account and stores nothing anywhere but the reviewer's browser until they send the result back.</li>
+            <li>Ask whether the cohort wants a shared sign-off form; ours can be exported as JSON if so.</li>
           </ul></td>
         </tr>
         <tr>
           <td class="when">Nov 2026</td>
           <td class="due"><span class="tag">Due</span><br>Conduct employer validation checkpoint</td>
           <td class="talk"><ul>
-            <li>Run one employer session on the demo run: three versions side by side, "would you accept any of these as a work sample?"</li>
-            <li>Capture their edits as new surface dimension values. That is the validation loop made concrete.</li>
+            <li>Run one partner through the real flow: contribute a challenge, review three sample versions, edit the scenario bank, sign off, complete the survey. The validated percentage and satisfaction score come out of the console the same day.</li>
+            <li>Then hand the same partner the talent view with one shared work sample and ask them to endorse it. That is the first observed-adoption event.</li>
           </ul></td>
         </tr>
         <tr>
           <td class="when">Dec 2026</td>
           <td class="due">Finalise v1 prototype with technical integration documentation and one employer checkpoint output</td>
           <td class="talk"><ul>
-            <li>Integration is a strength: static site, no server, no institutional data leaves the browser, faculty bring their own key. Nothing for MDC IT to host.</li>
-            <li>Documentation to submit: architecture spec, deployment README, integrity report CSV as the data artifact format.</li>
-            <li>Name the Canvas gap and the plan: per-student assignment export in December; LTI or Canvas API in the pilot cycle if the cohort wants it.</li>
+            <li>Integration is a strength: static site, no server, no institutional data on any server, faculty bring their own AI key. Nothing for MDC IT to host.</li>
+            <li>Artifacts to submit: the architecture spec, the deployment README, an integrity report CSV, a validation record, and an Open Badges 3.0 credential with its verify link.</li>
+            <li>Decide the two structural items before pilot: a durable record store for partners, validations and evidence records, and a college-held signing key. Name the Canvas gap and the plan: per-student export in December, LTI or Canvas API in the pilot cycle if the cohort wants it.</li>
           </ul></td>
         </tr>
         <tr class="phase"><td colspan="3">Q1–Q2 2027 · Pre-pilot, pilot, evaluation</td></tr>
@@ -229,17 +248,17 @@
           <td class="when">Jan 2027</td>
           <td class="due">Pre-pilot feedback session: soft launch, faculty demo or employer demo</td>
           <td class="talk"><ul>
-            <li>Offer to be the cohort's faculty demo. The demo run needs no key and no setup.</li>
-            <li>Ask peers to try Import with their own assignment sheet: the fastest way to surface extraction failures.</li>
+            <li>Offer to be the cohort's demo. The demo workspace needs no key: one student's path from an employer challenge to an offer is on the home page, with every panel clickable.</li>
+            <li>Ask peers to try Import with their own assignment sheet, and to send a review link to one of their own employer contacts.</li>
           </ul></td>
         </tr>
         <tr>
           <td class="when">Feb 2027</td>
           <td class="due">Finalise prototype: onboard faculty, configure courses, complete QA</td>
           <td class="talk"><ul>
-            <li>Onboarding is the five-step Getting started page. Target: a colleague goes from upload to released set in under 20 minutes without training.</li>
-            <li>QA gate: live generation on all three blueprints with real keys and a real roster; every set clears P1, P2, P4.</li>
-            <li>Set the threshold profile with the assessment office and record it on the compliance console before pilot.</li>
+            <li>Onboarding is the Getting started page. Target: a colleague goes from upload to released set in under twenty minutes without training.</li>
+            <li>QA gate: live generation on all three blueprints with real keys and a real roster; every set clears P1, P2, P4; two partners validated; records signed with the college key if it exists by then.</li>
+            <li>Record the threshold profile on the compliance console before pilot.</li>
           </ul></td>
         </tr>
         <tr>
@@ -247,24 +266,23 @@
           <td class="due"><span class="tag">Due</span><br>Begin pilot</td>
           <td class="talk"><ul>
             <li>Two sections, one receiving variants and one the fixed task, same rubric. That yields the persistence-correlation and mastery comparisons the framework asks for.</li>
-            <li>Record the baseline: prior-term scores on the same assignment.</li>
+            <li>Students in the variant section get a portfolio and choose whether to share with the partner employers. Record the baseline: prior-term scores on the same assignment.</li>
           </ul></td>
         </tr>
         <tr>
           <td class="when">Apr 2027</td>
           <td class="due">Continue pilot; at least one student and one employer validation checkpoint</td>
           <td class="talk"><ul>
-            <li>Student checkpoint: the "not a test" rate and self-efficacy items, plus two questions on perceived fairness of their version, VARIA's specific claim.</li>
-            <li>Employer checkpoint: review a stratified sample of graded submissions across versions.</li>
-            <li>Appeals are a built-in metric. Zero difficulty appeals on a released set is a headline.</li>
+            <li>Student checkpoint: the "not a test" rate, self-efficacy, and two questions on perceived fairness of their version. Difficulty appeals are a built-in metric; zero on a released set is a headline.</li>
+            <li>Employer checkpoint: partners endorse a stratified sample of shared work in the talent view and log any interviews. Endorsement rate and observed adoption come out of the console.</li>
           </ul></td>
         </tr>
         <tr>
           <td class="when">May 2027</td>
           <td class="due">Close pilot; collect data; begin evaluating student outcomes</td>
           <td class="talk"><ul>
-            <li>Native data: rubric scores by criterion, score spread by version, reading ease per version, integrity reports, audit trail.</li>
-            <li>Collected outside: engagement, time on task, persistence, satisfaction.</li>
+            <li>Native data: rubric scores by criterion and version, integrity reports, validation records, satisfaction, endorsements, outcome events, verification events, audit trail.</li>
+            <li>Collected outside: engagement, time on task, persistence, satisfaction with the course.</li>
             <li>The paper's pre-registered follow-up (rubric stability, copy resistance) can be the evaluation design, turning the pilot into a publishable second study.</li>
           </ul></td>
         </tr>
@@ -272,7 +290,7 @@
           <td class="when">Jun 2027</td>
           <td class="due"><span class="tag">Due</span><br>Submit all final artifacts from validation loops, outcomes and evaluations</td>
           <td class="talk"><ul>
-            <li>Artifacts: blueprints, released variant sets, integrity reports, rubric, employer validation records, evaluation write-up, and the app itself as an open asset.</li>
+            <li>Artifacts: blueprints, released variant sets, integrity reports, employer validation records, Open Badges credentials, the outcome log keyed by learner ID, the evaluation write-up, and the app itself as an open asset.</li>
           </ul></td>
         </tr>
         <tr class="phase"><td colspan="3">Q3 2027 · Blueprint feedback, scale and sustain</td></tr>
@@ -280,14 +298,14 @@
           <td class="when">Jul 2027</td>
           <td class="due">Provide feedback on the v1 blueprint</td>
           <td class="talk"><ul>
-            <li>Propose that the cohort's shared rubric (faculty practice outcome, validated across 3+ institutions) be authored as a VARIA blueprint so validation and variation share one format.</li>
+            <li>Propose that the cohort's shared rubric (faculty practice outcome, validated across 3+ institutions) be authored as a VARIA blueprint, so validation, variation and evidence records share one format.</li>
           </ul></td>
         </tr>
         <tr>
           <td class="when">Aug–Sep 2027</td>
           <td class="due">Share the final blueprint; support conversations to extend and scale</td>
           <td class="talk"><ul>
-            <li>Scale story: a static site any institution deploys in minutes, and blueprints are portable JSON. That is the "15+ institutions using shared assets" metric with a concrete path.</li>
+            <li>Scale story: a static site any institution deploys in minutes, blueprints as portable files, and evidence records as Open Badges 3.0 credentials that travel with the learner. That is the "15+ institutions using shared assets" metric with a concrete path.</li>
           </ul></td>
         </tr>
       </tbody>
@@ -301,17 +319,17 @@
       <h2>Intake form answers to draft now</h2>
       <dl>
         <dt>Learners in pilot</dt><dd>A number per section, conservative. Two or three DAT 4100 sections is roughly 70 to 100 learners for the first pilot; the three blueprints reuse across other courses.</dd>
-        <dt>Employers and industry data</dt><dd>Name the partners already tied to the course. Their input lands in the scenario bank (domain, stakeholder, scenario, complaint trigger).</dd>
-        <dt>Technical constraints</dt><dd>None on hosting. Constraints are API cost per run, faculty holding their own keys, and no LMS integration yet.</dd>
-        <dt>Unresolved, needs support</dt><dd>Canvas delivery of per-student tasks; institutional guidance on AI API use with student-identifying rosters.</dd>
-        <dt>Biggest risk to a March 2027 live pilot</dt><dd>Getting personalised tasks into students' hands inside the LMS with grades flowing back. Mitigation: a December decision between manual per-student export and an LTI build, and IT sign-off secured by January.</dd>
+        <dt>Employers and industry data</dt><dd>Name the partners already tied to the course. Each contributes one problem brief that feeds the scenario bank, validates one rubric, and gets a talent view of the students who share their work.</dd>
+        <dt>Technical constraints</dt><dd>None on hosting. Constraints are API cost per run, faculty holding their own AI keys, records living in the browser until a record store is chosen, and no LMS integration yet.</dd>
+        <dt>Unresolved, needs support</dt><dd>Canvas delivery of per-student tasks; a durable, college-held record store; a college signing key for evidence records; institutional guidance on AI API use with student-identifying rosters and on students sharing graded work with employers.</dd>
+        <dt>Biggest risk to a March 2027 live pilot</dt><dd>Getting personalised tasks into students' hands inside the LMS with grades flowing back, and the record store decision. Mitigation: a December decision on both, and IT sign-off secured by January.</dd>
       </dl>
     </section>
 
     <section class="bp ink note">
       <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <h2>One strategic note</h2>
-      <p>The cohort framework assumes AI-enhanced assessments are trustworthy. The paper shows that assumption is conditional, and VARIA is the instrument that makes it checkable. Position MDC's contribution as the cohort's integrity infrastructure, not only its pilot. That is a role no other partner is set up to play, and it maps to three required outcomes at once: shared assets adoption, employer validation, and a shared rubric across institutions.</p>
+      <p>The cohort framework assumes AI-enhanced assessments are trustworthy. The paper shows that assumption is conditional, and VARIA is the instrument that makes it checkable. Position MDC's contribution as the cohort's integrity infrastructure and its employer bridge, not only its pilot: the one place where an employer's problem, a student's verified work, and a hire are connected by a record all parties can check. That maps to three required outcomes at once, shared assets adoption, employer validation, and a shared rubric across institutions, and supplies the join key for every long-horizon row. We supply the join key, not the outcome.</p>
     </section>
   </div>
 
@@ -319,7 +337,8 @@
     <span>Dr. Ernesto Lee · Miami Dade College · lead faculty, AI Assessment Grant</span>
     <a href="https://osf.io/preprints/edarxiv/u6xef_v1" target="_blank" rel="noopener">Paper (EdArXiv)</a>
     <a href="https://github.com/fenago/varia" target="_blank" rel="noopener">Code</a>
-    <span>Source: Axim partner discussion deck, September 2026</span>
+    <a href="/" >The app</a>
+    <span>Source: Axim partner discussion deck, September 2026 · updated after the employer bridge build</span>
   </div>
 
 </div>
