@@ -31,19 +31,17 @@ body { background: var(--color-bg); color: var(--color-text); font-family: var(-
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 .va-rail-logo {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px dashed rgba(255, 255, 255, 0.28);
-  padding: 8px;
   margin-bottom: 14px;
-  height: 68px;
+  height: 52px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: #7f95ac;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-family: var(--font-heading);
+  justify-content: flex-start;
+}
+.va-rail-logo img {
+  display: block;
+  width: 165px;
+  height: 39px;
+  max-width: 100%;
 }
 .va-rail-word {
   font-family: var(--font-heading);

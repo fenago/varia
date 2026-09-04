@@ -44,8 +44,14 @@ export function Rail() {
   return (
     <aside className="va-rail" aria-label="Navigation">
       <div className="va-rail-brand">
-        <div className="va-rail-logo" aria-hidden="true">
-          MDC logo
+        <div className="va-rail-logo">
+          <img
+            src="/mdc-logo.png"
+            alt="Miami Dade College"
+            width={165}
+            height={39}
+            decoding="async"
+          />
         </div>
         <div className="va-rail-word">VARIA</div>
         <div className="va-rail-sub">Assessment Variants</div>
