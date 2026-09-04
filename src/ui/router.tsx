@@ -4,6 +4,7 @@ import { ReviewLayout } from "./shell/ReviewLayout";
 import { PageTitleProvider } from "./shell/PageTitleContext";
 import Start from "./pages/Start";
 import Home from "./pages/Home";
+import Summary from "./pages/Summary";
 import Notes from "./pages/Notes";
 import About from "./pages/About";
 import Import from "./pages/Import";
@@ -26,6 +27,7 @@ import Talent from "./pages/Talent";
 
 export type PageKey =
   | "home"
+  | "summary"
   | "start"
   | "notes"
   | "about"
@@ -49,7 +51,8 @@ export type PageKey =
 
 /** Crumb + title per page, copied from the mockup's PAGES map. */
 export const PAGES: Record<PageKey, { crumb: string; title: string; path: string }> = {
-  home: { crumb: "Orientation", title: "Who VARIA is for", path: "/" },
+  home: { crumb: "Home", title: "Proof an employer can verify", path: "/" },
+  summary: { crumb: "Orientation", title: "Executive summary", path: "/summary" },
   start: { crumb: "Orientation", title: "Getting started", path: "/start" },
   notes: { crumb: "Orientation", title: "Design notes and assumptions", path: "/notes" },
   about: { crumb: "Orientation", title: "About VARIA", path: "/about" },
@@ -88,6 +91,7 @@ export function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/start" element={<Start />} />
+          <Route path="/summary" element={<Summary />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/about" element={<About />} />
           <Route path="/import" element={<Import />} />

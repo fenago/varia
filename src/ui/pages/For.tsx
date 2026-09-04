@@ -7,13 +7,14 @@ const KEYS = new Set<string>(AUDIENCES.map((a) => a.key));
 
 export default function For() {
   const { audience } = useParams<{ audience?: string }>();
-  if (audience && !KEYS.has(audience)) return <Navigate to="/" replace />;
+  if (audience && !KEYS.has(audience)) return <Navigate to="/for" replace />;
   if (audience) return <AudienceDetail a={AUDIENCES.find((x) => x.key === audience)!} />;
-  return <Navigate to="/" replace />;
+  return <Overview />;
 }
 
 function Overview() {
   usePageTitle("Who VARIA is for");
+  const navigate = useNavigate();
   return (
     <div className="va-page va-page-narrow" style={{ gap: 30 }}>
       <Blueprint className="va-dark" style={{ padding: "26px 28px" }}>
@@ -25,6 +26,13 @@ function Overview() {
       <div>
         <h6 style={{ margin: "0 0 14px" }}>One artifact, six steps</h6>
         <PipelineStrip steps={AUDIENCE_OVERVIEW.pipeline} />
+        <Blueprint style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 260 }}>
+            <div className="va-kicker">For administrators</div>
+            <div style={{ fontFamily: "var(--font-heading)", fontSize: 17, marginTop: 4 }}>The executive summary: why now, what VARIA does, what the college gets, the evidence, and what to do this term.</div>
+          </div>
+          <BlueprintButton onClick={() => navigate("/summary")}>Read the executive summary</BlueprintButton>
+        </Blueprint>
       </div>
 
       <div>

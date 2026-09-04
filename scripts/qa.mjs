@@ -50,8 +50,9 @@ async function snapshotText(tag) {
 async function shot(name) { await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true }); }
 
 const ROUTES = {
-  "/": ["Orientation", "Who VARIA is for"],
+  "/": ["Home", "Proof an employer can verify"],
   "/start": ["Orientation", "Getting started"],
+  "/summary": ["Orientation", "Executive summary"],
   "/notes": ["Orientation", "Design notes and assumptions"],
   "/about": ["Orientation", "About VARIA"],
   "/import": ["Instructor · step 0 of 5", "Load an assessment you already have"],
@@ -99,7 +100,7 @@ await check("rail sections and labels", async () => {
   await go("/notes");
   const rail = await page.locator("aside, .va-rail").first().innerText();
   for (const s of ["Orientation", "Instructor", "Oversight", "Setup"]) assert(rail.toLowerCase().includes(s.toLowerCase()), `section ${s}`);
-  for (const l of ["Who it's for", "Getting started", "Design notes", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "API key & models"]) assert(rail.includes(l), `label ${l}`);
+  for (const l of ["Home", "Who it's for", "Getting started", "Design notes", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "API key & models"]) assert(rail.includes(l), `label ${l}`);
   const current = await page.locator('[aria-current="page"]').innerText();
   assert(current.includes("Design notes"), `aria-current is ${current}`);
 });
@@ -634,6 +635,12 @@ await check("/for overview and the four audience pages", async () => {
   const t = await page.locator("body").innerText();
   assert(t.includes("Four people, one artifact"), "hero title");
   for (const s of ["Challenge", "Version", "Work sample", "Portfolio", "Talent view", "Outcome"]) assert(t.includes(s), `pipeline step ${s}`);
+  assert(t.toLowerCase().includes("read the executive summary"), "exec summary link");
+  await page.getByRole("button", { name: /read the executive summary/i }).click();
+  await page.waitForURL("**/summary");
+  const st0 = (await page.locator("body").innerText()).toLowerCase();
+  for (const k of ["why now", "what varia does", "what the college gets", "the evidence behind it", "what an administrator can do this term"]) assert(st0.includes(k), `summary section ${k}`);
+  await go("/for");
   const readMore = page.getByRole("link", { name: /Read more/ });
   assert((await readMore.count()) === 4, `read-more links ${await readMore.count()}`);
   await shot("for");
@@ -652,7 +659,7 @@ await check("/for overview and the four audience pages", async () => {
     await page.waitForURL(`**${a.action}**`);
   }
   await go("/for/unknown");
-  assert(/(\/for\/?|\/)$/.test(page.url()), `unknown audience url ${page.url()}`);
+  assert(/\/for\/?$/.test(page.url()), `unknown audience url ${page.url()}`);
   await go("/start");
   const st = await page.locator("body").innerText();
   const stl = st.toLowerCase(); const i1 = stl.indexOf("who this is for"), i2 = stl.indexOf("the whole thing, in six steps");
@@ -671,9 +678,7 @@ await check("home: north star, six live path panels, bottom line, four shift col
   assert(t.includes("leave with proof, not a promise."), "students bottom line");
   assert(t.includes("hire from work, not transcripts."), "employers bottom line");
   for (const k of ["students", "instructors", "institutions", "employers"]) assert(t.includes(`for ${k} →`), `shift link ${k}`);
-  assert(t.includes("assessment integrity without surveillance, and a path from coursework to a job offer."), "exec headline");
-  for (const k of ["why now", "what varia does", "what the college gets", "the evidence behind it", "what it is not, and what is still ahead", "what an administrator can do this term"]) assert(t.includes(k), `exec section ${k}`);
-  assert(t.includes("variant sets in use") && t.includes("cleared all four checks"), "glance tiles");
+  assert(t.includes("why an employer can trust it"), "trust block");
   await page.getByRole("link", { name: /the work sample/i }).first().click();
   await page.waitForURL("**/evidence/v-04");
   await go("/");
