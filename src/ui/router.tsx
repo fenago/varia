@@ -49,7 +49,7 @@ export type PageKey =
 
 /** Crumb + title per page, copied from the mockup's PAGES map. */
 export const PAGES: Record<PageKey, { crumb: string; title: string; path: string }> = {
-  home: { crumb: "VARIA", title: "Proof an employer can verify", path: "/" },
+  home: { crumb: "Orientation", title: "Who VARIA is for", path: "/" },
   start: { crumb: "Orientation", title: "Getting started", path: "/start" },
   notes: { crumb: "Orientation", title: "Design notes and assumptions", path: "/notes" },
   about: { crumb: "Orientation", title: "About VARIA", path: "/about" },

@@ -7,9 +7,9 @@ const KEYS = new Set<string>(AUDIENCES.map((a) => a.key));
 
 export default function For() {
   const { audience } = useParams<{ audience?: string }>();
-  if (audience && !KEYS.has(audience)) return <Navigate to="/for" replace />;
+  if (audience && !KEYS.has(audience)) return <Navigate to="/" replace />;
   if (audience) return <AudienceDetail a={AUDIENCES.find((x) => x.key === audience)!} />;
-  return <Overview />;
+  return <Navigate to="/" replace />;
 }
 
 function Overview() {

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, Stamp, SkillTags, OutcomeStamps } from "@ui/components";
+import { AudienceCard, Blueprint, BlueprintButton, OutcomeStamps, PipelineStrip, SkillTags, Stamp } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
 import {
@@ -12,6 +12,7 @@ import {
   employerFunnel,
 } from "@lib/store/selectors";
 import { BOTTOM_LINE, NORTH_STAR, PATH_STEPS, SHIFTS, TRUST } from "@shared/home";
+import { AUDIENCES, AUDIENCE_OVERVIEW } from "@shared/audiences";
 import type { Workspace } from "@shared/types";
 
 const DEMO_VARIANT = "v-04";
@@ -83,7 +84,7 @@ function usePath(ws: Workspace) {
 }
 
 export default function Home() {
-  usePageTitle("Proof an employer can verify", "VARIA");
+  usePageTitle("Who VARIA is for", "Orientation");
   const ws = useWorkspace();
   const nav = useNavigate();
   const path = usePath(ws);
@@ -112,6 +113,21 @@ export default function Home() {
           <span style={{ fontSize: 11.5, color: "#7f95ac", alignSelf: "end", whiteSpace: "nowrap" }}>{NORTH_STAR.cohortSource}</span>
         </div>
       </Blueprint>
+
+      {/* Who it's for: four people, one artifact */}
+      <div>
+        <div style={{ marginBottom: 14 }}>
+          <div className="va-kicker">{AUDIENCE_OVERVIEW.kicker}</div>
+          <h3 style={{ margin: "6px 0 8px", maxWidth: "26ch" }}>{AUDIENCE_OVERVIEW.title}</h3>
+          <p style={{ margin: 0, maxWidth: "70ch", fontSize: 15, lineHeight: 1.6, textWrap: "pretty" }}>{AUDIENCE_OVERVIEW.lede}</p>
+        </div>
+        <PipelineStrip steps={AUDIENCE_OVERVIEW.pipeline} />
+        <div className="va-tiles" style={{ gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 16, marginTop: 18 }}>
+          {AUDIENCES.map((a) => (
+            <AudienceCard key={a.key} label={a.label} promise={a.promise} quote={a.quote} to={`/for/${a.key}`} />
+          ))}
+        </div>
+      </div>
 
       {/* 2. One student's path, with the real records */}
       <div id="path">

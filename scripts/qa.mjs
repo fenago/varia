@@ -50,7 +50,7 @@ async function snapshotText(tag) {
 async function shot(name) { await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true }); }
 
 const ROUTES = {
-  "/": ["VARIA", "Proof an employer can verify"],
+  "/": ["Orientation", "Who VARIA is for"],
   "/start": ["Orientation", "Getting started"],
   "/notes": ["Orientation", "Design notes and assumptions"],
   "/about": ["Orientation", "About VARIA"],
@@ -99,7 +99,7 @@ await check("rail sections and labels", async () => {
   await go("/notes");
   const rail = await page.locator("aside, .va-rail").first().innerText();
   for (const s of ["Orientation", "Instructor", "Oversight", "Setup"]) assert(rail.toLowerCase().includes(s.toLowerCase()), `section ${s}`);
-  for (const l of ["Home", "Getting started", "Who it's for", "Design notes", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "API key & models"]) assert(rail.includes(l), `label ${l}`);
+  for (const l of ["Who it's for", "Getting started", "Design notes", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "API key & models"]) assert(rail.includes(l), `label ${l}`);
   const current = await page.locator('[aria-current="page"]').innerText();
   assert(current.includes("Design notes"), `aria-current is ${current}`);
 });
@@ -652,7 +652,7 @@ await check("/for overview and the four audience pages", async () => {
     await page.waitForURL(`**${a.action}**`);
   }
   await go("/for/unknown");
-  assert(/\/for\/?$/.test(page.url()), `unknown audience url ${page.url()}`);
+  assert(/(\/for\/?|\/)$/.test(page.url()), `unknown audience url ${page.url()}`);
   await go("/start");
   const st = await page.locator("body").innerText();
   const stl = st.toLowerCase(); const i1 = stl.indexOf("who this is for"), i2 = stl.indexOf("the whole thing, in five steps");
