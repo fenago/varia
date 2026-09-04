@@ -60,6 +60,11 @@ function AudienceDetail({ a }: { a: AudienceContent }) {
             <Blueprint key={g.title} style={{ padding: "16px 18px 18px" }}>
               <div className="va-heading-16" style={{ marginBottom: 5 }}>{g.title}</div>
               <p className="text-muted" style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>{g.body}</p>
+              {g.see ? (
+                <Link to={g.see.to} style={{ display: "inline-block", marginTop: 8, fontSize: 12.5, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>
+                  {g.see.label} →
+                </Link>
+              ) : null}
             </Blueprint>
           ))}
         </div>

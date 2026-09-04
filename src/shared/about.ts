@@ -22,7 +22,7 @@ export const PAPER = {
 };
 
 export const APP_SUMMARY =
-  "VARIA is the working product behind the paper. An instructor uploads the assignment they already give; the system extracts a blueprint (the competency, the rubric and the model answer), generates a different-looking version for every student, and refuses to release the set until it passes the paper's four integrity checks. Oversight roles see the same numbers aggregated across an institution.";
+  "VARIA is the working product behind the paper. An instructor uploads the assignment they already give; the system extracts a blueprint (the competency, the rubric and the model answer), generates a different-looking version for every student, and refuses to release the set until it passes the paper's four integrity checks. Oversight roles see the same numbers aggregated across an institution. Employers contribute the real problems the versions are built from, validate the rubric once, and read, endorse and hire from the work in a talent view. Students leave with signed work samples in a portfolio they control, exported as Open Badges 3.0 credentials any employer can verify.";
 
 export const GRANT = {
   name: "AI Assessment Grant",
@@ -106,12 +106,12 @@ export const ACKNOWLEDGEMENTS = {
 export const GAPS = {
   heading: "Honest gaps to name before someone else does",
   items: [
-    "Employer validation now runs in the tool (blueprint review, sign-off, satisfaction survey, evidence records). Partner adoption is still a manual flag, not observed behaviour.",
+    "Employer validation, endorsement and outcome logging run in the tool. Adoption is counted two ways, a partner's declared acceptance of evidence records and observed verification events, and both are still small numbers from a demo cohort, not a pilot.",
     "No learner-facing delivery. Students receive tasks through Canvas, not VARIA. Canvas integration is a disabled button.",
     "Rubric stability (P3) is a proxy. The full protocol is pre-registered, not built.",
     "Outcomes instrumentation (engagement, time on task, persistence) is not collected by the app.",
     "Live generation at class scale has been tested in demo mode only.",
-    "Evidence records are self-verifying by hash, but there is no public verification endpoint yet; verification means recomputing the hash from an exported workspace.",
+    "Evidence records are hashed, signed and verifiable at a per-record verify page, but the signing key is a demonstration key generated in the browser and the verify page is not yet a public, college-hosted endpoint. Records live in the browser until a student shares them; a durable, college-held record store is the open structural decision.",
   ],
 };
 

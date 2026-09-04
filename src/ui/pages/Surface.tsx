@@ -51,7 +51,7 @@ export default function Surface() {
   return (
     <div className="va-page">
       <p style={{ maxWidth: "70ch", fontSize: 15, lineHeight: 1.6, textWrap: "pretty", margin: 0 }}>
-        Every strategy trades surface diversity against construct equivalence. Pick where this course should sit; the numbers are from the
+        Every strategy trades surface diversity against construct equivalence. The choice is also an employer conversation: dimension-preserving generation draws hardest on the scenario bank employer partners supply, so more surface separation means more employer scenarios. Pick where this course should sit; the numbers are from the
         VARIA pilot, {PILOT_META.variants} variants across {PILOT_META.cells} condition cells.
       </p>
 

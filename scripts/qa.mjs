@@ -655,7 +655,7 @@ await check("/for overview and the four audience pages", async () => {
   assert(/(\/for\/?|\/)$/.test(page.url()), `unknown audience url ${page.url()}`);
   await go("/start");
   const st = await page.locator("body").innerText();
-  const stl = st.toLowerCase(); const i1 = stl.indexOf("who this is for"), i2 = stl.indexOf("the whole thing, in five steps");
+  const stl = st.toLowerCase(); const i1 = stl.indexOf("who this is for"), i2 = stl.indexOf("the whole thing, in six steps");
   assert(i1 > 0 && i2 > i1, `start strip order ${i1} ${i2}`);
 });
 
@@ -671,7 +671,9 @@ await check("home: north star, six live path panels, bottom line, four shift col
   assert(t.includes("leave with proof, not a promise."), "students bottom line");
   assert(t.includes("hire from work, not transcripts."), "employers bottom line");
   for (const k of ["students", "instructors", "institutions", "employers"]) assert(t.includes(`for ${k} →`), `shift link ${k}`);
-  assert(t.includes("why an employer can trust it"), "trust block");
+  assert(t.includes("assessment integrity without surveillance, and a path from coursework to a job offer."), "exec headline");
+  for (const k of ["why now", "what varia does", "what the college gets", "the evidence behind it", "what it is not, and what is still ahead", "what an administrator can do this term"]) assert(t.includes(k), `exec section ${k}`);
+  assert(t.includes("variant sets in use") && t.includes("cleared all four checks"), "glance tiles");
   await page.getByRole("link", { name: /the work sample/i }).first().click();
   await page.waitForURL("**/evidence/v-04");
   await go("/");
@@ -896,6 +898,9 @@ await check("mockup h6/th labels present", async () => {
     const txt = m[2].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
     if (txt && txt !== "—") labels.add(txt);
   }
+  // Deliberate renames since the mockup: the Getting started grid gained a sixth step.
+  const RENAMED = new Map([["The whole thing, in five steps", "The whole thing, in six steps"]]);
+  for (const [from, to] of RENAMED) if (labels.delete(from)) labels.add(to);
   const all = corpus.map((c) => c.text.replace(/\s+/g, " ")).join("\n").toLowerCase();
   const missing = [...labels].filter((l) => !all.includes(l.toLowerCase()));
   assert(missing.length === 0, `missing: ${missing.join(" | ")}`);

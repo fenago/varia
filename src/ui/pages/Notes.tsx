@@ -64,7 +64,7 @@ export default function Notes() {
       </Blueprint>
 
       <p className="text-muted" style={{ fontSize: 13, maxWidth: "70ch" }}>
-        Next steps once a direction is picked: an LMS-embedded variant of screens 4 and 5, the appeal flow for a student who claims their variant was harder, and the admin page for setting institution-wide thresholds.
+        Since these notes were written, the appeal flow, institution-wide thresholds, employer validation, work-sample records, the student portfolio and the employer talent view have all been built. The two structural steps still ahead are a durable, college-held record store and a college-held signing key with a public verify endpoint; LMS delivery of per-student tasks remains a disabled button.
       </p>
     </div>
   );

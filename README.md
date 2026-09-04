@@ -40,6 +40,25 @@ Netlify picks up `netlify.toml`:
 All application state lives in the browser's local storage. Use **Settings → Export workspace**
 to move it between machines.
 
+## Employers, students, and the evidence records
+
+Beyond the instructor flow, the app carries an employer bridge:
+
+- **Employer validation** (`/employer`): partners contribute real problem briefs that feed the
+  scenario bank, validate a blueprint's rubric once through a self-contained review link
+  (`/review`), sign off with a work email, and answer a five-question satisfaction survey. The
+  three Axim employer outcomes (validated blueprints, adoption, satisfaction) are computed here.
+- **Evidence records** (`/evidence/:variantId`): each graded task becomes a work sample with a
+  stable learner ID (not the name), skills, an optional submission by consent, a SHA-256 hash and
+  an ES256 signature, exportable as an Open Badges 3.0 credential and checkable at `/verify/:id`.
+- **Portfolio** (`/portfolio`) and **talent view** (`/talent`): students choose which employers see
+  which samples; employers read the work, endorse it against their own bar, and log interviews,
+  offers, hires and ramp time where they happen.
+
+What is demo-grade: the signing key is generated in the browser and labelled as such; records live
+in the browser until a student shares them; students and employer reviewers are not authenticated.
+A durable, college-held record store and a college signing key are the next structural steps.
+
 ## Layout
 
 See `CLAUDE.md` for the architecture, the page-by-page spec, the domain rules from the paper, and

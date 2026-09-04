@@ -12,6 +12,7 @@ const STEPS = [
   { n: "03", title: "Generate", body: "Answer one question — what are you protecting against — and press go.", time: "~4 min, unattended" },
   { n: "04", title: "Check & release", body: "Four green checks means release. A red one tells you which versions to redo.", time: "~3 min" },
   { n: "05", title: "Grade", body: "One rubric, every submission, with each student's own model answer beside it.", time: "as usual" },
+  { n: "06", title: "Share", body: "The graded task becomes a signed work sample in the student's portfolio. They choose which employers see it; employers verify, endorse and hire from it.", time: "the student's call" },
 ];
 
 const FALLBACK_EXCERPTS = [
@@ -38,7 +39,7 @@ const FAQ = [
   { t: "Do I have to rewrite my rubric?", b: "No. The rubric is what is held constant — it is the thing the checks are protecting." },
   { t: "What if I don't trust a version?", b: "Reject and regenerate any single version before release. Rejections are logged with your reason." },
   { t: "Is this proctoring?", b: "No. Nothing monitors the student. The task design is what makes sharing answers unproductive." },
-  { t: "Can I reuse a set next term?", b: "Yes, but the library will prompt you to regenerate — released tasks circulate." },
+  { t: "Can I reuse a set next term?", b: "Yes; regenerate before reuse, since released tasks circulate. The blueprint, rubric and employer validation carry over unchanged." },
 ];
 
 function surname(name: string | undefined): string {
@@ -84,7 +85,7 @@ export default function Start() {
       </div>
 
       <div>
-        <h6 style={{ margin: "0 0 16px" }}>The whole thing, in five steps</h6>
+        <h6 style={{ margin: "0 0 16px" }}>The whole thing, in six steps</h6>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 16 }}>
           {STEPS.map((s) => (
             <Blueprint key={s.n} style={{ padding: "16px 16px 18px" }}>
@@ -109,7 +110,7 @@ export default function Start() {
             <p style={{ margin: 0 }} className="text-muted">Attached: instructor_model_answer.docx, roster.csv</p>
           </div>
           <div className="text-muted" style={{ fontSize: 12, marginTop: 12, lineHeight: 1.5 }}>
-            Also accepted: PDF, plain text, a Canvas assignment link, or a previous semester's exam. If you have no model answer, the system drafts one for you to correct — it is required, because it is how the rubric check works.
+            Also accepted: Word, PDF, plain text, or a previous semester's exam. If you have no model answer, the system drafts one for you to correct — it is required, because it is how the rubric check works.
           </div>
         </Blueprint>
 
