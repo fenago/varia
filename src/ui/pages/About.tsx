@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Blueprint, Corners } from "@ui/components";
-import { APP_SUMMARY, CITATION, GRANT, PAPER } from "@shared/about";
+import { ACKNOWLEDGEMENTS, APP_SUMMARY, CITATION, FIT, GAPS, GRANT, PAPER } from "@shared/about";
 
 export default function About() {
   const [copied, setCopied] = useState(false);
@@ -56,6 +56,28 @@ export default function About() {
       </Blueprint>
 
       <Blueprint style={{ padding: "22px 24px" }}>
+        <h6 style={{ margin: "0 0 8px" }}>{FIT.heading}</h6>
+        <p style={{ margin: "0 0 16px", fontSize: 15, lineHeight: 1.6, maxWidth: "76ch", textWrap: "pretty" }}>{FIT.lede}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 13.5, lineHeight: 1.55 }}>
+          {FIT.points.map((p) => (
+            <div key={p.title}>
+              <div className="va-heading-15">{p.title}</div>
+              <div className="text-muted" style={{ maxWidth: "76ch" }}>{p.body}</div>
+            </div>
+          ))}
+        </div>
+      </Blueprint>
+
+      <Blueprint style={{ padding: "22px 24px" }}>
+        <h6 style={{ margin: "0 0 12px" }}>{GAPS.heading}</h6>
+        <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13.5, lineHeight: 1.6, display: "flex", flexDirection: "column", gap: 8, maxWidth: "76ch" }}>
+          {GAPS.items.map((g) => (
+            <li key={g}>{g}</li>
+          ))}
+        </ul>
+      </Blueprint>
+
+      <Blueprint style={{ padding: "22px 24px" }}>
         <div className="va-kicker">Funded by</div>
         <h6 style={{ margin: "4px 0 12px" }}>{GRANT.name}</h6>
         <p style={{ margin: "0 0 18px", fontSize: 15, lineHeight: 1.6, maxWidth: "76ch", textWrap: "pretty" }}>{GRANT.summary}</p>
@@ -67,6 +89,23 @@ export default function About() {
                   {f.label}
                 </td>
                 <td>{f.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Blueprint>
+
+      <Blueprint style={{ padding: "22px 24px" }}>
+        <h6 style={{ margin: "0 0 8px" }}>{ACKNOWLEDGEMENTS.heading}</h6>
+        <p style={{ margin: "0 0 14px", fontSize: 14, lineHeight: 1.6, maxWidth: "76ch" }}>{ACKNOWLEDGEMENTS.body}</p>
+        <table className="table">
+          <tbody>
+            {ACKNOWLEDGEMENTS.credits.map((c) => (
+              <tr key={c.name}>
+                <td style={{ width: "30%" }} className="va-heading-15">
+                  {c.name}
+                </td>
+                <td>{c.role}</td>
               </tr>
             ))}
           </tbody>

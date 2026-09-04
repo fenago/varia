@@ -43,3 +43,73 @@ export const GRANT = {
 
 export const CITATION =
   "Lee, E. (2026). VARIA: Benchmarking Frontier LLMs on Construct-Equivalent Assessment Variant Generation. EdArXiv. https://osf.io/preprints/edarxiv/u6xef_v1";
+
+/** How VARIA fits the Axim cohort's framing. Shown on the About page. */
+export const FIT = {
+  heading: "How VARIA fits",
+  lede:
+    "VARIA is not just one more authentic assessment. It is the trust layer the cohort's own framing requires and nobody else in the cohort is likely to bring.",
+  points: [
+    {
+      title: "Application over recall.",
+      body: "Every VARIA blueprint is a performance task with an analytic rubric. There is no recall item type in the system.",
+    },
+    {
+      title: "How over what.",
+      body: "Rubric criteria score process (evidence, prioritisation, reasoning under shift), and each student's adapted model answer lets faculty grade the reasoning path, not a fixed key.",
+    },
+    {
+      title: "Employer-valued.",
+      body: "The surface dimensions (domain, stakeholder, scenario) are exactly where employer partners plug in. An employer contributes real scenarios and stakeholder roles, and every student gets a workplace-shaped task.",
+    },
+    {
+      title: "Evidence all parties can trust.",
+      body: "The four integrity checks and the compliance console are the mechanism. If assessments become personalised and AI-generated, every partner will be asked \"how do you know two students got an equivalent task?\" VARIA is the only answer in the room with a benchmark behind it.",
+    },
+    {
+      title: "Portable signal.",
+      body: "A released variant set plus its integrity report is a defensible artifact: the task, the rubric, the score, and the equivalence evidence travel together.",
+    },
+  ],
+};
+
+/** Credit to the people and organisations behind the grant. */
+export const ACKNOWLEDGEMENTS = {
+  heading: "With thanks",
+  body:
+    "VARIA is developed with the support of the AI Assessment Grant and the partners who make the cohort possible.",
+  credits: [
+    {
+      name: "Axim Collaborative",
+      role: "Convenes and supports the \"Dynamic Assessments in the Age of AI\" cohort: the partner journey, learning sessions, outcomes framework, and the shared blueprint.",
+    },
+    {
+      name: "Western Governors University (WGU)",
+      role: "Leads the consortium and anchors the outcomes framework; embeds successful approaches into open, interoperable tools.",
+    },
+    {
+      name: "Harvard, MIT, and the broad-access college partners",
+      role: "Consortium members co-designing and piloting career-connected assessments alongside their employer partners.",
+    },
+    {
+      name: "Miami Dade College",
+      role: "Partner institution. Institutional support from the Office of Innovation and Technology Partnerships and CIOL.",
+    },
+    {
+      name: "Employer partners",
+      role: "Supply the real scenarios, stakeholder roles, and competencies that every student's version is built from, and validate that the rubric reflects what they hire for.",
+    },
+  ],
+};
+
+/** Honest gaps to name before someone else does. Shown on the About page. */
+export const GAPS = {
+  heading: "Honest gaps to name before someone else does",
+  items: [
+    "No employer-facing role or validation workflow yet. Employer validation happens outside the tool today.",
+    "No learner-facing delivery. Students receive tasks through Canvas, not VARIA. Canvas integration is a disabled button.",
+    "Rubric stability (P3) is a proxy. The full protocol is pre-registered, not built.",
+    "Outcomes instrumentation (engagement, time on task, persistence) is not collected by the app.",
+    "Live generation at class scale has been tested in demo mode only.",
+  ],
+};
