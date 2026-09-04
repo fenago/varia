@@ -106,11 +106,12 @@ export const ACKNOWLEDGEMENTS = {
 export const GAPS = {
   heading: "Honest gaps to name before someone else does",
   items: [
-    "No employer-facing role or validation workflow yet. Employer validation happens outside the tool today.",
+    "Employer validation now runs in the tool (blueprint review, sign-off, satisfaction survey, evidence records). Partner adoption is still a manual flag, not observed behaviour.",
     "No learner-facing delivery. Students receive tasks through Canvas, not VARIA. Canvas integration is a disabled button.",
     "Rubric stability (P3) is a proxy. The full protocol is pre-registered, not built.",
     "Outcomes instrumentation (engagement, time on task, persistence) is not collected by the app.",
     "Live generation at class scale has been tested in demo mode only.",
+    "Evidence records are self-verifying by hash, but there is no public verification endpoint yet; verification means recomputing the hash from an exported workspace.",
   ],
 };
 

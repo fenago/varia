@@ -1,6 +1,7 @@
 /** Pure read-side helpers over a Workspace. No store access, no side effects. */
 
 import type {
+  VerificationEvent,
   AuditEvent,
   Blueprint,
   BlueprintDraft,
@@ -276,4 +277,185 @@ export function readingEaseContext(run: Run | null, variant: Variant | null) {
   const delta = variant.metrics.fleschEase - mean;
   const rounded = Math.round(delta * 10) / 10;
   return { mean: Math.round(mean * 10) / 10, delta: rounded, within3: Math.abs(rounded) <= 3 };
+}
+
+// ---------------------------------------------------------------------------
+// Employer validation and evidence records
+// ---------------------------------------------------------------------------
+
+import type { EmployerPartner, EmployerValidation, EvidenceRecord, Grade, IntegrityReport, Course } from "@shared/types";
+import { EMPLOYER_GOALS } from "@shared/thresholds";
+import { pickSampleVariants } from "./employer";
+
+export type BlueprintValidationStatus = "validated" | "changes-requested" | "declined" | "pending";
+
+export function partnerById(ws: Workspace, id: string | null | undefined): EmployerPartner | null {
+  if (!id) return null;
+  return ws.employerPartners.find((p) => p.id === id) ?? null;
+}
+
+/** Newest first. */
+export function validationsForBlueprint(ws: Workspace, bpId: string): EmployerValidation[] {
+  return ws.employerValidations.filter((v) => v.blueprintId === bpId).sort((a, b) => b.reviewedAt.localeCompare(a.reviewedAt));
+}
+
+export function latestValidation(ws: Workspace, bpId: string): EmployerValidation | null {
+  return validationsForBlueprint(ws, bpId)[0] ?? null;
+}
+
+export function blueprintValidationStatus(ws: Workspace, bpId: string): BlueprintValidationStatus {
+  const vs = validationsForBlueprint(ws, bpId);
+  if (vs.some((v) => v.status === "validated")) return "validated";
+  return vs[0]?.status ?? "pending";
+}
+
+export interface EmployerStats {
+  blueprints: number;
+  validated: number;
+  validatedPct: number;
+  partners: number;
+  adopted: number;
+  adoptedPct: number;
+  satisfactionMean: number | null;
+  responses: number;
+  goals: typeof EMPLOYER_GOALS;
+  /** partners with ≥1 valid verification event / partners (observed adoption) */
+  observedAdoptedPct: number;
+}
+
+export function employerStats(ws: Workspace): EmployerStats {
+  const blueprints = ws.blueprints.length;
+  const validated = ws.blueprints.filter((b) => blueprintValidationStatus(ws, b.id) === "validated").length;
+  const partners = ws.employerPartners.length;
+  const adopted = ws.employerPartners.filter((p) => p.adoptedEvidenceRecords).length;
+  const surveys = ws.employerValidations.map((v) => v.satisfaction).filter((s): s is NonNullable<typeof s> => !!s);
+  const means = surveys.map((s) => (s.realism + s.rubricFit + s.fairness + s.trust + s.adoptionIntent) / 5);
+  const satisfactionMean = means.length ? Math.round((means.reduce((a, b) => a + b, 0) / means.length) * 100) / 100 : null;
+  return {
+    blueprints,
+    validated,
+    validatedPct: blueprints ? validated / blueprints : 0,
+    partners,
+    adopted,
+    adoptedPct: partners ? adopted / partners : 0,
+    satisfactionMean,
+    responses: surveys.length,
+    goals: EMPLOYER_GOALS,
+    observedAdoptedPct: adoptionObserved(ws).observedAdoptedPct,
+  };
+}
+
+export function sampleVariantsFor(ws: Workspace, bpId: string): Variant[] {
+  const run = latestRunForBlueprint(ws, bpId);
+  return run ? pickSampleVariants(run.variants) : [];
+}
+
+export function evidenceForVariant(ws: Workspace, variantId: string): EvidenceRecord | null {
+  return ws.evidenceRecords.find((r) => r.variantId === variantId) ?? null;
+}
+
+export interface EvidenceView {
+  record: EvidenceRecord | null;
+  student: Student;
+  course: Course;
+  blueprint: Blueprint;
+  variant: Variant;
+  run: Run;
+  submission: Submission | null;
+  grade: Grade | null;
+  report: IntegrityReport | null;
+  validations: EmployerValidation[];
+  partnerNames: string[];
+}
+
+export function evidenceView(ws: Workspace, variantId: string): EvidenceView | null {
+  const record = evidenceForVariant(ws, variantId);
+  const found = variantById(ws, variantId, record?.runId ?? null);
+  if (!found) return null;
+  const { run, variant } = found;
+  const student = studentById(ws, variant.studentId);
+  const blueprint = ws.blueprints.find((b) => b.id === run.blueprintId) ?? null;
+  if (!student || !blueprint) return null;
+  const submission = submissionForVariant(ws, variantId, run.id);
+  const validations = record
+    ? ws.employerValidations.filter((v) => record.validationIds.includes(v.id))
+    : validationsForBlueprint(ws, blueprint.id).filter((v) => v.status === "validated");
+  return {
+    record,
+    student,
+    course: ws.course,
+    blueprint,
+    variant,
+    run,
+    submission,
+    grade: submission?.grade ?? null,
+    report: run.report,
+    validations,
+    partnerNames: [...new Set(validations.map((v) => v.organisation))],
+  };
+}
+
+export interface EvidenceRow {
+  record: EvidenceRecord;
+  student: Student | null;
+  blueprintName: string;
+  issuedAt: string;
+}
+
+export function evidenceRows(ws: Workspace): EvidenceRow[] {
+  return [...ws.evidenceRecords]
+    .sort((a, b) => b.issuedAt.localeCompare(a.issuedAt))
+    .map((record) => ({
+      record,
+      student: studentById(ws, record.studentId),
+      blueprintName: ws.blueprints.find((b) => b.id === record.blueprintId)?.name ?? "",
+      issuedAt: record.issuedAt,
+    }));
+}
+
+export interface EmployerBlueprintRow {
+  blueprint: Blueprint;
+  status: BlueprintValidationStatus;
+  latest: EmployerValidation | null;
+  partnerName: string | null;
+  sampleCount: number;
+}
+
+export function blueprintRowsForEmployer(ws: Workspace): EmployerBlueprintRow[] {
+  return ws.blueprints.map((blueprint) => {
+    const latest = latestValidation(ws, blueprint.id);
+    return {
+      blueprint,
+      status: blueprintValidationStatus(ws, blueprint.id),
+      latest,
+      partnerName: latest ? (partnerById(ws, latest.partnerId)?.organisation ?? latest.organisation) : null,
+      sampleCount: sampleVariantsFor(ws, blueprint.id).length,
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Structural bridge: verification events (observed adoption)
+// ---------------------------------------------------------------------------
+
+export function verificationsForRecord(ws: Workspace, recordId: string): VerificationEvent[] {
+  return (ws.verificationEvents ?? []).filter((e) => e.recordId === recordId).sort((a, b) => b.at.localeCompare(a.at));
+}
+
+export interface AdoptionObserved {
+  /** Partners with at least one valid verification event (matched by organisation name) */
+  partnersWithVerifications: number;
+  verifications: number;
+  observedAdoptedPct: number;
+}
+
+export function adoptionObserved(ws: Workspace): AdoptionObserved {
+  const events = (ws.verificationEvents ?? []).filter((e) => e.result === "valid");
+  const orgs = new Set(events.map((e) => (e.byOrganisation ?? "").trim().toLowerCase()).filter(Boolean));
+  const partnersWithVerifications = ws.employerPartners.filter((p) => orgs.has(p.organisation.trim().toLowerCase())).length;
+  return {
+    partnersWithVerifications,
+    verifications: events.length,
+    observedAdoptedPct: ws.employerPartners.length ? partnersWithVerifications / ws.employerPartners.length : 0,
+  };
 }

@@ -90,6 +90,9 @@ key. Breadcrumb and page title come from the `PAGES` map in the mockup script.
 | `/surface` | Oversight · Trade-off surface | Oversight / Strategy trade-off surface |
 | `/console` | Oversight · Compliance console | Oversight / Institution compliance console |
 | `/settings` | Setup · API key & models | Setup / Your Claude key and models |
+| `/employer` | Oversight · Employer validation | Oversight / Employer validation |
+| `/review`, `/review/:blueprintId` | (employer-facing, `ReviewLayout`, no rail) | Employer review / Validate an assessment |
+| `/evidence/:variantId` | (employer-facing, `ReviewLayout`, printable) | Evidence record / Evidence of demonstrated skill |
 
 Header right side: `DAT 4100 · Fall 2026` neutral tag, then an accent tag showing the generator
 model label from settings, or `Demo mode · add a key` (linking to `/settings`) when no key is set.
@@ -142,6 +145,34 @@ What each page must actually do (beyond rendering the mockup):
   table with All / Flagged / Awaiting sign-off filter, thresholds table with inline edit (creates a
   new `ThresholdSet` version + audit event; never re-scores released runs), audit trail (newest
   first, includes local events).
+- **Employer** (`/employer`) — the instructor's side of the employer-outcomes bridge. Three stat
+  tiles from `employerStats`: blueprints validated by employers (goal 75%), partners adopting
+  evidence records (goal 50%), employer satisfaction mean (1–5, n responses). Partner list with
+  "Adopted evidence records" toggle and add-partner form. Blueprint table with validation status
+  pill (Validated / Changes requested / Declined / Pending), latest reviewer and date, and per
+  row: "Review in this browser" (→ `/review/:blueprintId`), "Copy review link" (self-contained
+  `#pkg=` link via `lib/share`), "Download package". A "Bring in a result" box accepts a pasted
+  result link or a JSON file and calls `applyReviewResult`; `/employer#result=…` auto-applies.
+  Validation history list. Evidence records table (id, student, blueprint, issued) linking to
+  `/evidence/:variantId`.
+- **Review** (`/review`, `/review/:blueprintId`) — what an employer reviewer sees, no instructor
+  chrome. Loads the package from the workspace (by id) or from `#pkg=` or a dropped JSON file.
+  Sections: what this assessment measures (construct + comment box), the rubric (each criterion
+  with anchors and a comment box), the scenario bank (each unlocked dimension as a ChipEditor so
+  the reviewer can add/remove values; diffs become `scenarioEdits`), three sample versions with
+  their adapted model answers collapsible, the integrity report summary if present, sign-off
+  (reviewer name, role, organisation, status radio, attestation checkbox "This rubric reflects
+  what we hire or promote for"), the five-question satisfaction survey (`SATISFACTION_QUESTIONS`,
+  LikertRow) with a comment. Submit → if the package came from this workspace, `recordValidation`
+  and route to `/employer`; else build a `ReviewResult`, show a "Copy result link" CopyField and
+  "Download result" so the reviewer can send it back. Nothing is uploaded anywhere.
+- **Evidence** (`/evidence/:variantId`) — the portable skill indicator. `evidenceView` renders:
+  record id + issued date + hash (or "Not yet issued" with an "Issue record" button for graded
+  submissions), student, course, institution, blueprint name and construct, the task the student
+  received, rubric with the student's level and points per criterion and total, employer
+  validation stamps (organisation, reviewer, date, attested), the integrity report's four checks
+  with gates, an optional collapsed adapted model answer, and a verification footer explaining
+  the hash. "Print / Save as PDF" (`window.print`) with the print CSS. "Revoke" for instructors.
 - **Settings** — the key box: password-type input with show/hide, "Remember on this device"
   checkbox, "Verify key" (calls `provider.verifyKey()`, shows model + timestamp), "Forget key".
   Explains in one paragraph that the key stays in this browser and is only sent to Anthropic.
@@ -270,6 +301,18 @@ say so in the final report and the lead applies it.
 | **G · QA** | tests only | Build passes, every route renders, demo flow end-to-end, label audit vs mockup |
 
 Order: A, B, C, D in parallel → E, F in parallel → G.
+
+### Employer-outcomes bridge (Axim required rows)
+
+| Required outcome | Metric in the app | Where |
+|---|---|---|
+| Assessments validated by employer partners (goal 75%) | validated blueprints / blueprints | `employerStats` → Employer page + Console |
+| Employers adopt portable skill indicators (goal 50%) | partners with `adoptedEvidenceRecords` / partners | Employer page |
+| Employers satisfied with assessment outcomes | mean of the five-question survey, n | Employer page + Console |
+
+Rules: validation happens at the blueprint, once, and every variant inherits it. Evidence records
+carry `validationIds` at issue time and a SHA-256 over their canonical content. No student data is
+ever inside a review package (samples are stripped of student ids).
 
 ## Non-goals
 

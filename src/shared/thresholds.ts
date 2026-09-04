@@ -123,3 +123,21 @@ export const PILL_CLASS: Record<Gate | "watch", string> = {
   watch: "va-watch",
 };
 type Gate = "pass" | "fail" | "advisory";
+
+/** Employer-outcome goals from the Axim outcomes framework (required rows). */
+export const EMPLOYER_GOALS = {
+  /** % of blueprints validated by employer partners */
+  validatedPct: 0.75,
+  /** % of partners that adopt evidence records for hiring or promotion */
+  adoptedPct: 0.5,
+  /** satisfaction is reported as a mean on a 1–5 scale, no numeric goal in the framework */
+  satisfactionScale: 5,
+} as const;
+
+export const SATISFACTION_QUESTIONS: { key: "realism" | "rubricFit" | "fairness" | "trust" | "adoptionIntent"; text: string }[] = [
+  { key: "realism", text: "The task reflects real work in our organisation." },
+  { key: "rubricFit", text: "The rubric reflects what we hire or promote for." },
+  { key: "fairness", text: "The sample versions are fair to compare across candidates." },
+  { key: "trust", text: "I would trust an evidence record from this assessment." },
+  { key: "adoptionIntent", text: "I would use this in hiring or promotion decisions." },
+];

@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Blueprint, DataTable, Pill, SegChoice, StatTile, type Column, type PillGate } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
-import { auditNewestFirst, consoleRows, consoleStats, currentThresholds, strategyLabel } from "@lib/store/selectors";
+import { auditNewestFirst, consoleRows, consoleStats, currentThresholds, employerStats, strategyLabel } from "@lib/store/selectors";
 import { THRESHOLD_ATTRIBUTION } from "@lib/store/seed";
 import { PROPERTY_LABELS } from "@shared/thresholds";
 import type { InstitutionSet, InstitutionSetStatus, Property } from "@shared/types";
@@ -45,6 +45,7 @@ export default function Console() {
   const [error, setError] = useState<string | null>(null);
 
   const stats = useMemo(() => consoleStats(ws), [ws]);
+  const emp = useMemo(() => employerStats(ws), [ws]);
   const rows = useMemo(() => consoleRows(ws), [ws]);
   const audit = useMemo(() => auditNewestFirst(ws), [ws]);
   const thresholds = currentThresholds(ws);
@@ -120,6 +121,35 @@ export default function Console() {
         <StatTile kicker="Passing all four" value={stats.passingAll} sub={`${stats.passingPct}% of released sets`} color="pass" />
         <StatTile kicker="Released over threshold" value={stats.overThreshold} sub="each with a recorded reason" color="fail" />
         <StatTile kicker="Unreviewed > 14 days" value={stats.unreviewed} sub="needs a specialist sign-off" color="watch" />
+      </div>
+
+      <div>
+        <div className="va-row-flex" style={{ alignItems: "baseline", gap: 12, marginBottom: 10 }}>
+          <div className="va-kicker">Employer outcomes</div>
+          <Link to="/employer" className="va-muted-12" style={{ marginLeft: "auto" }}>
+            Manage on Employer validation →
+          </Link>
+        </div>
+        <div className="va-tiles" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+          <StatTile
+            kicker="Validated by employer partners"
+            value={`${Math.round(emp.validatedPct * 100)}%`}
+            sub={`${emp.validated} of ${emp.blueprints} blueprints · goal ${Math.round(emp.goals.validatedPct * 100)}%`}
+            color={emp.validatedPct >= emp.goals.validatedPct ? "pass" : "watch"}
+          />
+          <StatTile
+            kicker="Partners adopting evidence records"
+            value={`${Math.round(emp.adoptedPct * 100)}%`}
+            sub={`${emp.adopted} of ${emp.partners} partners · goal ${Math.round(emp.goals.adoptedPct * 100)}%`}
+            color={emp.adoptedPct >= emp.goals.adoptedPct ? "pass" : "watch"}
+          />
+          <StatTile
+            kicker="Employer satisfaction"
+            value={emp.satisfactionMean == null ? "—" : `${emp.satisfactionMean.toFixed(1)} / ${emp.goals.satisfactionScale}`}
+            sub={emp.responses ? `${emp.responses} survey ${emp.responses === 1 ? "response" : "responses"}` : "no responses yet"}
+            color={emp.satisfactionMean != null && emp.satisfactionMean >= 4 ? "pass" : "watch"}
+          />
+        </div>
       </div>
 
       <Blueprint style={{ padding: "20px 22px" }}>

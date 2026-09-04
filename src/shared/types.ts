@@ -348,7 +348,9 @@ export type AuditKind =
   | "appeal"
   | "grade"
   | "run"
-  | "settings";
+  | "settings"
+  | "employer"
+  | "evidence";
 
 export interface AuditEvent {
   id: string;
@@ -421,6 +423,13 @@ export interface Workspace {
   /** Draft produced by Import, not yet saved as a blueprint */
   pendingDraft: BlueprintDraft | null;
   seededAt: string;
+  /** Employer-outcomes bridge (added in workspace schema v1.1; older persisted states get defaults) */
+  employerPartners: EmployerPartner[];
+  employerValidations: EmployerValidation[];
+  evidenceRecords: EvidenceRecord[];
+  /** Bridge (optional so older persisted states load; the store fills defaults) */
+  verificationEvents?: VerificationEvent[];
+  signingKey?: SigningKey | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -474,4 +483,156 @@ export interface LlmProvider {
   generateFewShotAnchors(blueprint: Blueprint): Promise<{ positive: string[]; negative: string[] }>;
   generateVariant(input: GenerateVariantInput): Promise<GenerateVariantOutput>;
   judgeVariant(input: JudgeInput): Promise<JudgeSample[]>;
+}
+
+// ---------------------------------------------------------------------------
+// Employer validation, evidence records (the employer-outcomes bridge)
+// ---------------------------------------------------------------------------
+
+export interface EmployerPartner {
+  id: string;
+  organisation: string; // "Northline Talent Systems"
+  sector: string; // "Hiring" | "Lending" | "Healthcare" | "Logistics" | …
+  contactName?: string;
+  contactRole?: string;
+  contactEmail?: string;
+  /** Has this partner accepted evidence records for hiring or promotion? */
+  adoptedEvidenceRecords: boolean;
+  adoptedAt: string | null;
+  addedAt: string;
+}
+
+export type ValidationStatus = "validated" | "changes-requested" | "declined";
+
+export interface ScenarioEdit {
+  dimensionKey: string;
+  added: string[];
+  removed: string[];
+}
+
+/** Five-question employer satisfaction survey, 1–5 each. */
+export interface EmployerSatisfaction {
+  /** The task reflects real work in our organisation */
+  realism: number;
+  /** The rubric reflects what we hire or promote for */
+  rubricFit: number;
+  /** The sample versions are fair to compare across candidates */
+  fairness: number;
+  /** I would trust an evidence record from this assessment */
+  trust: number;
+  /** I would use this in hiring or promotion decisions */
+  adoptionIntent: number;
+  comment: string;
+  submittedAt: string;
+}
+
+export interface EmployerValidation {
+  id: string;
+  blueprintId: string;
+  blueprintName: string;
+  partnerId: string | null;
+  organisation: string;
+  reviewerName: string;
+  reviewerRole: string;
+  /** Lightweight reviewer identity: a work email at the organisation's domain, so a validation has a real signer */
+  reviewerEmail?: string;
+  reviewedAt: string;
+  status: ValidationStatus;
+  /** "This rubric reflects what we hire for" — explicit attestation */
+  attested: boolean;
+  criteriaComments: Record<string, string>; // criterionId -> comment
+  constructComment: string;
+  scenarioEdits: ScenarioEdit[];
+  /** IDs of the sample variants the reviewer saw */
+  sampleVariantIds: string[];
+  satisfaction: EmployerSatisfaction | null;
+  /** How the record arrived: in this workspace, or imported from a result link/file */
+  source: "workspace" | "imported";
+}
+
+/** What an employer reviewer receives. Self-contained: no workspace needed. */
+export interface ReviewPackage {
+  version: 1;
+  issuedAt: string;
+  issuedBy: string; // "Dr. E. Lee · Miami Dade College"
+  course: Course;
+  blueprint: Blueprint;
+  sampleVariants: Pick<Variant, "id" | "text" | "surfaceAssignment" | "adaptedSolution">[];
+  partner: Pick<EmployerPartner, "id" | "organisation" | "sector"> | null;
+  /** Latest integrity report for context, if a run exists */
+  report: IntegrityReport | null;
+}
+
+/** What comes back from the reviewer. Applied to the workspace by the instructor. */
+export interface ReviewResult {
+  version: 1;
+  packageIssuedAt: string;
+  validation: Omit<EmployerValidation, "id" | "source">;
+}
+
+export interface EvidenceRecord {
+  /** "VR-2026-0004" */
+  id: string;
+  runId: string;
+  variantId: string;
+  studentId: string;
+  blueprintId: string;
+  issuedAt: string;
+  issuedBy: string;
+  /** SHA-256 over the canonical content, hex */
+  hash: string;
+  /** Validation IDs stamped on the record at issue time */
+  validationIds: string[];
+  /** Bridge fields (schema v2). Optional so v1 persisted records still load; the store upgrades them. */
+  bridge?: EvidenceRecordBridge;
+}
+
+// ---------------------------------------------------------------------------
+// Structural bridge: learner identity, consent, verification, Open Badges 3.0
+// ---------------------------------------------------------------------------
+
+/** Student-initiated sharing of an evidence record. FERPA: the learner shares, not the instructor. */
+export interface ConsentEvent {
+  id: string;
+  at: string;
+  action: "shared" | "revoked";
+  learnerId: string;
+  toOrganisation: string | null;
+  toEmail: string | null;
+  note: string | null;
+}
+
+/** An employer (or anyone) verified a record. Observed adoption, not a checkbox. */
+export interface VerificationEvent {
+  id: string;
+  at: string;
+  recordId: string;
+  byOrganisation: string | null;
+  result: "valid" | "invalid";
+  /** "hash" | "hash+signature" */
+  method: string;
+}
+
+/** Workspace-held demo signing key (ECDSA P-256, JWK). A real deployment uses an MDC-held key. */
+export interface SigningKey {
+  kid: string;
+  alg: "ES256";
+  publicJwk: JsonWebKey;
+  privateJwk: JsonWebKey;
+  createdAt: string;
+  issuerName: string;
+  demo: true;
+}
+
+/** Fields added to EvidenceRecord for the bridge (schema v2). */
+export interface EvidenceRecordBridge {
+  schemaVersion: 2;
+  /** Stable learner identifier, not the name: "L-" + first 12 hex of sha256(studentId|courseId|seededAt) */
+  learnerId: string;
+  consent: ConsentEvent[];
+  /** Open Badges 3.0 credential id (URL-shaped, resolves on the verify page) */
+  credentialId: string;
+  /** Detached JWS (ES256) over the canonical content, or null if unsigned */
+  signature: string | null;
+  signedWithKid: string | null;
 }

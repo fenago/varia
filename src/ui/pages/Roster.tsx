@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Blueprint, DataTable, EmptyState, Pill, SegChoice, StatTile, type Column } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
-import { activeRun, rosterRows, rosterStats, type RosterRow } from "@lib/store/selectors";
+import { activeRun, evidenceForVariant, rosterRows, rosterStats, type RosterRow } from "@lib/store/selectors";
 import { DEMO_DUE_LABEL, DEMO_RUN_ID } from "@lib/store/seed";
 import type { SubmissionStatus } from "@shared/types";
 
@@ -101,6 +101,28 @@ export default function Roster() {
     { key: "ease", header: "Reading ease", render: (r) => r.readingEase.toFixed(1) },
     { key: "status", header: "Status", render: (r) => statusCell(r.status) },
     { key: "score", header: "Score", render: (r) => r.scoreLabel },
+    {
+      key: "evidence",
+      header: "Evidence",
+      render: (r) => {
+        const rec = evidenceForVariant(ws, r.variant.id);
+        if (rec) {
+          return (
+            <a href={`/evidence/${r.variant.id}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+              {rec.id}
+            </a>
+          );
+        }
+        if (r.status === "graded") {
+          return (
+            <a href={`/evidence/${r.variant.id}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+              Issue
+            </a>
+          );
+        }
+        return <span className="text-muted">—</span>;
+      },
+    },
   ];
 
   const open = (r: RosterRow) => {
@@ -114,9 +136,17 @@ export default function Roster() {
   };
 
   const exportCsv = () => {
-    const header = ["student", "version", "domain_stakeholder", "reading_ease", "status", "score"];
+    const header = ["student", "version", "domain_stakeholder", "reading_ease", "status", "score", "evidence_record"];
     const lines = filtered.map((r) =>
-      [r.student?.name ?? "", r.variant.id, r.domainStakeholder, r.readingEase, r.status, r.scoreLabel]
+      [
+        r.student?.name ?? "",
+        r.variant.id,
+        r.domainStakeholder,
+        r.readingEase,
+        r.status,
+        r.scoreLabel,
+        evidenceForVariant(ws, r.variant.id)?.id ?? "",
+      ]
         .map(csvEscape)
         .join(","),
     );

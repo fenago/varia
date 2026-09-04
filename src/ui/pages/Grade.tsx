@@ -10,6 +10,7 @@ import {
   readingEaseContext,
   rosterRows,
   studentById,
+  evidenceForVariant,
   submissionForVariant,
   variantById,
 } from "@lib/store/selectors";
@@ -76,6 +77,8 @@ function GradeView({ variantId }: { variantId: string }) {
 
   const [scores, setScores] = useState<Record<string, LevelScore>>({});
   const [showSolution, setShowSolution] = useState(false);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
+  const evidence = variant ? evidenceForVariant(ws, variant.id) : null;
   const [showFull, setShowFull] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -234,6 +237,38 @@ function GradeView({ variantId }: { variantId: string }) {
           {easeLine && (
             <div className="va-muted-12" style={{ lineHeight: 1.55 }}>
               {easeLine}
+            </div>
+          )}
+
+          {submission?.grade && (
+            <div style={{ marginTop: 12 }}>
+              {evidence ? (
+                <div className="va-muted-12" style={{ lineHeight: 1.55 }}>
+                  Evidence record{" "}
+                  <a href={`/evidence/${variant.id}`} target="_blank" rel="noopener noreferrer">
+                    {evidence.id}
+                  </a>{" "}
+                  issued.
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-block"
+                  onClick={async () => {
+                    setEvidenceError(null);
+                    try {
+                      await ws.issueEvidenceRecord(variant.id);
+                    } catch (e) {
+                      setEvidenceError(e instanceof Error ? e.message : String(e));
+                    }
+                  }}
+                >
+                  Issue evidence record
+                </button>
+              )}
+              {evidenceError && (
+                <div style={{ color: "#8d4a3c", fontSize: 12, marginTop: 6 }}>{evidenceError}</div>
+              )}
             </div>
           )}
 

@@ -313,6 +313,285 @@ await check("threshold edit + audit", async () => {
   assert(pills.includes("over threshold"), `report pill changed: ${pills.join(",")}`);
 });
 
+
+// ---------------------------------------------------------------------------
+// Employer-outcomes bridge
+// ---------------------------------------------------------------------------
+async function resetDemo() {
+  await go("/settings");
+  await page.getByRole("button", { name: /Reset to demo data/ }).click();
+  await page.locator(".dialog .btn-primary, .dialog button.blueprint").first().click();
+  await page.waitForTimeout(300);
+}
+function fieldInput(scope, label) { return scope.locator(`.field:has(label:has-text("${label}"))`).locator("input, textarea").first(); }
+async function fillReviewForm(p, { name, role, org, email, status = "Validated", attest = true, scenarioValue = null, likert = 4 }) {
+  if (scenarioValue) {
+    const add = p.locator('input[aria-label="Add a organisation and scenario"]');
+    await add.fill(scenarioValue);
+    await add.press("Enter");
+    await p.waitForTimeout(100);
+  }
+  await fieldInput(p, "Your name").fill(name);
+  await fieldInput(p, "Your role").fill(role);
+  await fieldInput(p, "Organisation").fill(org);
+  await fieldInput(p, "Work email").fill(email);
+  await p.locator('label:has(input[name="status"])', { hasText: status }).first().click();
+  if (attest) await p.locator('label:has-text("This rubric reflects what we hire or promote for") input[type="checkbox"]').check();
+  const groups = p.locator(".va-likert .seg");
+  const n = await groups.count();
+  for (let i = 0; i < n; i++) await groups.nth(i).locator("label", { hasText: new RegExp(`^\\s*${likert}\\s*$`) }).click();
+}
+let mcaBlueprintId = null;
+let verifyLink = null;
+
+console.log("\n15. Employer validation page");
+await check("rail + employer page tiles, partners, blueprints, history, records", async () => {
+  await resetDemo();
+  await go("/employer");
+  const rail = await page.locator(".va-rail").innerText();
+  assert(rail.includes("Employer validation"), "rail label");
+  const t = await snapshotText("/employer-seeded");
+  for (const s of ["67%", "33%", "4.3", "goal 75%", "goal 50%"]) assert(t.includes(s), `tile text ${s}`);
+  for (const org of ["Bayfront Regional Bank", "Coral Health Network", "Northline Talent Systems"]) assert(await page.locator("tr", { hasText: org }).count() >= 1, `partner ${org}`);
+  assert(await page.locator("tr", { hasText: "Bayfront Regional Bank" }).first().locator('input[type="checkbox"]').isChecked(), "Bayfront adopted checked");
+  const mca = await page.locator("tr", { hasText: "Model card audit" }).first().innerText();
+  assert(/pending/i.test(mca), `B1 pending: ${mca}`);
+  for (const bp of ["Stakeholder memo", "Ethical risk decomposition"]) assert(/validated/i.test(await page.locator("tr", { hasText: bp }).first().innerText()), `${bp} validated`);
+  const hist = await page.locator("text=Validation history").locator("..").innerText();
+  assert(hist.includes("Bayfront Regional Bank") && hist.includes("Coral Health Network"), "history two entries");
+  assert(t.includes("VR-2026-0001") && t.includes("VR-2026-0002"), "evidence records table");
+  await shot("employer");
+});
+
+console.log("\n16. In-workspace employer review");
+await check("review pending blueprint in this browser", async () => {
+  await go("/employer");
+  await page.locator("tr", { hasText: "Model card audit" }).first().getByRole("button", { name: /^Review here$/ }).click();
+  await page.waitForURL(/\/review\/[^/?]+/);
+  mcaBlueprintId = page.url().match(/\/review\/([^/?#]+)/)[1];
+  await page.waitForTimeout(200);
+  const t = await snapshotText("/review-workspace");
+  assert(await page.locator(".va-rail").count() === 0, "no instructor rail");
+  assert(await page.locator(".va-review-bar").count() === 1, "review bar");
+  for (const s of ["What this assessment measures", "The rubric", "The scenario bank", "Sample versions", "Integrity of the version set", "Sign off"]) assert(t.toLowerCase().includes(s.toLowerCase()), `section ${s}`);
+  assert(/fairness/i.test(t) && /robustness/i.test(t) && /documentation/i.test(t) && /prioritis/i.test(t), "four criteria");
+  assert(await page.locator(".va-chips").count() >= 4, "chip editors for unlocked dims");
+  assert(await page.locator(".va-stamp").count() >= 4, "integrity stamps");
+  await shot("review");
+  await fillReviewForm(page, { name: "Priya Natarajan", role: "HR director", org: "Northline Talent Systems", email: "hr@northline.example", scenarioValue: "QA Test Scenario · returns classifier" });
+  await page.getByRole("button", { name: /^Record this review$/ }).click();
+  await page.waitForURL("**/employer");
+  await page.waitForTimeout(200);
+  const e = await snapshotText("/employer-after-review");
+  assert(e.includes("100%"), "validated tile 100%");
+  assert(/validated/i.test(await page.locator("tr", { hasText: "Model card audit" }).first().innerText()), "B1 validated");
+  await go(`/review/${mcaBlueprintId}`);
+  assert((await page.locator("body").innerText()).includes("QA Test Scenario"), "scenario value persisted on blueprint");
+});
+
+console.log("\n17. Link round-trip in a fresh browser context");
+await check("copy review link → fresh context review → result link → applied", async () => {
+  await go("/employer");
+  const row = page.locator("tr", { hasText: "Stakeholder memo" }).first();
+  await row.locator('select[aria-label="Partner for the review link"]').selectOption({ label: "Northline Talent Systems" });
+  await row.getByRole("button", { name: /^Copy review link$/ }).click();
+  const link = await row.locator(".va-copyfield input").inputValue();
+  assert(link.includes("/review#pkg="), `link ${link.slice(0, 60)}`);
+  const ctx2 = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const p2 = await ctx2.newPage();
+  const errs2 = [];
+  p2.on("pageerror", (e) => errs2.push(e.message));
+  await p2.goto(link, { waitUntil: "networkidle" });
+  await p2.waitForTimeout(300);
+  const bar = await p2.locator(".va-review-bar").innerText();
+  assert(bar.includes("Reviewing for Northline Talent Systems"), `bar: ${bar}`);
+  await fillReviewForm(p2, { name: "Priya Natarajan", role: "HR director", org: "Northline Talent Systems", email: "hr@northline.example" });
+  await p2.getByRole("button", { name: /^Finish review$/ }).click();
+  await p2.locator(".va-copyfield input").first().waitFor({ timeout: 5000 });
+  const result = await p2.locator(".va-copyfield input").first().inputValue();
+  assert(result.includes("/employer#result="), `result ${result.slice(0, 60)}`);
+  assert(errs2.length === 0, errs2.join(" | "));
+  await ctx2.close();
+  const before = await page.locator("text=Validation history").locator("..").innerText().catch(() => "");
+  await page.goto(result, { waitUntil: "networkidle" });
+  await page.waitForTimeout(400);
+  const t = await snapshotText("/employer-result-applied");
+  assert(t.includes("Applied: Northline Talent Systems validated"), "applied line");
+  const hist = await page.locator("text=Validation history").locator("..").innerText();
+  assert(hist.includes("imported"), "history entry marked imported");
+  assert(hist.length > before.length, "history grew");
+});
+
+console.log("\n18. Consumer email warning");
+await check("gmail address warns", async () => {
+  await go(`/review/${mcaBlueprintId}`);
+  await fieldInput(page, "Organisation").fill("Acme Corp");
+  await fieldInput(page, "Work email").fill("someone@gmail.com");
+  await fieldInput(page, "Your name").click();
+  await page.waitForTimeout(100);
+  assert((await page.locator("body").innerText()).includes("Use your work address at Acme Corp"), "warning text");
+});
+
+console.log("\n19. Evidence record v-04 / v-07");
+await check("evidence v-04 content, Open Badges download, sign, links", async () => {
+  await go("/evidence/v-04");
+  const t = await snapshotText("/evidence-v04");
+  assert(t.includes("VR-2026-0001"), "record id");
+  assert(/L-[0-9a-f]{12}/.test(t), "learner id");
+  assert(/Signed ·|Unsigned/i.test(t), "signature stamp");
+  for (const s of ["Employer validation", "Integrity of the assessment set", "How to verify"]) assert(t.toLowerCase().includes(s.toLowerCase()), `section ${s}`);
+  assert(/[0-9a-f]{64}/.test(t), "hash");
+  assert(await page.locator(".va-stamp").count() >= 6, "stamps");
+  const [dl] = await Promise.all([page.waitForEvent("download", { timeout: 5000 }), page.getByRole("button", { name: /Download Open Badges 3\.0/ }).click()]);
+  const path = await dl.path();
+  const json = JSON.parse(readFileSync(path, "utf8"));
+  const ctxs = JSON.stringify(json["@context"]);
+  assert(ctxs.includes("https://www.w3.org/ns/credentials/v2") && ctxs.includes("purl.imsglobal.org/spec/ob/v3p0"), `contexts ${ctxs}`);
+  assert(!JSON.stringify(json).includes("Alvarez"), "no student name in credential");
+  const sign = page.getByRole("button", { name: /^Sign record$/ });
+  if (await sign.count()) {
+    await sign.click();
+    await page.waitForTimeout(600);
+    assert(/Signed ·/i.test(await page.locator("body").innerText()), "signed after click");
+  }
+  assert(await page.locator('a[href="/verify/VR-2026-0001"]').count() === 1, "verify link");
+  assert(await page.locator('a[href="/share/VR-2026-0001"]').count() === 1, "share link");
+  await shot("evidence_v04");
+});
+await check("evidence v-07 not graded → grade → issue VR-2026-0003", async () => {
+  await go("/evidence/v-07");
+  const t = await page.locator("body").innerText();
+  assert(/not graded/i.test(t), "not graded stamp");
+  assert(await page.getByRole("button", { name: /^Issue record$/ }).count() === 0, "no issue button");
+  await go("/grade/v-07");
+  const groups = page.locator('[role="radiogroup"]');
+  for (let i = 0; i < 4; i++) await groups.nth(i).locator("label", { hasText: /^\s*3\s*$/ }).click();
+  await page.getByRole("button", { name: /Save score/ }).click();
+  await page.waitForTimeout(300);
+  await go("/evidence/v-07");
+  await page.getByRole("button", { name: /^Issue record$/ }).click();
+  await page.waitForTimeout(600);
+  const after = await snapshotText("/evidence-v07-issued");
+  assert(after.includes("VR-2026-0003"), `issued id missing: ${after.slice(0, 300)}`);
+});
+
+console.log("\n20. Student share → verify in a fresh context → record verification");
+await check("share, verify (no name), record verification, audit", async () => {
+  await go("/share/VR-2026-0001");
+  const t = await snapshotText("/share");
+  assert(t.includes("Alvarez"), "student sees own name");
+  await page.locator('input[placeholder="e.g. Bayfront Regional Bank"]').fill("Coral Health Network");
+  await page.locator('label:has-text("I choose to share") input[type="checkbox"]').check();
+  await page.getByRole("button", { name: /Share and get a verify link/ }).click();
+  await page.locator(".va-copyfield input").first().waitFor({ timeout: 8000 });
+  verifyLink = await page.locator(".va-copyfield input").first().inputValue();
+  assert(verifyLink.includes("/verify/VR-2026-0001#rec="), `verify link ${verifyLink.slice(0, 60)}`);
+  await shot("share");
+  const ctx2 = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const p2 = await ctx2.newPage();
+  const errs2 = [];
+  p2.on("pageerror", (e) => errs2.push(e.message));
+  await p2.goto(verifyLink, { waitUntil: "networkidle" });
+  await p2.getByText("Record verified").waitFor({ timeout: 8000 });
+  const v = await p2.locator("body").innerText();
+  assert(!v.includes("Alvarez"), "no student name on verify page");
+  assert(/Signed ·/i.test(v), "signature verified line");
+  await p2.screenshot({ path: `${SHOTS}/verify_bundle.png`, fullPage: true });
+  assert(errs2.length === 0, errs2.join(" | "));
+  await ctx2.close();
+  await go("/verify/VR-2026-0001");
+  await page.getByText("Record verified").waitFor({ timeout: 8000 });
+  await page.locator('input[placeholder="e.g. Bayfront Regional Bank"]').fill("Coral Health Network");
+  await page.getByRole("button", { name: /^Record this verification$/ }).click();
+  await page.waitForTimeout(200);
+  assert((await page.locator("body").innerText()).includes("Recorded"), "recorded");
+  await go("/console");
+  const audit = await page.locator("text=Audit trail").locator("..").innerText();
+  assert(/Coral Health Network verified VR-2026-0001/.test(audit), `audit: ${audit.slice(0, 200)}`);
+});
+
+console.log("\n21. Tamper check");
+await check("tampered bundle does not verify and does not crash", async () => {
+  const i = verifyLink.indexOf("#rec=") + 5 + 40;
+  const ch = verifyLink[i] === "A" ? "B" : "A";
+  const tampered = verifyLink.slice(0, i) + ch + verifyLink.slice(i + 1);
+  const ctx2 = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const p2 = await ctx2.newPage();
+  const errs2 = [];
+  p2.on("pageerror", (e) => errs2.push(e.message));
+  await p2.goto(tampered, { waitUntil: "networkidle" });
+  await p2.waitForTimeout(1500);
+  const v = await p2.locator("body").innerText();
+  assert(!v.includes("Record verified"), "must not verify");
+  assert(/Hash mismatch|Signature invalid|could not|invalid|not a varia|unreadable|corrupt|failed/i.test(v), `no clear failure text: ${v.slice(0, 300)}`);
+  assert(errs2.length === 0, errs2.join(" | "));
+  await ctx2.close();
+});
+
+console.log("\n22. Print media");
+await check("print hides chrome, shows record header", async () => {
+  await go("/evidence/v-04");
+  await page.emulateMedia({ media: "print" });
+  await page.waitForTimeout(100);
+  assert(!(await page.locator(".va-review-bar").isVisible()), "bar hidden");
+  assert(!(await page.getByRole("button", { name: /Print \/ Save as PDF/ }).isVisible()), "action row hidden");
+  const ph = page.locator(".va-print-header");
+  assert(await ph.isVisible(), "print header visible");
+  assert((await ph.innerText()).includes("VR-2026-0001"), "print header id");
+  await page.screenshot({ path: `${SHOTS}/evidence_print.png`, fullPage: true });
+  await page.emulateMedia({ media: "screen" });
+});
+
+console.log("\n23. Console / Roster / Grade wiring");
+await check("employer tiles, evidence column, grade line", async () => {
+  await go("/console");
+  const c = await page.locator("body").innerText();
+  assert(/employer outcomes/i.test(c) && /Manage on Employer validation/i.test(c), "console employer row");
+  await go("/roster");
+  assert((await page.locator("tr", { hasText: "Alvarez, R." }).innerText()).includes("VR-2026-0001"), "Alvarez evidence");
+  assert((await page.locator("tr", { hasText: "Ferreira, M." }).innerText()).includes("VR-2026-0002"), "Ferreira evidence");
+  await go("/grade/v-04");
+  const g = await page.locator("body").innerText();
+  assert(/Evidence record\s+VR-2026-0001\s+issued/.test(g.replace(/\n/g, " ")), "grade evidence line");
+});
+
+console.log("\n24. Migration from a pre-bridge workspace");
+await check("stripped workspace loads with employer data and bridge fields", async () => {
+  await resetDemo();
+  await go("/settings");
+  await page.evaluate(() => {
+    const raw = localStorage.getItem("varia.workspace.v1");
+    const obj = JSON.parse(raw);
+    for (const k of ["employerPartners", "employerValidations", "evidenceRecords", "verificationEvents", "signingKey"]) delete obj.state[k];
+    localStorage.setItem("varia.workspace.v1", JSON.stringify(obj));
+  });
+  await page.reload({ waitUntil: "networkidle" });
+  await go("/employer");
+  const t = await page.locator("body").innerText();
+  for (const s of ["Bayfront Regional Bank", "Coral Health Network", "Northline Talent Systems", "VR-2026-0001", "VR-2026-0002"]) assert(t.includes(s), `after migration ${s}`);
+  await go("/evidence/v-04");
+  assert(/L-[0-9a-f]{12}/.test(await page.locator("body").innerText()), "learner id after migration");
+});
+
+console.log("\n25. Reset restores employer tiles");
+await check("reset → 67% / 33% / 4.3", async () => {
+  await resetDemo();
+  await go("/employer");
+  const t = await page.locator("body").innerText();
+  for (const s of ["67%", "33%", "4.3"]) assert(t.includes(s), `tile ${s}`);
+});
+
+console.log("\n26. Label audit for the new pages");
+await check("employer/review/evidence headings present", async () => {
+  const want = ["Employer partners", "Blueprints and their validation", "Bring in a result", "Validation history", "Evidence records",
+    "What this assessment measures", "The rubric", "The scenario bank", "Sample versions", "Sign off",
+    "What was assessed", "The task this student received", "Rubric and result", "Employer validation", "Integrity of the assessment set", "How to verify"];
+  const all = corpus.map((c) => c.text.replace(/\s+/g, " ")).join("\n").toLowerCase();
+  const missing = want.filter((l) => !all.includes(l.toLowerCase()));
+  assert(missing.length === 0, `missing: ${missing.join(" | ")}`);
+  return `${want.length} labels`;
+});
+
 console.log("\n13. Label audit vs mockup");
 await check("mockup h6/th labels present", async () => {
   const html = readFileSync("mockups/VARIA App.dc.html", "utf8");

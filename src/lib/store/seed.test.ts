@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computeReport } from "@lib/metrics";
 import { buildDemoWorkspace, demoReadingEase, NAMED_STUDENTS } from "./seed";
-import { consoleStats, rosterRows, rosterStats, studentById } from "./selectors";
+import { blueprintValidationStatus, consoleStats, employerStats, rosterRows, rosterStats, studentById } from "./selectors";
 
 describe("demo workspace", () => {
   const ws = buildDemoWorkspace(computeReport);
@@ -84,10 +84,46 @@ describe("demo workspace", () => {
     expect(rows[1].readingEase).toBe(49.8);
   });
 
-  it("has three blueprints with B1 active and five audit events", () => {
+  it("has three blueprints with B1 active and seven audit events", () => {
     expect(ws.blueprints).toHaveLength(3);
     expect(ws.activeBlueprintId).toBe("bp-b1-model-card-audit");
-    expect(ws.audit).toHaveLength(5);
+    expect(ws.audit).toHaveLength(7);
+    expect(ws.audit.some((a) => a.text === "Bayfront Regional Bank validated Stakeholder memo")).toBe(true);
+    expect(ws.audit.some((a) => a.text === "Evidence record VR-2026-0001 issued for Alvarez, R.")).toBe(true);
     expect(ws.thresholds[ws.thresholds.length - 1].p4FleschSigma).toBe(8);
+  });
+
+  it("seeds three employer partners, two validations, two evidence records", () => {
+    expect(ws.employerPartners.map((p) => p.organisation)).toEqual(["Bayfront Regional Bank", "Coral Health Network", "Northline Talent Systems"]);
+    expect(ws.employerPartners.filter((p) => p.adoptedEvidenceRecords).map((p) => p.organisation)).toEqual(["Bayfront Regional Bank"]);
+    expect(ws.employerValidations).toHaveLength(2);
+    expect(blueprintValidationStatus(ws, "bp-b2-stakeholder-memo")).toBe("validated");
+    expect(blueprintValidationStatus(ws, "bp-b3-ethical-risk")).toBe("validated");
+    expect(blueprintValidationStatus(ws, "bp-b1-model-card-audit")).toBe("pending");
+    // Bayfront's scenario edit is reflected on B2
+    const b2 = ws.blueprints.find((b) => b.id === "bp-b2-stakeholder-memo")!;
+    expect(b2.surfaceDimensions.find((d) => d.key === "scenario")!.values).toContain("small-business lending");
+    expect(ws.evidenceRecords.map((r) => r.id)).toEqual(["VR-2026-0001", "VR-2026-0002"]);
+    expect(ws.evidenceRecords.map((r) => r.variantId)).toEqual(["v-04", "v-15"]);
+    for (const r of ws.evidenceRecords) {
+      expect(r.hash).toMatch(/^[0-9a-f]{64}$/);
+      expect(r.validationIds).toEqual([]); // B1 has no validation yet
+      expect(r.issuedBy).toBe("Dr. E. Lee · Miami Dade College");
+    }
+    expect(ws.evidenceRecords[0].hash).not.toBe(ws.evidenceRecords[1].hash);
+  });
+
+  it("employer stats read 2 of 3 validated, 1 of 3 adopted, satisfaction 4.3 from 2 responses", () => {
+    const s = employerStats(ws);
+    expect(s.blueprints).toBe(3);
+    expect(s.validated).toBe(2);
+    expect(Math.abs(s.validatedPct - 2 / 3)).toBeLessThan(1e-9);
+    expect(s.partners).toBe(3);
+    expect(s.adopted).toBe(1);
+    expect(Math.abs(s.adoptedPct - 1 / 3)).toBeLessThan(1e-9);
+    expect(s.responses).toBe(2);
+    expect(s.satisfactionMean).toBe(4.3); // (22/5 + 21/5) / 2
+    expect(s.goals.validatedPct).toBe(0.75);
+    expect(s.goals.adoptedPct).toBe(0.5);
   });
 });

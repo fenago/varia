@@ -13,6 +13,9 @@ import type {
   BlueprintDraft,
   Course,
   Criterion,
+  EmployerPartner,
+  EmployerValidation,
+  EvidenceRecord,
   Grade,
   InstitutionSet,
   IntegrityReport,
@@ -31,6 +34,7 @@ import type {
 } from "@shared/types";
 import { DEFAULT_THRESHOLDS, JOINT_WEIGHTS, PROPERTY_LABELS, SIGMA_CEILING } from "@shared/thresholds";
 import { variantId } from "./ids";
+import { evidenceCanonical, hashEvidence } from "./employer";
 import {
   SEED_SCENARIOS,
   SEED_SUBMISSION_V07,
@@ -754,12 +758,158 @@ export function buildDemoInstitutionSets(): InstitutionSet[] {
 
 export function buildDemoAudit(): AuditEvent[] {
   return [
+    { id: "aud-ev-1", at: "2026-09-08T16:40:00-04:00", actor: DEMO_INSTRUCTOR, kind: "grade", text: "Evidence record VR-2026-0001 issued for Alvarez, R.", runId: DEMO_RUN_ID },
     { id: "aud-1", at: "2026-09-04T08:20:00-04:00", actor: "T. Gordon", kind: "appeal", text: "Student appeal opened on DAT 4100 v-19", runId: DEMO_RUN_ID },
     { id: "aud-2", at: "2026-09-03T14:02:00-04:00", actor: "system", kind: "system", text: "ENC 1102 set blocked automatically — two checks failed" },
     { id: "aud-3", at: "2026-09-02T09:41:00-04:00", actor: "M. Okafor", kind: "release", text: "CIS 3320 released over difficulty threshold. Reason: \"formative, low stakes, copy-resistance prioritised\"" },
     { id: "aud-4", at: "2026-08-28T16:15:00-04:00", actor: "Assessment office", kind: "threshold", text: "Difficulty parity threshold tightened 10.0 → 8.0" },
     { id: "aud-5", at: "2026-08-21T11:03:00-04:00", actor: "Assessment office", kind: "policy", text: "Llama 3.2 3B removed from selectable generators" },
+    { id: "aud-val-1", at: "2026-08-19T15:30:00-04:00", actor: "M. Restrepo (Bayfront Regional Bank)", kind: "policy", text: "Bayfront Regional Bank validated Stakeholder memo" },
   ];
+}
+
+// ---------------------------------------------------------------------------
+// Employer partners, validations, evidence records
+// ---------------------------------------------------------------------------
+
+export const DEMO_PARTNER_IDS = {
+  bayfront: "partner-bayfront-regional-bank",
+  coral: "partner-coral-health-network",
+  northline: "partner-northline-talent-systems",
+} as const;
+
+export function buildDemoEmployerPartners(): EmployerPartner[] {
+  return [
+    {
+      id: DEMO_PARTNER_IDS.bayfront,
+      organisation: "Bayfront Regional Bank",
+      sector: "Lending",
+      contactName: "M. Restrepo",
+      contactRole: "Chief Risk Officer",
+      contactEmail: "m.restrepo@bayfrontregional.example",
+      adoptedEvidenceRecords: true,
+      adoptedAt: "2026-09-02T10:15:00-04:00",
+      addedAt: "2026-07-22T09:00:00-04:00",
+    },
+    {
+      id: DEMO_PARTNER_IDS.coral,
+      organisation: "Coral Health Network",
+      sector: "Healthcare",
+      contactName: "Dr. A. Okonkwo",
+      contactRole: "Clinical Informatics Lead",
+      contactEmail: "a.okonkwo@coralhealth.example",
+      adoptedEvidenceRecords: false,
+      adoptedAt: null,
+      addedAt: "2026-07-22T09:05:00-04:00",
+    },
+    {
+      id: DEMO_PARTNER_IDS.northline,
+      organisation: "Northline Talent Systems",
+      sector: "Hiring",
+      contactName: "J. Whitaker",
+      contactRole: "HR Director",
+      contactEmail: "j.whitaker@northlinetalent.example",
+      adoptedEvidenceRecords: false,
+      adoptedAt: null,
+      addedAt: "2026-08-05T14:20:00-04:00",
+    },
+  ];
+}
+
+export function buildDemoEmployerValidations(): EmployerValidation[] {
+  return [
+    {
+      id: "val-b2-bayfront",
+      blueprintId: "bp-b2-stakeholder-memo",
+      blueprintName: "Stakeholder memo",
+      partnerId: DEMO_PARTNER_IDS.bayfront,
+      organisation: "Bayfront Regional Bank",
+      reviewerName: "M. Restrepo",
+      reviewerRole: "Chief Risk Officer",
+      reviewedAt: "2026-08-19T15:30:00-04:00",
+      status: "validated",
+      attested: true,
+      criteriaComments: {
+        "c2-recommendation": "This is the criterion we hire on. An analyst who cannot name an owner and a date has not finished the memo.",
+      },
+      constructComment: "Matches the brief our model-risk team gives new analysts in their first quarter.",
+      scenarioEdits: [{ dimensionKey: "scenario", added: ["small-business lending"], removed: [] }],
+      sampleVariantIds: [],
+      satisfaction: {
+        realism: 5,
+        rubricFit: 4,
+        fairness: 5,
+        trust: 4,
+        adoptionIntent: 4,
+        comment: "We would accept this memo as a work sample from a candidate.",
+        submittedAt: "2026-08-19T15:42:00-04:00",
+      },
+      source: "workspace",
+    },
+    {
+      id: "val-b3-coral",
+      blueprintId: "bp-b3-ethical-risk",
+      blueprintName: "Ethical risk decomposition",
+      partnerId: DEMO_PARTNER_IDS.coral,
+      organisation: "Coral Health Network",
+      reviewerName: "Dr. A. Okonkwo",
+      reviewerRole: "Clinical Informatics Lead",
+      reviewedAt: "2026-08-26T11:10:00-04:00",
+      status: "validated",
+      attested: true,
+      criteriaComments: {
+        "c3-mitigation": "Sequencing and ownership of mitigations is exactly what our governance committee asks for.",
+      },
+      constructComment: "The vignette format mirrors our pre-deployment ethics review.",
+      scenarioEdits: [],
+      sampleVariantIds: [],
+      satisfaction: {
+        realism: 4,
+        rubricFit: 5,
+        fairness: 4,
+        trust: 5,
+        adoptionIntent: 3,
+        comment: "Useful for screening informatics fellows; adoption for hiring needs our HR partner's sign-off.",
+        submittedAt: "2026-08-26T11:25:00-04:00",
+      },
+      source: "workspace",
+    },
+  ];
+}
+
+export function buildDemoEvidenceRecords(
+  run: Run,
+  submissions: Submission[],
+  blueprint: Blueprint,
+  course: Course,
+  roster: Roster,
+  validations: EmployerValidation[],
+): EvidenceRecord[] {
+  const issuedBy = `${DEMO_INSTRUCTOR} · Miami Dade College`;
+  const validationIds = validations.filter((v) => v.blueprintId === blueprint.id && v.status === "validated").map((v) => v.id);
+  const make = (variantIdStr: string, id: string, issuedAt: string): EvidenceRecord | null => {
+    const variant = run.variants.find((v) => v.id === variantIdStr);
+    const submission = submissions.find((s) => s.variantId === variantIdStr);
+    const student = roster.students.find((s) => s.id === variant?.studentId);
+    if (!variant || !submission?.grade || !student) return null;
+    const canonical = evidenceCanonical({ student, course, blueprint, variant, grade: submission.grade, report: run.report, validationIds, issuedAt });
+    return { id, runId: run.id, variantId: variantIdStr, studentId: student.id, blueprintId: blueprint.id, issuedAt, issuedBy, hash: hashEvidence(canonical), validationIds };
+  };
+  return [make("v-04", "VR-2026-0001", "2026-09-08T16:40:00-04:00"), make("v-15", "VR-2026-0002", "2026-09-08T16:41:00-04:00")].filter(
+    (r): r is EvidenceRecord => !!r,
+  );
+}
+
+/** Employer-bridge data alone, for migrating persisted workspaces that pre-date it. */
+export function buildDemoEmployerData(ws: Pick<Workspace, "runs" | "submissions" | "blueprints" | "course" | "roster">): Pick<Workspace, "employerPartners" | "employerValidations" | "evidenceRecords"> {
+  const validations = buildDemoEmployerValidations();
+  const run = ws.runs.find((r) => r.id === DEMO_RUN_ID) ?? ws.runs[0];
+  const b1 = ws.blueprints.find((b) => b.id === DEMO_BLUEPRINT_ID);
+  return {
+    employerPartners: buildDemoEmployerPartners(),
+    employerValidations: validations,
+    evidenceRecords: run && b1 ? buildDemoEvidenceRecords(run, ws.submissions, b1, ws.course, ws.roster, validations) : [],
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -769,13 +919,26 @@ export function buildDemoAudit(): AuditEvent[] {
 export function buildDemoWorkspace(computeReport?: (run: Run, t: ThresholdSet) => IntegrityReport): Workspace {
   const b1 = buildDemoBlueprintB1();
   const run = buildDemoRun(computeReport);
+  const course = buildDemoCourse();
+  const roster = buildDemoRoster();
+  const submissions = buildDemoSubmissions(run, b1.rubric);
+  const employerPartners = buildDemoEmployerPartners();
+  const employerValidations = buildDemoEmployerValidations();
+  // The Bayfront review added a scenario value to B2; reflect it on the blueprint as recordValidation would.
+  const b2 = buildDemoBlueprintB2();
+  const b2Validated: Blueprint = {
+    ...b2,
+    surfaceDimensions: b2.surfaceDimensions.map((d) =>
+      d.key === "scenario" ? { ...d, values: [...d.values, "small-business lending"], note: "5 values · 1 added by employer" } : d,
+    ),
+  };
   return {
     version: 1,
-    course: buildDemoCourse(),
-    roster: buildDemoRoster(),
-    blueprints: [buildDemoBlueprintB2(), buildDemoBlueprintB3(), b1],
+    course,
+    roster,
+    blueprints: [b2Validated, buildDemoBlueprintB3(), b1],
     runs: [run],
-    submissions: buildDemoSubmissions(run, b1.rubric),
+    submissions,
     appeals: buildDemoAppeals(run),
     thresholds: buildDemoThresholds(),
     audit: buildDemoAudit(),
@@ -784,5 +947,46 @@ export function buildDemoWorkspace(computeReport?: (run: Run, t: ThresholdSet) =
     activeRunId: run.id,
     pendingDraft: null,
     seededAt: new Date().toISOString(),
+    employerPartners,
+    employerValidations,
+    evidenceRecords: buildDemoEvidenceRecords(run, submissions, b1, course, roster, employerValidations),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Structural bridge demo events: one consent share and one employer verification
+// on VR-2026-0001 so the observed-adoption number is non-zero in demo mode.
+// ---------------------------------------------------------------------------
+
+export function buildDemoBridgeEvents<T extends Pick<Workspace, "evidenceRecords" | "verificationEvents" | "employerPartners">>(ws: T): T {
+  const rec = ws.evidenceRecords.find((r) => r.id === "VR-2026-0001");
+  if (!rec || !rec.bridge) return ws;
+  const bayfront = ws.employerPartners.find((p) => p.id === DEMO_PARTNER_IDS.bayfront);
+  const org = bayfront?.organisation ?? "Bayfront Regional Bank";
+  const consent = {
+    id: "con-demo-0001",
+    at: "2026-09-02T15:10:00-04:00",
+    action: "shared" as const,
+    learnerId: rec.bridge.learnerId,
+    toOrganisation: org,
+    toEmail: bayfront?.contactEmail ?? null,
+    note: "Applying for the summer analyst programme.",
+  };
+  const verification = {
+    id: "ver-demo-0001",
+    at: "2026-09-03T09:24:00-04:00",
+    recordId: rec.id,
+    byOrganisation: org,
+    result: "valid" as const,
+    method: "hash",
+  };
+  const alreadyConsent = rec.bridge.consent.some((c) => c.id === consent.id);
+  const alreadyVer = (ws.verificationEvents ?? []).some((v) => v.id === verification.id);
+  return {
+    ...ws,
+    evidenceRecords: ws.evidenceRecords.map((r) =>
+      r.id === rec.id && r.bridge && !alreadyConsent ? { ...r, bridge: { ...r.bridge, consent: [...r.bridge.consent, consent] } } : r,
+    ),
+    verificationEvents: alreadyVer ? (ws.verificationEvents ?? []) : [...(ws.verificationEvents ?? []), verification],
   };
 }
