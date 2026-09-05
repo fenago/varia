@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { GENERATOR_MODELS } from "@shared/types";
 import { useSettings } from "@lib/store/settings";
 import { PAGES, pageKeyForPath } from "../router";
@@ -28,11 +28,7 @@ export function Header() {
           <span className="tag tag-accent" title="Generator model from Settings">
             {modelLabel}
           </span>
-        ) : (
-          <Link className="tag tag-outline" to="/settings" title="No Claude key set — replaying recorded sample runs">
-            Demo mode · add a key
-          </Link>
-        )}
+        ) : null}
       </div>
     </header>
   );

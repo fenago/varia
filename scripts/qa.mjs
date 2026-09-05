@@ -211,12 +211,10 @@ await check("deep-link hard reload on /roster", async () => {
 await check("no console errors so far", async () => { assert(consoleErrors.length === 0, consoleErrors.join(" | ")); });
 
 console.log("\n2. Header chip");
-await check("header shows the demo chip and links to settings", async () => {
+await check("header shows no chip without a key", async () => {
   await go("/");
   const h = await page.locator(".va-header").innerText();
-  assert(h.includes("Demo mode · add a key"), "demo chip");
-  await page.locator(".va-header").getByText("Demo mode · add a key").click();
-  await page.waitForURL("**/settings");
+  assert(!h.includes("Demo mode"), "no demo chip");
 });
 
 console.log("\n3. Rail");
@@ -409,7 +407,7 @@ await check("settings key flow", async () => {
   await page.getByRole("button", { name: /^Forget key$/ }).first().click();
   await page.locator(".dialog").getByRole("button", { name: /Forget key/ }).click();
   await page.waitForTimeout(200);
-  assert((await page.locator(".va-header").innerText()).includes("Demo mode"), "back to demo");
+  assert(!(await page.locator(".va-header").innerText()).includes("Claude"), "chip gone after forget");
 });
 await check("export workspace download", async () => {
   await go("/settings");
