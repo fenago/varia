@@ -6,15 +6,18 @@ export const DEFAULT_THRESHOLDS: ThresholdSet = {
   setAt: "2026-08-28T16:15:00-04:00",
   setBy: "Assessment office",
   p1Cosine: 0.15,
+  p1Ngram: 0.35,
+  p1MaxPair: 0.5,
   p2Equivalence: 0.9,
   p3: "advisory",
   p4FleschSigma: 8.0,
   allowOverThresholdRelease: true,
-  metricsVersion: 3,
+  metricsVersion: 4,
 };
 
 /** Human label for a metric definition version (wave 6c). */
 export function metricsVersionLabel(v: number | undefined): string {
+  if (v === 4) return "metric definition v4 (stop words removed; shared lines stripped; terms every version shares are floored in TF-IDF so the construct's own vocabulary barely counts)";
   if (v === 3) return "metric definition v3 (stop words removed; lines shared by most versions stripped before P1)";
   if (v === 2) return "metric definition v2 (stop words removed)";
   if (v === 1) return "metric definition v1 (no stop-word removal)";
@@ -23,6 +26,11 @@ export function metricsVersionLabel(v: number | undefined): string {
 
 /** Pilot σ Flesch range for dimension-preserving generation (paper Table 3). */
 export const PILOT_DP_FLESCH_SIGMA: [number, number] = [10.4, 11.3];
+
+/** P1 4-gram overlap limit used when a threshold set predates the field. Pilot frontier ≤ 0.09; Llama near-duplicates 0.533. */
+export const DEFAULT_P1_NGRAM = 0.35;
+/** P1 most-similar-pair limit: any two versions sharing more than half their four-word phrases are a duplicate pair. */
+export const DEFAULT_P1_MAXPAIR = 0.5;
 
 /** Frontier band from the pilot, shown for context next to J. */
 export const FRONTIER_BAND: [number, number] = [0.81, 0.88];

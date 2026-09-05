@@ -59,8 +59,15 @@ describe("regenerateOutliers never releases; policy can block over-threshold rel
 
   it("releaseAnyway refuses when policy blocks over-threshold release", () => {
     const ws = useWorkspace.getState();
-    const run = ws.runs.find((r) => r.report && !r.report.releasable)!;
-    useWorkspace.setState((s) => ({ runs: s.runs.map((r) => (r.id === run.id ? { ...r, release: null } : r)) }));
+    // Every recorded run clears all four checks under metric v4, so make one over threshold for the test.
+    const run = ws.runs.find((r) => r.report)!;
+    useWorkspace.setState((s) => ({
+      runs: s.runs.map((r) =>
+        r.id === run.id
+          ? { ...r, release: null, report: { ...r.report!, releasable: false, checks: { ...r.report!.checks, p1: { ...r.report!.checks.p1, gate: "fail" as const } } } }
+          : r,
+      ),
+    }));
     ws.setThreshold({ allowOverThresholdRelease: false }, "Assessment office");
     expect(currentThresholds(useWorkspace.getState()).allowOverThresholdRelease).toBe(false);
     useWorkspace.getState().releaseAnyway(run.id, "test");

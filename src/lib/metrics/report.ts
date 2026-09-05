@@ -15,11 +15,11 @@ import type {
   Variant,
   VariantMetrics,
 } from "@shared/types";
-import { JOINT_WEIGHTS, PROPERTY_LABELS, SIGMA_CEILING } from "@shared/thresholds";
+import { DEFAULT_P1_MAXPAIR, DEFAULT_P1_NGRAM, JOINT_WEIGHTS, PROPERTY_LABELS, SIGMA_CEILING } from "@shared/thresholds";
 import { DEFAULT_ADVANCED } from "@shared/types";
 import { METRICS_VERSION } from "./version";
 import { fleschReadingEase, stepCount, typeTokenRatio } from "./flesch";
-import { pairwiseJaccard4Mean } from "./ngram";
+import { maxPairJaccard4, pairwiseJaccard4Mean } from "./ngram";
 import { pairwiseCosineMean } from "./cosine";
 import { stripSharedBoilerplate } from "./boilerplate";
 import { clamp01, mean, median, stddev } from "./stats";
@@ -118,6 +118,8 @@ export function detectOutliers(variants: Variant[], report: OutlierContext): str
 }
 
 export interface CheckInputs {
+  mostSimilarPair?: { a: string; b: string; overlap: number } | null;
+  ngramOverlapMean?: number;
   cosineMean: number;
   equivalenceMean: number;
   rubricProxySigma: number;
@@ -139,7 +141,16 @@ const fmt = (x: number, d: number) => (Number.isFinite(x) ? x.toFixed(d) : "—"
 export function buildChecks(inputs: CheckInputs, thresholds: ThresholdSet): Record<Property, Check> {
   const { cosineMean, equivalenceMean, rubricProxySigma, fleschSigma, fleschMean } = inputs;
 
-  const p1Pass = cosineMean <= thresholds.p1Cosine;
+  const ngramMean = inputs.ngramOverlapMean ?? 0;
+  const ngramLimit = thresholds.p1Ngram ?? DEFAULT_P1_NGRAM;
+  const pair = inputs.mostSimilarPair ?? null;
+  const pairLimit = thresholds.p1MaxPair ?? DEFAULT_P1_MAXPAIR;
+  const p1CosPass = cosineMean <= thresholds.p1Cosine;
+  const p1NgramPass = ngramMean <= ngramLimit;
+  const p1PairPass = !pair || pair.overlap <= pairLimit;
+  // P1 needs both lenses (paper §3.4): TF-IDF cosine catches recycled scenarios, 4-gram overlap
+  // catches near-duplicates whose only differences are rare words that TF-IDF over-weights.
+  const p1Pass = p1CosPass && p1NgramPass && p1PairPass;
   const p2Pass = equivalenceMean >= thresholds.p2Equivalence;
   const p4Pass = fleschSigma <= thresholds.p4FleschSigma;
 
@@ -155,7 +166,7 @@ export function buildChecks(inputs: CheckInputs, thresholds: ThresholdSet): Reco
     p1: {
       property: "p1",
       label: PROPERTY_LABELS.p1.label,
-      metricLabel: `cosine ${fmt(cosineMean, 3)}`,
+      metricLabel: `cosine ${fmt(cosineMean, 3)} · 4-gram ${fmt(ngramMean, 3)}${pair ? ` · closest pair ${fmt(pair.overlap, 2)}` : ""}`,
       detail:
         PROPERTY_LABELS.p1.tooltip +
         (inputs.boilerplateLinesRemoved
@@ -168,7 +179,11 @@ export function buildChecks(inputs: CheckInputs, thresholds: ThresholdSet): Reco
       gate: p1Pass ? "pass" : "fail",
       note: p1Pass
         ? null
-        : "Versions are too alike to deter copying. Add a surface dimension or raise the version count.",
+        : !p1PairPass && pair
+          ? `${pair.a} and ${pair.b} share ${Math.round(pair.overlap * 100)}% of their four-word phrases (limit ${Math.round(pairLimit * 100)}%): two students got the same task. Regenerate one of them.`
+          : !p1NgramPass
+          ? `Versions share ${Math.round(ngramMean * 100)}% of their four-word phrases (limit ${Math.round(ngramLimit * 100)}%): they are near-duplicates. Regenerate with a different scenario per version.`
+          : "Versions are too alike to deter copying. Add a surface dimension or raise the version count.",
     },
     p2: {
       property: "p2",
@@ -246,6 +261,8 @@ export function computeReport(run: Run, thresholds: ThresholdSet, opts: ReportOp
 
   const cosineMean = pairwiseCosineMean(texts);
   const ngramOverlapMean = pairwiseJaccard4Mean(texts);
+  const mp = maxPairJaccard4(texts);
+  const mostSimilarPair = mp ? { a: scorable[mp.i].id, b: scorable[mp.j].id, overlap: mp.value } : null;
 
   const eqs = scorable
     .map((v) => v.metrics.equivalence)
@@ -272,6 +289,8 @@ export function computeReport(run: Run, thresholds: ThresholdSet, opts: ReportOp
 
   const checks = buildChecks(
     {
+      ngramOverlapMean,
+      mostSimilarPair,
       cosineMean,
       equivalenceMean,
       rubricProxySigma,
@@ -295,6 +314,7 @@ export function computeReport(run: Run, thresholds: ThresholdSet, opts: ReportOp
     boilerplateLinesRemoved,
     cosineMean,
     ngramOverlapMean,
+    mostSimilarPair,
     equivalenceMean,
     rubricProxySigma,
     fleschSigma,

@@ -41,3 +41,16 @@ export function pairwiseJaccard4Mean(texts: string[]): number {
   }
   return pairs === 0 ? 0 : sum / pairs;
 }
+
+
+/** The most similar pair by 4-gram Jaccard, with indexes into `texts`. */
+export function maxPairJaccard4(texts: string[]): { i: number; j: number; value: number } | null {
+  if (texts.length < 2) return null;
+  const sets = texts.map((t) => wordNgrams(tokenize(t), 4));
+  let best = { i: 0, j: 1, value: -1 };
+  for (let i = 0; i < sets.length; i++) for (let j = i + 1; j < sets.length; j++) {
+    const v = jaccard(sets[i], sets[j]);
+    if (v > best.value) best = { i, j, value: v };
+  }
+  return best;
+}

@@ -191,7 +191,7 @@ describe("buildChecks", () => {
   it("labels, metric labels, bar geometry on an all-pass set", () => {
     const c = buildChecks(inputs, DEFAULT_THRESHOLDS);
     expect(c.p1.label).toBe("Versions look different");
-    expect(c.p1.metricLabel).toBe("cosine 0.095");
+    expect(c.p1.metricLabel).toMatch(/^cosine 0\.095 · 4-gram /);
     expect(c.p2.metricLabel).toBe("equivalence 0.960");
     expect(c.p3.metricLabel).toBe("provisional proxy");
     expect(c.p4.metricLabel).toBe("σ Flesch 5.5");
@@ -309,10 +309,12 @@ describe("computeReport", () => {
     const t = "audit the model card for the hospital triage classifier and report gaps in region";
     const vs = FLESCH.map((_, i) => mkVariant(`v-0${i + 1}`, 60, 0.95, `${t} ${["north", "south", "east", "west", "central", "coastal"][i]}`));
     const r = computeReport(mkRun(vs), DEFAULT_THRESHOLDS);
-    expect(r.cosineMean).toBeGreaterThan(0.5);
+    // Metric v4 discounts the words every version shares, so cosine is small here; the
+    // 4-gram lens is what catches near-duplicates and fails P1.
     expect(r.ngramOverlapMean).toBeGreaterThan(0.5);
     expect(r.boilerplateLinesRemoved).toBe(0);
     expect(r.checks.p1.gate).toBe("fail");
+    expect(r.checks.p1.note).toMatch(/near-duplicates|same task/);
     expect(r.releasable).toBe(false);
   });
 

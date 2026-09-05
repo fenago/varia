@@ -227,6 +227,8 @@ export interface IntegrityReport {
   /** F = 1 − J */
   failure: number;
   checks: Record<Property, Check>;
+  /** The most similar pair of versions by 4-gram overlap */
+  mostSimilarPair?: { a: string; b: string; overlap: number } | null;
   /** Variant IDs named by a failing check */
   outliers: string[];
   /** P1, P2, P4 all pass */
@@ -384,6 +386,10 @@ export interface ThresholdSet {
   setBy: string;
   /** P1: mean pairwise cosine must be ≤ */
   p1Cosine: number;
+  /** P1: mean pairwise 4-gram overlap must be ≤ (catches near-duplicates that TF-IDF v4 discounts). Default 0.35. */
+  p1Ngram?: number;
+  /** P1: the MOST similar pair's 4-gram overlap must be ≤ (paper §3.1 formal P1 is a max over pairs). Default 0.5. */
+  p1MaxPair?: number;
   /** P2: construct equivalence must be ≥ */
   p2Equivalence: number;
   /** P3 is advisory in this prototype */

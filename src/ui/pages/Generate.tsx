@@ -5,6 +5,7 @@ import { useWorkspace } from "@lib/store/workspace";
 import { useSettings } from "@lib/store/settings";
 import { activeBlueprint, activeRun } from "@lib/store/selectors";
 import { runCompletion } from "@lib/store/orchestrator";
+import { fixtureForBlueprint } from "@lib/store/fixtures";
 import { estimateRunCost } from "@lib/llm";
 import { PILOT_DP_FLESCH_SIGMA, STRATEGY_LABELS, THREAT_OPTIONS, THREAT_TO_STRATEGY } from "@shared/thresholds";
 import { currentThresholds } from "@lib/store/selectors";
@@ -59,9 +60,14 @@ export default function Generate() {
   const run = activeRun(ws);
 
   const rosterSize = ws.roster.students.length;
+  // Without a key, Generate replays the recorded run for this blueprint, so N defaults to (and is
+  // capped at) the number of recorded versions; cycling them would only manufacture duplicates.
+  const recorded = settings.mode === "demo" && bp ? fixtureForBlueprint(bp.id, bp.name) : null;
+  const recordedCount = recorded ? recorded.run.variants.filter((v) => v.text && !v.error).length : 0;
+  const nMax = recordedCount > 0 ? recordedCount : 200;
   const [threat, setThreat] = useState<ThreatProfile>("high-stakes");
   const [manual, setManual] = useState<Strategy>("zero-shot");
-  const [n, setN] = useState<number>(Math.max(2, Math.min(200, rosterSize || 10)));
+  const [n, setN] = useState<number>(Math.max(2, Math.min(nMax, recordedCount > 0 ? recordedCount : rosterSize || 10)));
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [judgeSamples, setJudgeSamplesLocal] = useState<number>(Math.max(3, Math.min(9, settings.judgeSamples)));
@@ -309,7 +315,7 @@ export default function Generate() {
                 min={2}
                 max={200}
                 value={n}
-                onChange={(e) => setN(Math.max(2, Math.min(200, Number(e.target.value) || 2)))}
+                onChange={(e) => setN(Math.max(2, Math.min(nMax, Number(e.target.value) || 2)))}
               />
             </Field>
             <div style={{ marginBottom: 12 }}>
@@ -368,7 +374,7 @@ export default function Generate() {
             </BlueprintButton>
             {settings.mode === "demo" && (
               <div className="va-muted-12" style={{ marginTop: 10, lineHeight: 1.5 }}>
-                Demo mode: replays a seeded run. Add your key in <Link to="/settings">Settings</Link> to generate for real.
+                No key set: this replays the recorded run for this assessment{recordedCount ? ` (${recordedCount} versions, ${recorded?.models.generator ?? "recorded"} generating)` : ""}. Add your key in <Link to="/settings">Settings</Link> to generate for your roster of {rosterSize} for real.
               </div>
             )}
             {settings.mode === "live" && (

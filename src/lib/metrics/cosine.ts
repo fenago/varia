@@ -1,8 +1,8 @@
 /**
  * TF-IDF n-gram cosine (P1). Stop words removed, then unigrams + bigrams,
- * raw term frequency, idf = ln((1+N)/(1+df)) + 1, L2-normalised. Paper §4.5
+ * raw term frequency, idf = ln((N+1)/df) (metric v4, set-wide terms floored), L2-normalised. Paper §4.5
  * used TF-IDF n-gram cosine as the local proxy for the embedding cosine; no
- * embedding model in the browser. Metric definition v2 (see METRICS_VERSION).
+ * embedding model in the browser. Metric definition v4 (see METRICS_VERSION).
  */
 import { tokenize } from "./ngram";
 
@@ -45,7 +45,12 @@ export function tfidfVectors(texts: string[]): Map<string, number>[] {
     const vec = new Map<string, number>();
     let ss = 0;
     for (const [f, count] of tf) {
-      const idf = Math.log((1 + N) / (1 + (df.get(f) ?? 0))) + 1;
+      // Metric v4: idf = ln((N+1)/df). A term every version shares (df = N) keeps a small
+      // floor, ln((N+1)/N), instead of the standard smoothed weight of 1, so the construct's
+      // own vocabulary ("sessions", "false positive rate") barely counts while identical or
+      // near-identical sets still score ~1. On the five recorded runs this puts cosine at
+      // 0.04–0.07, inside the paper's frontier band; the smoothed form gave 0.13–0.33.
+      const idf = Math.log((N + 1) / Math.max(1, df.get(f) ?? 1));
       const w = count * idf;
       vec.set(f, w);
       ss += w * w;

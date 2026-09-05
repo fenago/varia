@@ -407,7 +407,7 @@ await check("settings key flow", async () => {
   await page.getByRole("button", { name: /^Forget key$/ }).first().click();
   await page.locator(".dialog").getByRole("button", { name: /Forget key/ }).click();
   await page.waitForTimeout(200);
-  assert(!(await page.locator(".va-header").innerText()).includes("Claude"), "chip gone after forget");
+  assert(!(await page.locator(".va-header-right").innerText()).includes("Claude"), "chip gone after forget");
 });
 await check("export workspace download", async () => {
   await go("/settings");

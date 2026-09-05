@@ -27,7 +27,7 @@ describe("stop words (metric v2)", () => {
   it("identical texts still score 1", () => {
     expect(pairwiseCosineMean(["alpha beta gamma delta", "alpha beta gamma delta"])).toBeCloseTo(1, 6);
   });
-  it("METRICS_VERSION is 3", () => expect(METRICS_VERSION).toBe(3));
+  it("METRICS_VERSION is 4", () => expect(METRICS_VERSION).toBe(4));
 });
 
 describe("shared boilerplate (metric v3)", () => {
@@ -56,7 +56,7 @@ describe("shared boilerplate (metric v3)", () => {
   it("computeReport stamps metricsVersion and boilerplateLinesRemoved", () => {
     const vs = bodies.map((b, i) => mk(`v-0${i + 1}`, 50, header + b));
     const rep = computeReport(run(vs), DEFAULT_THRESHOLDS);
-    expect(rep.metricsVersion).toBe(3);
+    expect(rep.metricsVersion).toBe(4);
     expect(rep.boilerplateLinesRemoved).toBe(2);
     expect(rep.checks.p1.detail).toContain("after removing 2 lines");
   });

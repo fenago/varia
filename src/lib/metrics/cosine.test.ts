@@ -11,10 +11,10 @@ describe("tfidfVectors", () => {
     expect(ss).toBeCloseTo(1, 10);
   });
 
-  it("uses idf = ln((1+N)/(1+df)) + 1 with raw tf", () => {
+  it("uses idf = ln((N+1)/df) with raw tf (metric v4)", () => {
     const vecs = tfidfVectors(["x y", "x y", "y x"]);
     const N = 3;
-    const idf = (df: number) => Math.log((1 + N) / (1 + df)) + 1;
+    const idf = (df: number) => Math.log((N + 1) / df);
     // doc 0: x (df3), y (df3), "x y" (df2)
     const raw0 = [idf(3), idf(3), idf(2)];
     const norm0 = Math.sqrt(raw0.reduce((s, w) => s + w * w, 0));
@@ -46,14 +46,15 @@ describe("pairwiseCosineMean", () => {
 
   it("mean of three texts with shared unigrams, hand-computed", () => {
     const N = 3;
-    const idf = (df: number) => Math.log((1 + N) / (1 + df)) + 1;
+    const idf = (df: number) => Math.log((N + 1) / df); // metric v4
     // doc0 = doc1 = {x, y, "x y"}; doc2 = {x, y, "y x"}
     const n0 = Math.sqrt(2 * idf(3) ** 2 + idf(2) ** 2);
     const n2 = Math.sqrt(2 * idf(3) ** 2 + idf(1) ** 2);
     const cos02 = (2 * idf(3) ** 2) / (n0 * n2);
     const expected = (1 + cos02 + cos02) / 3;
     expect(pairwiseCosineMean(["x y", "x y", "y x"])).toBeCloseTo(expected, 10);
-    expect(expected).toBeGreaterThan(0.6);
-    expect(expected).toBeLessThan(0.7);
+    // Under v4 the set-wide unigrams are floored, so the two-vs-one similarity is driven by the bigram.
+    expect(expected).toBeGreaterThan(0.4);
+    expect(expected).toBeLessThan(0.5);
   });
 });

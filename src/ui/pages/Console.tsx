@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Blueprint, DataTable, Pill, SegChoice, StatTile, type Column, type PillGate } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
 import { auditNewestFirst, consoleRows, consoleStats, currentThresholds, employerStats, outcomeStats, strategyLabel } from "@lib/store/selectors";
-import { metricsVersionLabel } from "@shared/thresholds";
+import { DEFAULT_P1_MAXPAIR, DEFAULT_P1_NGRAM, metricsVersionLabel } from "@shared/thresholds";
 import { PROPERTY_LABELS } from "@shared/thresholds";
 import type { InstitutionSet, InstitutionSetStatus, Property } from "@shared/types";
 
@@ -72,7 +72,7 @@ export default function Console() {
   ];
 
   const thresholdRows: { property: Property; label: string; key: NumericKey | null; display: string }[] = [
-    { property: "p1", label: "Surface diversity (cosine)", key: "p1Cosine", display: `≤ ${thresholds.p1Cosine.toFixed(2)}` },
+    { property: "p1", label: "Surface diversity (cosine · 4-gram overlap)", key: "p1Cosine", display: `cosine ≤ ${thresholds.p1Cosine.toFixed(2)} · 4-gram ≤ ${(thresholds.p1Ngram ?? DEFAULT_P1_NGRAM).toFixed(2)} · closest pair ≤ ${(thresholds.p1MaxPair ?? DEFAULT_P1_MAXPAIR).toFixed(2)}` },
     { property: "p2", label: "Construct equivalence", key: "p2Equivalence", display: `≥ ${thresholds.p2Equivalence.toFixed(2)}` },
     { property: "p3", label: "Rubric stability", key: null, display: "Advisory — proxy metric" },
     { property: "p4", label: "Difficulty parity (σ Flesch)", key: "p4FleschSigma", display: `≤ ${thresholds.p4FleschSigma.toFixed(1)}` },
