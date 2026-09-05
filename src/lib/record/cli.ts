@@ -24,7 +24,9 @@ const flag = (name: string) => process.argv.includes(`--${name}`);
 
 async function main() {
   const dryRun = flag("dry-run");
-  const ids = process.argv.slice(2).filter((a) => !a.startsWith("--") && !process.argv[process.argv.indexOf(a) - 1]?.startsWith("--"));
+  const VALUE_FLAGS = new Set(["--strategy", "--generator", "--judge", "--samples", "--n", "--out"]);
+  const args = process.argv.slice(2);
+  const ids = args.filter((a, i) => !a.startsWith("--") && !VALUE_FLAGS.has(args[i - 1] ?? ""));
   const targets = ids.length ? ids : [...SAMPLE_IDS];
   for (const id of targets) if (!sampleById(id)) throw new Error(`Unknown sample "${id}". Known: ${SAMPLE_IDS.join(", ")}`);
 
