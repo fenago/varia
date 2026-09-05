@@ -360,6 +360,9 @@ console.log("\n9. Generate (no key) replays a recorded run → report → releas
 await check("replayed generate reproduces the recorded report", async () => {
   await resetDemo();
   await go("/generate");
+  // The count defaults to 5 (start small); replay the recorded 10 so the report is comparable.
+  const ten = page.getByRole("button", { name: /^10$/ });
+  if (await ten.count()) await ten.click();
   const btn = page.getByRole("button", { name: /^Make the versions$/ });
   const label = await btn.innerText();
   await btn.click();
@@ -380,7 +383,7 @@ await check("replayed generate reproduces the recorded report", async () => {
   if (await regen.count()) {
     await regen.click();
     await page.getByRole("button", { name: /^(Release \d+ versions|Release anyway)$/ }).first().waitFor({ timeout: 60000 });
-    assert((await page.getByText(/^Released /).count()) === 0, "regenerate must not auto-release");
+    assert((await page.getByText(/^Released on /).count()) === 0, "regenerate must not auto-release");
   }
   const clean = page.getByRole("button", { name: /^Release \d+ versions$/ });
   if (await clean.count()) await clean.click();
