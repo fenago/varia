@@ -24,7 +24,6 @@ export function Header() {
         <h4>{title}</h4>
       </div>
       <div className="va-header-right">
-        <span className="tag tag-neutral">DAT 4100 · Fall 2026</span>
         {mode === "live" && modelLabel ? (
           <span className="tag tag-accent" title="Generator model from Settings">
             {modelLabel}

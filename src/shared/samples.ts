@@ -6,18 +6,398 @@
  */
 import type { SampleAssessment } from "./types";
 
-export const SAMPLE_IDS = ["lending-loan-default-audit", "healthcare-sepsis-model-incident", "retail-subscription-churn", "logistics-vendor-scoring-bias", "hospitality-chatbot-policy-audit"] as const;
+export const SAMPLE_IDS = ["data-mining-churn", "marketing-web-analytics-attribution", "ai-in-business-vendor-case", "nlp-support-ticket-triage", "ml-lending-fairness-audit"] as const;
 
 export const SAMPLES: SampleAssessment[] = [
   {
-    "id": "lending-loan-default-audit",
+    "id": "data-mining-churn",
+    "industry": "Retail",
+    "organisation": "Palmetto & Pine Market",
+    "title": "Find the root cause of our online-order subscription churn",
+    "summary": "A South Florida specialty grocer's online-order subscription is losing customers in a pattern the retention team cannot explain. Choose the method, find the cause, and design the test that confirms it.",
+    "course": {
+      "code": "CAP 4767",
+      "title": "Data Mining",
+      "program": "Bachelor of Science in Data Analytics"
+    },
+    "files": [
+      {
+        "name": "assignment.md",
+        "kind": "task+rubric",
+        "path": "assignment.md"
+      },
+      {
+        "name": "model-answer.md",
+        "kind": "solution",
+        "path": "model-answer.md"
+      },
+      {
+        "name": "employer-brief.md",
+        "kind": "task",
+        "path": "employer-brief.md"
+      },
+      {
+        "name": "roster.csv",
+        "kind": "roster",
+        "path": "roster.csv"
+      }
+    ],
+    "challenge": {
+      "organisation": "Palmetto & Pine Market",
+      "title": "Find the root cause of our online-order subscription churn",
+      "brief": "We are a four-store specialty grocer in Miami-Dade and Broward. In 2024 we launched Pantry Plan, a weekly online-order subscription: customers pick a delivery window, we assemble the order, and a courier delivers it. We have 6,140 active subscribers and the plan is 22 percent of our revenue.\n\nSince March, monthly churn has climbed from 4.1 percent to 7.6 percent. The retention team has tried a 15 percent win-back coupon and a courier change in Broward. Neither moved the number. What bothers me is that churn is not spread evenly. Customers who joined in the second half of 2025 churn faster than earlier cohorts, and the Broward stores look worse than Miami-Dade, but the team cannot tell me whether that is the courier, the product mix, the delivery window, or something about who we acquired last year.\n\nI can give you the subscriber table (join date, store, delivery window, plan tier, weekly basket value, substitutions per order, on-time rate, support tickets, churn date), 18 months of it. I do not want a churn model that scores customers. I want to know why they leave, in a form I can act on by segment, and I want a test that will prove it before I spend money on a fix.\n\nThe skills this exercises are what I look for when I hire an analyst: picking the right method for the question, finding a cause rather than a correlation, and knowing how to prove it.\n\nEmployer names are stand-ins until a partner signs on; the problem is real to the industry.",
+      "domain": "Retail",
+      "stakeholderRole": "Director of e-commerce",
+      "deliverable": "A data-mining brief: the method and why, the root cause with quantified evidence, a segment-level recommendation, and the test that would confirm it.",
+      "skillKeys": [
+        "statistical-method-selection",
+        "cohort-analysis",
+        "churn-analysis",
+        "root-cause-analysis",
+        "experiment-design",
+        "evidence-based-reasoning"
+      ],
+      "contributedBy": "Daniela Ferrer"
+    },
+    "partner": {
+      "organisation": "Palmetto & Pine Market",
+      "sector": "Retail",
+      "contactName": "Daniela Ferrer",
+      "contactRole": "Director of E-commerce",
+      "contactEmail": "d.ferrer@palmettopine.example"
+    },
+    "skills": [
+      {
+        "key": "statistical-method-selection",
+        "label": "Statistical method selection",
+        "source": "taxonomy",
+        "externalRef": "O*NET 15-2041.00 · Method selection"
+      },
+      {
+        "key": "cohort-analysis",
+        "label": "Cohort and survival analysis",
+        "source": "taxonomy",
+        "externalRef": "O*NET 15-2041.00 · Longitudinal analysis"
+      },
+      {
+        "key": "churn-analysis",
+        "label": "Churn analysis",
+        "source": "employer",
+        "externalRef": "Palmetto & Pine RET-2 · Retention analytics"
+      },
+      {
+        "key": "root-cause-analysis",
+        "label": "Root-cause analysis",
+        "source": "taxonomy",
+        "externalRef": "O*NET 15-2041.00 · Statistical root-cause analysis"
+      },
+      {
+        "key": "experiment-design",
+        "label": "Experiment design",
+        "source": "instructor"
+      },
+      {
+        "key": "evidence-based-reasoning",
+        "label": "Evidence-based reasoning",
+        "source": "instructor"
+      }
+    ],
+    "preExtracted": null
+  },
+  {
+    "id": "marketing-web-analytics-attribution",
+    "industry": "Hospitality",
+    "organisation": "Marisol Boutique Hotels",
+    "title": "Why did paid social double our sessions but not our direct bookings?",
+    "summary": "A Miami boutique hotel group doubled paid-social spend for a fall promotion; sessions rose 84 percent, direct bookings barely moved. Diagnose the funnel, compare attribution models, and reallocate the budget.",
+    "course": {
+      "code": "MAR 2704",
+      "title": "Marketing Web Analytics",
+      "program": "Digital Marketing Strategy College Credit Certificate"
+    },
+    "files": [
+      {
+        "name": "assignment.md",
+        "kind": "task+rubric",
+        "path": "assignment.md"
+      },
+      {
+        "name": "model-answer.md",
+        "kind": "solution",
+        "path": "model-answer.md"
+      },
+      {
+        "name": "employer-brief.md",
+        "kind": "task",
+        "path": "employer-brief.md"
+      },
+      {
+        "name": "roster.csv",
+        "kind": "roster",
+        "path": "roster.csv"
+      }
+    ],
+    "challenge": {
+      "organisation": "Marisol Boutique Hotels",
+      "title": "Why did paid social double our sessions but not our direct bookings?",
+      "brief": "We run three boutique hotels in Miami Beach, Coconut Grove and Coral Gables, 212 rooms in total. Direct bookings on our own site are worth about 18 percent more to us than bookings through online travel agencies, so every fall we run a promotion to pull bookings direct.\n\nThis year I doubled paid-social spend for the fall promotion, from $24,000 to $48,000 across Instagram and Facebook, with a \"stay three nights, fourth free\" offer. Sessions from paid social went up 84 percent. Direct bookings went up 6 percent. My owner wants to know what happened to the money.\n\nHere is what the analytics show. Paid-social sessions land 92 percent on a promotion landing page. Bounce rate on that page went from 41 to 67 percent, and 71 percent of the new sessions are mobile. Of the sessions that reached the booking engine, the conversion rate held at 2.9 percent, about the same as last year. Last-click attribution gives paid social 210 direct bookings; the data-driven model in GA4 gives it 141 and moves the difference to organic search and email. Our email list grew by 1,400 during the promotion.\n\nI want a diagnosis I can defend to the owner, a recommendation on where the next $48,000 goes, and a dashboard I can watch every Monday.\n\nEmployer names are stand-ins until a partner signs on; the problem is real to the industry.",
+      "domain": "Hospitality",
+      "stakeholderRole": "Marketing manager",
+      "deliverable": "A web-analytics diagnosis of the fall promotion, an attribution comparison, a budget reallocation, and the dashboard the marketing manager will watch weekly.",
+      "skillKeys": [
+        "funnel-analysis",
+        "attribution-modelling",
+        "budget-reallocation",
+        "evidence-based-reasoning",
+        "stakeholder-communication",
+        "experiment-design"
+      ],
+      "contributedBy": "Gabriela Torres"
+    },
+    "partner": {
+      "organisation": "Marisol Boutique Hotels",
+      "sector": "Hospitality",
+      "contactName": "Gabriela Torres",
+      "contactRole": "Marketing Manager",
+      "contactEmail": "g.torres@marisolhotels.example"
+    },
+    "skills": [
+      {
+        "key": "funnel-analysis",
+        "label": "Funnel analysis",
+        "source": "employer",
+        "externalRef": "Marisol Hotels DM-3 · Conversion funnel review"
+      },
+      {
+        "key": "attribution-modelling",
+        "label": "Attribution modelling",
+        "source": "taxonomy",
+        "externalRef": "O*NET 13-1161.00 · Marketing analytics"
+      },
+      {
+        "key": "budget-reallocation",
+        "label": "Budget reallocation",
+        "source": "instructor"
+      },
+      {
+        "key": "evidence-based-reasoning",
+        "label": "Evidence-based reasoning",
+        "source": "instructor"
+      },
+      {
+        "key": "stakeholder-communication",
+        "label": "Stakeholder communication",
+        "source": "employer",
+        "externalRef": "Northline L2 · Executive communication"
+      },
+      {
+        "key": "experiment-design",
+        "label": "Experiment design",
+        "source": "instructor"
+      }
+    ],
+    "preExtracted": null
+  },
+  {
+    "id": "ai-in-business-vendor-case",
+    "industry": "Real estate",
+    "organisation": "Keystone Residential Management",
+    "title": "Should we sign the AI vendor for invoices and tenant inquiries?",
+    "summary": "A regional property manager received a proposal to automate invoice processing and tenant-inquiry triage. Write the COO's go/no-go memo: fit, ROI and payback, responsible-AI risks, and the rollout plan.",
+    "course": {
+      "code": "GEB 1432",
+      "title": "Applied Artificial Intelligence (AI) in Business",
+      "program": "School of Business · Applied AI pathway"
+    },
+    "files": [
+      {
+        "name": "assignment.md",
+        "kind": "task+rubric",
+        "path": "assignment.md"
+      },
+      {
+        "name": "model-answer.md",
+        "kind": "solution",
+        "path": "model-answer.md"
+      },
+      {
+        "name": "employer-brief.md",
+        "kind": "task",
+        "path": "employer-brief.md"
+      },
+      {
+        "name": "roster.csv",
+        "kind": "roster",
+        "path": "roster.csv"
+      }
+    ],
+    "challenge": {
+      "organisation": "Keystone Residential Management",
+      "title": "Should we sign the AI vendor for invoices and tenant inquiries?",
+      "brief": "We manage 4,300 residential units across 38 associations and rental communities in Miami-Dade and Broward. Two back-office jobs eat our time. Accounts payable processes about 2,900 vendor invoices a month by hand: 3.5 full-time staff, roughly 11 minutes per invoice, and a 4 percent error rate that generates rework and late fees. Tenant and owner inquiries come in at about 9,400 a month by email and portal; a team of six spends most of its day reading them, tagging them and routing them to maintenance, accounting or the community manager, and our first-response time averages 19 hours.\n\nA vendor has proposed a platform that reads invoices, matches them to purchase orders and posts them for approval, and that classifies inquiries by topic and urgency and drafts a first reply for a person to approve. Their proposal: $6,500 a month subscription, $48,000 implementation, a promised 70 percent reduction in invoice handling time and a 60 percent reduction in inquiry triage time, contract term three years.\n\nI need someone to tell me whether this is a good fit for how we actually work, what it is worth in dollars, what could go wrong with tenant data and with a machine drafting replies about late rent or maintenance emergencies, and how we would roll it out so we find out early if the vendor's numbers are wrong. A one-page memo with the reasoning behind it. Go or no-go.\n\nEmployer names are stand-ins until a partner signs on; the problem is real to the industry.",
+      "domain": "Real estate",
+      "stakeholderRole": "Chief operating officer",
+      "deliverable": "A recommendation memo to the COO: use-case fit, ROI and payback from the proposal figures, responsible-AI and data-handling risks with controls, an implementation plan with success metrics, and a go/no-go.",
+      "skillKeys": [
+        "roi-estimation",
+        "responsible-ai-governance",
+        "implementation-planning",
+        "risk-prioritisation",
+        "stakeholder-communication",
+        "evidence-based-reasoning"
+      ],
+      "contributedBy": "Andre Pierre-Louis"
+    },
+    "partner": {
+      "organisation": "Keystone Residential Management",
+      "sector": "Real estate",
+      "contactName": "Andre Pierre-Louis",
+      "contactRole": "Chief Operating Officer",
+      "contactEmail": "a.pierrelouis@keystoneres.example"
+    },
+    "skills": [
+      {
+        "key": "roi-estimation",
+        "label": "ROI and payback estimation",
+        "source": "taxonomy",
+        "externalRef": "O*NET 13-2051.00 · Financial analysis"
+      },
+      {
+        "key": "responsible-ai-governance",
+        "label": "Responsible-AI governance",
+        "source": "employer",
+        "externalRef": "Keystone Residential OPS-9 · Vendor AI review"
+      },
+      {
+        "key": "implementation-planning",
+        "label": "Implementation planning",
+        "source": "instructor"
+      },
+      {
+        "key": "risk-prioritisation",
+        "label": "Risk prioritisation",
+        "source": "taxonomy",
+        "externalRef": "O*NET 13-2054.00 · Risk assessment"
+      },
+      {
+        "key": "stakeholder-communication",
+        "label": "Stakeholder communication",
+        "source": "employer",
+        "externalRef": "Northline L2 · Executive communication"
+      },
+      {
+        "key": "evidence-based-reasoning",
+        "label": "Evidence-based reasoning",
+        "source": "instructor"
+      }
+    ],
+    "preExtracted": null
+  },
+  {
+    "id": "nlp-support-ticket-triage",
+    "industry": "Healthcare",
+    "organisation": "Coral Health Plan",
+    "title": "Design the triage system for 40,000 member messages a month",
+    "summary": "A South Florida health plan wants member messages in English, Spanish and Haitian Creole triaged by intent and urgency. Design the labelling scheme, compare model options, and plan the evaluation with a per-language fairness check.",
+    "course": {
+      "code": "CAI 3303C",
+      "title": "Natural Language Processing",
+      "program": "Bachelor of Science in Applied Artificial Intelligence"
+    },
+    "files": [
+      {
+        "name": "assignment.md",
+        "kind": "task+rubric",
+        "path": "assignment.md"
+      },
+      {
+        "name": "model-answer.md",
+        "kind": "solution",
+        "path": "model-answer.md"
+      },
+      {
+        "name": "employer-brief.md",
+        "kind": "task",
+        "path": "employer-brief.md"
+      },
+      {
+        "name": "roster.csv",
+        "kind": "roster",
+        "path": "roster.csv"
+      }
+    ],
+    "challenge": {
+      "organisation": "Coral Health Plan",
+      "title": "Design the triage system for 40,000 member messages a month",
+      "brief": "We are a Medicaid and Marketplace health plan with about 310,000 members in Miami-Dade, Broward and Palm Beach. Our member-services centre receives about 40,000 written messages a month through the member portal and email. By our own sampling, 58 percent are in English, 33 percent in Spanish and 9 percent in Haitian Creole, with a fair amount of mixing inside single messages.\n\nToday a team of 22 agents reads every message and decides what it is (claim question, prior authorisation, find a provider, ID card, billing, pharmacy, complaint, appeal, and so on) and how urgent it is. About 6 percent of messages describe something we must act on within 24 hours: a denied medication a member needs now, a pregnancy-related access problem, an appeal deadline, a safety concern. Our median time to first human response is 31 hours, and we have missed urgent cases that were buried in long messages or written in Creole.\n\nWe want a system that reads each message, assigns an intent and an urgency level, and routes urgent cases to a human within the hour. I have 18 months of messages with the agents' tags, though the tags are inconsistent, and I can share 200 de-identified sample messages across the three languages. I need a design, a plan to evaluate it that is fair to our Creole-speaking members, and the rule that decides when a case is urgent. If the honest answer is that some part of this should stay with humans, tell me.\n\nEmployer names are stand-ins until a partner signs on; the problem is real to the industry.",
+      "domain": "Healthcare",
+      "stakeholderRole": "Director of member services",
+      "deliverable": "An NLP system design and evaluation plan: labelling scheme, model options compared, metrics with a per-language fairness check, error analysis on the sample messages, and the escalation rule for urgent cases.",
+      "skillKeys": [
+        "intent-classification",
+        "multilingual-evaluation",
+        "evaluation-design",
+        "error-analysis",
+        "fairness-analysis",
+        "risk-prioritisation"
+      ],
+      "contributedBy": "Marie-Josée Alexis"
+    },
+    "partner": {
+      "organisation": "Coral Health Plan",
+      "sector": "Healthcare",
+      "contactName": "Marie-Josée Alexis",
+      "contactRole": "Director of Member Services",
+      "contactEmail": "mj.alexis@coralhealthplan.example"
+    },
+    "skills": [
+      {
+        "key": "intent-classification",
+        "label": "Intent classification",
+        "source": "taxonomy",
+        "externalRef": "O*NET 15-2051.01 · Text classification"
+      },
+      {
+        "key": "multilingual-evaluation",
+        "label": "Multilingual evaluation",
+        "source": "employer",
+        "externalRef": "Coral Health Plan MS-2 · Member-services language access"
+      },
+      {
+        "key": "evaluation-design",
+        "label": "Evaluation design",
+        "source": "instructor"
+      },
+      {
+        "key": "error-analysis",
+        "label": "Error analysis",
+        "source": "instructor"
+      },
+      {
+        "key": "fairness-analysis",
+        "label": "Fairness analysis",
+        "source": "taxonomy",
+        "externalRef": "O*NET 15-2051.01 · Fairness assessment of models"
+      },
+      {
+        "key": "risk-prioritisation",
+        "label": "Risk prioritisation",
+        "source": "taxonomy",
+        "externalRef": "O*NET 13-2054.00 · Risk assessment"
+      }
+    ],
+    "preExtracted": null
+  },
+  {
+    "id": "ml-lending-fairness-audit",
     "industry": "Lending",
     "organisation": "Bayfront Regional Bank",
     "title": "Audit our loan-default classifier",
-    "summary": "A regional bank's default model is declining applicants in two lending regions at a rate underwriting cannot explain. Audit it from the partial model card.",
+    "summary": "A regional bank's default model is declining applicants in two lending regions at a rate underwriting cannot explain. Audit it from the partial model card: performance and fairness gaps, robustness under shift, documentation gaps, and what to fix first.",
     "course": {
-      "code": "DAT 4100",
-      "title": "Applied AI and Data Analytics"
+      "code": "CAP 4631C",
+      "title": "Machine Learning for Data Analytics I",
+      "program": "Bachelor of Science in Data Analytics"
     },
     "files": [
       {
@@ -44,10 +424,10 @@ export const SAMPLES: SampleAssessment[] = [
     "challenge": {
       "organisation": "Bayfront Regional Bank",
       "title": "Audit our loan-default classifier",
-      "brief": "We put a loan-default classifier into production in March across our three lending regions. In August the underwriting team in the Southwest and Coastal regions raised a complaint: applicants there are being declined at a rate that does not match what underwriters see in the files. The model vendor gave us a partial model card. It reports an aggregate accuracy of 0.91 and says \"no disparate impact detected,\" but it does not break anything down by region, income band, or the age of the credit file.\n\nWhat we want back is not a rebuild. We want an audit a model risk committee can read in one sitting: what the card proves, what it leaves out, where the model is likely to be fragile when the applicant mix changes, and which three things we should fix first and why. If the card cannot support the \"no disparate impact\" claim, say so plainly and tell us what evidence would.\n\nThe skills this exercises are the ones we hire for in our model risk group: fairness analysis, robustness evaluation, technical documentation review, and risk prioritisation. Whoever does this well would be someone we want to meet.",
+      "brief": "We put a loan-default classifier into production in March across our three lending regions. In August the underwriting team in the Southwest and Coastal regions raised a complaint: applicants there are being declined at a rate that does not match what underwriters see in the files. The model vendor gave us a partial model card. It reports an aggregate accuracy of 0.91 and an AUC of 0.88, says \"no disparate impact detected,\" and lists 41 features, but it does not break anything down by region, income band, or the age of the credit file, and it does not report calibration.\n\nWhat we want back is not a rebuild. We want an audit a model risk committee can read in one sitting: what the card proves, what it leaves out, where the model is likely to be fragile when the applicant mix changes, and which three things we should fix first and why. If the card cannot support the \"no disparate impact\" claim, say so plainly and tell us what evidence would.\n\nThe skills this exercises are the ones we hire for in our model risk group: fairness analysis, robustness evaluation, technical documentation review, and risk prioritisation. Whoever does this well would be someone we want to meet.\n\nEmployer names are stand-ins until a partner signs on; the problem is real to the industry.",
       "domain": "Lending",
       "stakeholderRole": "Risk officer",
-      "deliverable": "A structured audit identifying fairness, robustness and documentation gaps, with prioritised recommendations the model risk committee can act on.",
+      "deliverable": "A structured audit from the partial model card: performance and fairness gaps with evidence, robustness under shift, documentation gaps, and prioritised recommendations the model risk committee can act on.",
       "skillKeys": [
         "fairness-analysis",
         "robustness-evaluation",
@@ -100,372 +480,6 @@ export const SAMPLES: SampleAssessment[] = [
         "key": "evidence-based-reasoning",
         "label": "Evidence-based reasoning",
         "source": "instructor"
-      }
-    ],
-    "preExtracted": null
-  },
-  {
-    "id": "healthcare-sepsis-model-incident",
-    "industry": "Healthcare",
-    "organisation": "Coral Health Network",
-    "title": "Explain why our sepsis-risk model degraded",
-    "summary": "A sepsis early-warning model started missing cases in two units after an EHR upgrade. Write the incident analysis and the one-page memo clinical leadership will read.",
-    "course": {
-      "code": "DAT 4100",
-      "title": "Applied AI and Data Analytics"
-    },
-    "files": [
-      {
-        "name": "assignment.md",
-        "kind": "task+rubric",
-        "path": "assignment.md"
-      },
-      {
-        "name": "model-answer.md",
-        "kind": "solution",
-        "path": "model-answer.md"
-      },
-      {
-        "name": "employer-brief.md",
-        "kind": "task",
-        "path": "employer-brief.md"
-      },
-      {
-        "name": "roster.csv",
-        "kind": "roster",
-        "path": "roster.csv"
-      }
-    ],
-    "challenge": {
-      "organisation": "Coral Health Network",
-      "title": "Explain why our sepsis-risk model degraded",
-      "brief": "We run a sepsis early-warning model on two medical-surgical units and one step-down unit. It fires an alert when a patient's risk score crosses a threshold, and the nursing team escalates. In the first week of June, nurses on the two med-surg units told us the model had \"gone quiet.\" Our own retrospective check confirmed it: sensitivity on those two units fell from about 0.78 in April to 0.52 in June, while the step-down unit stayed flat. The week before the drop, our EHR vendor pushed an upgrade that changed how lactate results and some vital-sign fields are recorded.\n\nWe think we know what happened, but we need someone outside the team to work it through from the data description and tell us, in an order a clinical leadership committee can act on, what broke, what it means for patients, and what monitoring would have caught it in a day instead of a month.\n\nWe want two things back: a root-cause incident analysis with the evidence laid out, and a one-page memo to the chief nursing officer and the chief medical officer that a non-technical reader can act on. The skills are the ones our informatics team lives on: root-cause analysis, robustness thinking about data pipelines, and writing an incident up so that a clinician trusts it.",
-      "domain": "Healthcare",
-      "stakeholderRole": "Clinical lead",
-      "deliverable": "A root-cause incident analysis and a one-page memo for clinical leadership, with a monitoring recommendation.",
-      "skillKeys": [
-        "root-cause-analysis",
-        "robustness-evaluation",
-        "incident-communication",
-        "stakeholder-communication",
-        "risk-prioritisation",
-        "evidence-based-reasoning"
-      ],
-      "contributedBy": "Dr. Renata Okafor"
-    },
-    "partner": {
-      "organisation": "Coral Health Network",
-      "sector": "Healthcare",
-      "contactName": "Dr. Renata Okafor",
-      "contactRole": "Chief Clinical Informatics Officer",
-      "contactEmail": "r.okafor@coralhealth.example"
-    },
-    "skills": [
-      {
-        "key": "root-cause-analysis",
-        "label": "Root-cause analysis",
-        "source": "taxonomy",
-        "externalRef": "O*NET 15-2041.00 · Statistical root-cause analysis"
-      },
-      {
-        "key": "robustness-evaluation",
-        "label": "Robustness evaluation",
-        "source": "taxonomy",
-        "externalRef": "O*NET 15-2051.01 · Model validation"
-      },
-      {
-        "key": "incident-communication",
-        "label": "Incident communication",
-        "source": "employer",
-        "externalRef": "Coral Health CQ-7 · Clinical incident write-up"
-      },
-      {
-        "key": "stakeholder-communication",
-        "label": "Stakeholder communication",
-        "source": "employer",
-        "externalRef": "Northline L2 · Executive communication"
-      },
-      {
-        "key": "risk-prioritisation",
-        "label": "Risk prioritisation",
-        "source": "taxonomy",
-        "externalRef": "O*NET 13-2054.00 · Risk assessment"
-      },
-      {
-        "key": "evidence-based-reasoning",
-        "label": "Evidence-based reasoning",
-        "source": "instructor"
-      }
-    ],
-    "preExtracted": null
-  },
-  {
-    "id": "retail-subscription-churn",
-    "industry": "Retail",
-    "organisation": "Palmetto Fresh",
-    "title": "Find the root cause of our meal-kit churn",
-    "summary": "A grocer's meal-kit subscription is losing customers in a pattern the retention team cannot explain. Choose the method, find the cause, and recommend what to do about it.",
-    "course": {
-      "code": "DAT 3200",
-      "title": "Applied Analytics"
-    },
-    "files": [
-      {
-        "name": "assignment.md",
-        "kind": "task+rubric",
-        "path": "assignment.md"
-      },
-      {
-        "name": "model-answer.md",
-        "kind": "solution",
-        "path": "model-answer.md"
-      },
-      {
-        "name": "employer-brief.md",
-        "kind": "task",
-        "path": "employer-brief.md"
-      },
-      {
-        "name": "roster.csv",
-        "kind": "roster",
-        "path": "roster.csv"
-      }
-    ],
-    "challenge": {
-      "organisation": "Palmetto Fresh",
-      "title": "Find the root cause of our meal-kit churn",
-      "brief": "Palmetto Fresh is a regional grocer. Two years ago we launched a meal-kit subscription: a weekly box, four plans, delivered from our own stores. It grew well for eighteen months. Since January, monthly churn has climbed from about 6 percent to about 11 percent, and the retention team cannot tell me why. They have tried a discount, which did not move the number, and a new recipe rotation, which did not either.\n\nWe have clean data: every subscriber's plan, start month, delivery zip, weekly order history, substitutions, delivery issues, and support tickets. We have a suspicion it has something to do with the switch to a third-party courier in two delivery zones, but the courier's own on-time numbers look fine.\n\nWhat I need is someone who can pick the right way to look at this, not just run a churn model. Tell me which subscribers are leaving, when in their tenure, what they experienced before they left, what the most likely cause is, how big it is, and what one thing you would do about it and how we would know it worked. If the courier is not the cause, I need to hear that too.\n\nThe skills are churn analysis, choosing the right statistical method for the question, root-cause thinking, and explaining the answer to a business owner.",
-      "domain": "Retail",
-      "stakeholderRole": "Growth director",
-      "deliverable": "A churn analysis that names the method, isolates the cause, quantifies its size, and recommends one intervention with a way to test it.",
-      "skillKeys": [
-        "churn-analysis",
-        "statistical-method-selection",
-        "root-cause-analysis",
-        "evidence-based-reasoning",
-        "stakeholder-communication"
-      ],
-      "contributedBy": "Jerome Baptiste"
-    },
-    "partner": {
-      "organisation": "Palmetto Fresh",
-      "sector": "Retail",
-      "contactName": "Jerome Baptiste",
-      "contactRole": "Director of Subscription Growth",
-      "contactEmail": "j.baptiste@palmettofresh.example"
-    },
-    "skills": [
-      {
-        "key": "churn-analysis",
-        "label": "Churn analysis",
-        "source": "employer",
-        "externalRef": "Palmetto Fresh GA-2 · Retention analytics"
-      },
-      {
-        "key": "statistical-method-selection",
-        "label": "Statistical method selection",
-        "source": "taxonomy",
-        "externalRef": "O*NET 15-2041.00 · Method selection"
-      },
-      {
-        "key": "root-cause-analysis",
-        "label": "Root-cause analysis",
-        "source": "taxonomy",
-        "externalRef": "O*NET 15-2041.00 · Statistical root-cause analysis"
-      },
-      {
-        "key": "evidence-based-reasoning",
-        "label": "Evidence-based reasoning",
-        "source": "instructor"
-      },
-      {
-        "key": "stakeholder-communication",
-        "label": "Stakeholder communication",
-        "source": "employer",
-        "externalRef": "Northline L2 · Executive communication"
-      }
-    ],
-    "preExtracted": null
-  },
-  {
-    "id": "logistics-vendor-scoring-bias",
-    "industry": "Logistics",
-    "organisation": "Gulfstream Last Mile",
-    "title": "Find why our vendor-scoring model flags the wrong accounts",
-    "summary": "A delivery carrier's vendor-risk model keeps flagging reliable contractors and clearing unreliable ones. Trace the bias through the data pipeline and recommend a fix.",
-    "course": {
-      "code": "DAT 3200",
-      "title": "Applied Analytics"
-    },
-    "files": [
-      {
-        "name": "assignment.md",
-        "kind": "task+rubric",
-        "path": "assignment.md"
-      },
-      {
-        "name": "model-answer.md",
-        "kind": "solution",
-        "path": "model-answer.md"
-      },
-      {
-        "name": "employer-brief.md",
-        "kind": "task",
-        "path": "employer-brief.md"
-      },
-      {
-        "name": "roster.csv",
-        "kind": "roster",
-        "path": "roster.csv"
-      }
-    ],
-    "challenge": {
-      "organisation": "Gulfstream Last Mile",
-      "title": "Find why our vendor-scoring model flags the wrong accounts",
-      "brief": "Gulfstream contracts about 340 independent delivery vendors across South Florida. Every month a scoring model rates each vendor on reliability, and the bottom decile gets a performance review and can lose routes. Since we rebuilt the scoring pipeline last fall, our route managers say the model is flagging vendors they consider reliable and clearing ones they consider problems. Two of the flagged vendors have been with us for six years with clean records; one that was cleared had three route abandonments in a quarter.\n\nThe model itself has not changed. What changed is the pipeline that feeds it: we moved from a nightly batch to a streaming feed, added a new scan-event source from the handheld devices, and started filling gaps in delivery timestamps with an estimate.\n\nI need someone to trace the bias from the pipeline into the scores. Where does it enter, which vendors does it hurt and help, how much does it move a score, and what is the fix. I also need a plan to validate the fix before we act on scores again, because we have route managers who no longer trust the number and vendors who may have been wrongly reviewed.\n\nThe skills: data pipeline diagnosis, fairness thinking applied to a scoring system, root-cause analysis, and prioritising what to fix first when several things are wrong.",
-      "domain": "Logistics",
-      "stakeholderRole": "Operations lead",
-      "deliverable": "A pipeline diagnosis that locates where the bias enters, shows its effect on scores, and recommends a fix with a validation plan.",
-      "skillKeys": [
-        "data-pipeline-diagnosis",
-        "fairness-analysis",
-        "root-cause-analysis",
-        "robustness-evaluation",
-        "risk-prioritisation"
-      ],
-      "contributedBy": "Dana Whitlock"
-    },
-    "partner": {
-      "organisation": "Gulfstream Last Mile",
-      "sector": "Logistics",
-      "contactName": "Dana Whitlock",
-      "contactRole": "VP Network Operations",
-      "contactEmail": "d.whitlock@gulfstreamlm.example"
-    },
-    "skills": [
-      {
-        "key": "data-pipeline-diagnosis",
-        "label": "Data pipeline diagnosis",
-        "source": "employer",
-        "externalRef": "Gulfstream DE-4 · Pipeline quality review"
-      },
-      {
-        "key": "fairness-analysis",
-        "label": "Fairness analysis",
-        "source": "taxonomy",
-        "externalRef": "O*NET 15-2051.01 · Fairness assessment of models"
-      },
-      {
-        "key": "root-cause-analysis",
-        "label": "Root-cause analysis",
-        "source": "taxonomy",
-        "externalRef": "O*NET 15-2041.00 · Statistical root-cause analysis"
-      },
-      {
-        "key": "robustness-evaluation",
-        "label": "Robustness evaluation",
-        "source": "taxonomy",
-        "externalRef": "O*NET 15-2051.01 · Model validation"
-      },
-      {
-        "key": "risk-prioritisation",
-        "label": "Risk prioritisation",
-        "source": "taxonomy",
-        "externalRef": "O*NET 13-2054.00 · Risk assessment"
-      }
-    ],
-    "preExtracted": null
-  },
-  {
-    "id": "hospitality-chatbot-policy-audit",
-    "industry": "Hospitality",
-    "organisation": "Sunward Hotels",
-    "title": "Audit our concierge chatbot's cancellation answers",
-    "summary": "A hotel group's AI concierge gives guests inconsistent answers about the cancellation policy. Audit the failures and design the evaluation that would catch them before guests do.",
-    "course": {
-      "code": "CAI 3100",
-      "title": "Applied AI"
-    },
-    "files": [
-      {
-        "name": "assignment.md",
-        "kind": "task+rubric",
-        "path": "assignment.md"
-      },
-      {
-        "name": "model-answer.md",
-        "kind": "solution",
-        "path": "model-answer.md"
-      },
-      {
-        "name": "employer-brief.md",
-        "kind": "task",
-        "path": "employer-brief.md"
-      },
-      {
-        "name": "roster.csv",
-        "kind": "roster",
-        "path": "roster.csv"
-      }
-    ],
-    "challenge": {
-      "organisation": "Sunward Hotels",
-      "title": "Audit our concierge chatbot's cancellation answers",
-      "brief": "Sunward runs 22 hotels under three brands. Last spring we put an AI concierge on our booking site and in the app. It answers questions about amenities, directions, and policies. It is popular. It is also, we have learned, inconsistent about our cancellation policy. In the last quarter, 140 guests disputed a cancellation fee saying the chatbot told them cancellation was free. In some of those transcripts it did. In others it gave the right answer for the wrong brand, or the right answer for a flexible rate when the guest had booked a non-refundable one.\n\nOur cancellation policy is not simple. It varies by brand, by rate type, by how far out the stay is, and by whether the booking came through us or a third party. The chatbot was given the policy documents and a system prompt. Nobody tested it against the policy systematically before launch.\n\nWhat I want back: an audit of how and why the answers go wrong, grounded in the transcripts and the policy documents, and an evaluation we can run every time we change the bot, so that it cannot ship if it gets the policy wrong. Test cases, how to score them, and a pass mark. I also need to know which failures cost us money and which cost us trust, because they are not the same.\n\nSkills: evaluating a conversational AI system, designing an evaluation with a release gate, reading a policy closely enough to know when an answer is wrong, and prioritising.",
-      "domain": "Hospitality",
-      "stakeholderRole": "Guest experience lead",
-      "deliverable": "A failure audit of the chatbot's policy answers and an evaluation design with test cases, metrics and a release gate.",
-      "skillKeys": [
-        "conversational-ai-evaluation",
-        "evaluation-design",
-        "policy-compliance-analysis",
-        "documentation-review",
-        "risk-prioritisation",
-        "stakeholder-communication"
-      ],
-      "contributedBy": "Priyanka Raman"
-    },
-    "partner": {
-      "organisation": "Sunward Hotels",
-      "sector": "Hospitality",
-      "contactName": "Priyanka Raman",
-      "contactRole": "VP Guest Experience",
-      "contactEmail": "p.raman@sunwardhotels.example"
-    },
-    "skills": [
-      {
-        "key": "conversational-ai-evaluation",
-        "label": "Conversational AI evaluation",
-        "source": "employer",
-        "externalRef": "Sunward GX-1 · Guest-facing AI quality"
-      },
-      {
-        "key": "evaluation-design",
-        "label": "Evaluation design",
-        "source": "instructor"
-      },
-      {
-        "key": "policy-compliance-analysis",
-        "label": "Policy compliance analysis",
-        "source": "instructor"
-      },
-      {
-        "key": "documentation-review",
-        "label": "Technical documentation review",
-        "source": "taxonomy",
-        "externalRef": "O*NET 15-1299.08 · Technical documentation"
-      },
-      {
-        "key": "risk-prioritisation",
-        "label": "Risk prioritisation",
-        "source": "taxonomy",
-        "externalRef": "O*NET 13-2054.00 · Risk assessment"
-      },
-      {
-        "key": "stakeholder-communication",
-        "label": "Stakeholder communication",
-        "source": "employer",
-        "externalRef": "Northline L2 · Executive communication"
       }
     ],
     "preExtracted": null

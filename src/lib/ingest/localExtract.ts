@@ -144,6 +144,7 @@ const NEIGHBOUR_DOMAINS: Record<string, string[]> = {
   retail: ["grocery", "meal-kit subscriptions", "e-commerce", "specialty retail"],
   logistics: ["last-mile delivery", "freight", "warehousing", "courier networks"],
   hospitality: ["hotels", "resorts", "vacation rentals", "airlines"],
+  "real estate": ["property management", "homeowner associations", "commercial leasing", "vacation rentals"],
 };
 
 const NEIGHBOUR_ROLES: Record<string, string[]> = {
@@ -151,5 +152,6 @@ const NEIGHBOUR_ROLES: Record<string, string[]> = {
   healthcare: ["chief nursing officer", "chief medical officer", "clinical informatics lead", "quality director"],
   retail: ["growth director", "head of retention", "chief operating officer", "store operations lead"],
   logistics: ["vp network operations", "route manager", "vendor relations lead", "head of data engineering"],
-  hospitality: ["vp guest experience", "revenue manager", "contact centre director", "general manager"],
+  hospitality: ["vp guest experience", "revenue manager", "contact centre director", "general manager", "marketing manager"],
+  "real estate": ["chief operating officer", "controller", "community manager", "director of resident services"],
 };

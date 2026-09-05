@@ -129,7 +129,7 @@ export default function Import() {
       const result = await loadSample(id, {
         provider: getProvider(),
         ws,
-        actions: { addPartner: ws.addPartner, addChallenge: ws.addChallenge, addSkill: ws.addSkill, setRoster: ws.setRoster },
+        actions: { addPartner: ws.addPartner, addChallenge: ws.addChallenge, addSkill: ws.addSkill, setRoster: ws.setRoster, setCourse: ws.setCourse },
         onPhase: (ph, msg) => {
           setPhase(ph === "extracting" ? "extracting" : "reading");
           setMessage(msg);
@@ -211,12 +211,21 @@ export default function Import() {
         <Blueprint style={{ padding: "18px 20px" }}>
           <div className="va-row-flex" style={{ alignItems: "baseline", gap: 10, marginBottom: 4 }}>
             <h6 style={{ margin: 0 }}>Start from a sample</h6>
-            <span className="text-muted" style={{ fontSize: 12 }}>Five real assignments, each built from an employer's own problem. Loading one runs the same file parsing and extraction as an upload.</span>
+            <span className="text-muted" style={{ fontSize: 12 }}>Five employer problems, each with the brief the business sent and the assignment built from it, used in real MDC courses. Employer names are stand-ins until a partner signs on. Loading one runs the same file parsing and extraction as an upload.</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {SAMPLES.map((sm) => (
-              <div key={sm.id} style={{ display: "grid", gridTemplateColumns: "92px minmax(0,1fr) auto", gap: 14, alignItems: "center", padding: "10px 0", borderTop: "1px solid var(--color-divider)" }}>
-                <span className="tag tag-outline" style={{ justifySelf: "start" }}>{sm.industry}</span>
+              <div
+                key={sm.id}
+                className="va-row"
+                role="button"
+                tabIndex={0}
+                aria-label={`Load the ${sm.organisation} sample`}
+                onClick={() => !busy && handleSample(sm.id)}
+                onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !busy) { e.preventDefault(); handleSample(sm.id); } }}
+                style={{ display: "grid", gridTemplateColumns: "110px minmax(0,1fr) auto", gap: 14, alignItems: "center", padding: "10px 6px", borderTop: "1px solid var(--color-divider)" }}
+              >
+                <span className="va-kicker" style={{ justifySelf: "start", color: "var(--color-accent-700)" }}>{sm.industry}</span>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: "var(--font-heading)", fontSize: 15, lineHeight: 1.2 }}>
                     {sm.organisation} · {sm.title}
@@ -224,7 +233,7 @@ export default function Import() {
                   <div className="text-muted" style={{ fontSize: 12.5, lineHeight: 1.45 }}>{sm.summary}</div>
                   <div className="text-muted" style={{ fontSize: 11.5 }}>{sm.course.code} · {sm.course.title}</div>
                 </div>
-                <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => handleSample(sm.id)} aria-label={`Load the ${sm.organisation} sample`}>
+                <button type="button" className="btn btn-secondary" disabled={busy} onClick={(e) => { e.stopPropagation(); handleSample(sm.id); }}>
                   {loadingSample === sm.id ? "Loading…" : "Load"}
                 </button>
               </div>

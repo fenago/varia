@@ -1,0 +1,95 @@
+{
+  "id": "ai-in-business-vendor-case",
+  "industry": "Real estate",
+  "organisation": "Keystone Residential Management",
+  "title": "Should we sign the AI vendor for invoices and tenant inquiries?",
+  "summary": "A regional property manager received a proposal to automate invoice processing and tenant-inquiry triage. Write the COO's go/no-go memo: fit, ROI and payback, responsible-AI risks, and the rollout plan.",
+  "course": {
+    "code": "GEB 1432",
+    "title": "Applied Artificial Intelligence (AI) in Business",
+    "program": "School of Business · Applied AI pathway"
+  },
+  "files": [
+    {
+      "name": "assignment.md",
+      "kind": "task+rubric",
+      "path": "assignment.md"
+    },
+    {
+      "name": "model-answer.md",
+      "kind": "solution",
+      "path": "model-answer.md"
+    },
+    {
+      "name": "employer-brief.md",
+      "kind": "task",
+      "path": "employer-brief.md"
+    },
+    {
+      "name": "roster.csv",
+      "kind": "roster",
+      "path": "roster.csv"
+    }
+  ],
+  "challenge": {
+    "organisation": "Keystone Residential Management",
+    "title": "Should we sign the AI vendor for invoices and tenant inquiries?",
+    "brief": "We manage 4,300 residential units across 38 associations and rental communities in Miami-Dade and Broward. Two back-office jobs eat our time. Accounts payable processes about 2,900 vendor invoices a month by hand: 3.5 full-time staff, roughly 11 minutes per invoice, and a 4 percent error rate that generates rework and late fees. Tenant and owner inquiries come in at about 9,400 a month by email and portal; a team of six spends most of its day reading them, tagging them and routing them to maintenance, accounting or the community manager, and our first-response time averages 19 hours.\n\nA vendor has proposed a platform that reads invoices, matches them to purchase orders and posts them for approval, and that classifies inquiries by topic and urgency and drafts a first reply for a person to approve. Their proposal: $6,500 a month subscription, $48,000 implementation, a promised 70 percent reduction in invoice handling time and a 60 percent reduction in inquiry triage time, contract term three years.\n\nI need someone to tell me whether this is a good fit for how we actually work, what it is worth in dollars, what could go wrong with tenant data and with a machine drafting replies about late rent or maintenance emergencies, and how we would roll it out so we find out early if the vendor's numbers are wrong. A one-page memo with the reasoning behind it. Go or no-go.\n\nEmployer names are stand-ins until a partner signs on; the problem is real to the industry.",
+    "domain": "Real estate",
+    "stakeholderRole": "Chief operating officer",
+    "deliverable": "A recommendation memo to the COO: use-case fit, ROI and payback from the proposal figures, responsible-AI and data-handling risks with controls, an implementation plan with success metrics, and a go/no-go.",
+    "skillKeys": [
+      "roi-estimation",
+      "responsible-ai-governance",
+      "implementation-planning",
+      "risk-prioritisation",
+      "stakeholder-communication",
+      "evidence-based-reasoning"
+    ],
+    "contributedBy": "Andre Pierre-Louis"
+  },
+  "partner": {
+    "organisation": "Keystone Residential Management",
+    "sector": "Real estate",
+    "contactName": "Andre Pierre-Louis",
+    "contactRole": "Chief Operating Officer",
+    "contactEmail": "a.pierrelouis@keystoneres.example"
+  },
+  "skills": [
+    {
+      "key": "roi-estimation",
+      "label": "ROI and payback estimation",
+      "source": "taxonomy",
+      "externalRef": "O*NET 13-2051.00 · Financial analysis"
+    },
+    {
+      "key": "responsible-ai-governance",
+      "label": "Responsible-AI governance",
+      "source": "employer",
+      "externalRef": "Keystone Residential OPS-9 · Vendor AI review"
+    },
+    {
+      "key": "implementation-planning",
+      "label": "Implementation planning",
+      "source": "instructor"
+    },
+    {
+      "key": "risk-prioritisation",
+      "label": "Risk prioritisation",
+      "source": "taxonomy",
+      "externalRef": "O*NET 13-2054.00 · Risk assessment"
+    },
+    {
+      "key": "stakeholder-communication",
+      "label": "Stakeholder communication",
+      "source": "employer",
+      "externalRef": "Northline L2 · Executive communication"
+    },
+    {
+      "key": "evidence-based-reasoning",
+      "label": "Evidence-based reasoning",
+      "source": "instructor"
+    }
+  ],
+  "preExtracted": null
+}

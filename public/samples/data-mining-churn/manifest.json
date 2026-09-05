@@ -1,0 +1,95 @@
+{
+  "id": "data-mining-churn",
+  "industry": "Retail",
+  "organisation": "Palmetto & Pine Market",
+  "title": "Find the root cause of our online-order subscription churn",
+  "summary": "A South Florida specialty grocer's online-order subscription is losing customers in a pattern the retention team cannot explain. Choose the method, find the cause, and design the test that confirms it.",
+  "course": {
+    "code": "CAP 4767",
+    "title": "Data Mining",
+    "program": "Bachelor of Science in Data Analytics"
+  },
+  "files": [
+    {
+      "name": "assignment.md",
+      "kind": "task+rubric",
+      "path": "assignment.md"
+    },
+    {
+      "name": "model-answer.md",
+      "kind": "solution",
+      "path": "model-answer.md"
+    },
+    {
+      "name": "employer-brief.md",
+      "kind": "task",
+      "path": "employer-brief.md"
+    },
+    {
+      "name": "roster.csv",
+      "kind": "roster",
+      "path": "roster.csv"
+    }
+  ],
+  "challenge": {
+    "organisation": "Palmetto & Pine Market",
+    "title": "Find the root cause of our online-order subscription churn",
+    "brief": "We are a four-store specialty grocer in Miami-Dade and Broward. In 2024 we launched Pantry Plan, a weekly online-order subscription: customers pick a delivery window, we assemble the order, and a courier delivers it. We have 6,140 active subscribers and the plan is 22 percent of our revenue.\n\nSince March, monthly churn has climbed from 4.1 percent to 7.6 percent. The retention team has tried a 15 percent win-back coupon and a courier change in Broward. Neither moved the number. What bothers me is that churn is not spread evenly. Customers who joined in the second half of 2025 churn faster than earlier cohorts, and the Broward stores look worse than Miami-Dade, but the team cannot tell me whether that is the courier, the product mix, the delivery window, or something about who we acquired last year.\n\nI can give you the subscriber table (join date, store, delivery window, plan tier, weekly basket value, substitutions per order, on-time rate, support tickets, churn date), 18 months of it. I do not want a churn model that scores customers. I want to know why they leave, in a form I can act on by segment, and I want a test that will prove it before I spend money on a fix.\n\nThe skills this exercises are what I look for when I hire an analyst: picking the right method for the question, finding a cause rather than a correlation, and knowing how to prove it.\n\nEmployer names are stand-ins until a partner signs on; the problem is real to the industry.",
+    "domain": "Retail",
+    "stakeholderRole": "Director of e-commerce",
+    "deliverable": "A data-mining brief: the method and why, the root cause with quantified evidence, a segment-level recommendation, and the test that would confirm it.",
+    "skillKeys": [
+      "statistical-method-selection",
+      "cohort-analysis",
+      "churn-analysis",
+      "root-cause-analysis",
+      "experiment-design",
+      "evidence-based-reasoning"
+    ],
+    "contributedBy": "Daniela Ferrer"
+  },
+  "partner": {
+    "organisation": "Palmetto & Pine Market",
+    "sector": "Retail",
+    "contactName": "Daniela Ferrer",
+    "contactRole": "Director of E-commerce",
+    "contactEmail": "d.ferrer@palmettopine.example"
+  },
+  "skills": [
+    {
+      "key": "statistical-method-selection",
+      "label": "Statistical method selection",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2041.00 · Method selection"
+    },
+    {
+      "key": "cohort-analysis",
+      "label": "Cohort and survival analysis",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2041.00 · Longitudinal analysis"
+    },
+    {
+      "key": "churn-analysis",
+      "label": "Churn analysis",
+      "source": "employer",
+      "externalRef": "Palmetto & Pine RET-2 · Retention analytics"
+    },
+    {
+      "key": "root-cause-analysis",
+      "label": "Root-cause analysis",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2041.00 · Statistical root-cause analysis"
+    },
+    {
+      "key": "experiment-design",
+      "label": "Experiment design",
+      "source": "instructor"
+    },
+    {
+      "key": "evidence-based-reasoning",
+      "label": "Evidence-based reasoning",
+      "source": "instructor"
+    }
+  ],
+  "preExtracted": null
+}

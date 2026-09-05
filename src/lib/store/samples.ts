@@ -16,6 +16,7 @@ export interface SampleLoadActions {
   addChallenge: (c: Omit<EmployerChallenge, "id" | "contributedAt" | "status" | "blueprintIds" | "organisation"> & { organisation?: string }) => EmployerChallenge;
   addSkill: (tag: { key?: string; label: string; source: "employer" | "taxonomy" | "instructor"; externalRef?: string }) => { key: string };
   setRoster: (roster: Roster) => void;
+  setCourse?: (patch: { code: string; title: string }) => void;
 }
 
 export interface SampleLoadResult {
@@ -93,6 +94,7 @@ export async function loadSample(id: string, opts: SampleLoadOptions): Promise<S
   const parsed = await parseFiles(files, courseId);
   if (!parsed.roster) throw new Error("The sample roster did not parse.");
   actions.setRoster(parsed.roster);
+  actions.setCourse?.({ code: sample.course.code, title: sample.course.title });
 
   ensureSkills(sample, ws, actions);
   const partner = ensurePartner(sample, ws, actions);

@@ -1,0 +1,95 @@
+{
+  "id": "nlp-support-ticket-triage",
+  "industry": "Healthcare",
+  "organisation": "Coral Health Plan",
+  "title": "Design the triage system for 40,000 member messages a month",
+  "summary": "A South Florida health plan wants member messages in English, Spanish and Haitian Creole triaged by intent and urgency. Design the labelling scheme, compare model options, and plan the evaluation with a per-language fairness check.",
+  "course": {
+    "code": "CAI 3303C",
+    "title": "Natural Language Processing",
+    "program": "Bachelor of Science in Applied Artificial Intelligence"
+  },
+  "files": [
+    {
+      "name": "assignment.md",
+      "kind": "task+rubric",
+      "path": "assignment.md"
+    },
+    {
+      "name": "model-answer.md",
+      "kind": "solution",
+      "path": "model-answer.md"
+    },
+    {
+      "name": "employer-brief.md",
+      "kind": "task",
+      "path": "employer-brief.md"
+    },
+    {
+      "name": "roster.csv",
+      "kind": "roster",
+      "path": "roster.csv"
+    }
+  ],
+  "challenge": {
+    "organisation": "Coral Health Plan",
+    "title": "Design the triage system for 40,000 member messages a month",
+    "brief": "We are a Medicaid and Marketplace health plan with about 310,000 members in Miami-Dade, Broward and Palm Beach. Our member-services centre receives about 40,000 written messages a month through the member portal and email. By our own sampling, 58 percent are in English, 33 percent in Spanish and 9 percent in Haitian Creole, with a fair amount of mixing inside single messages.\n\nToday a team of 22 agents reads every message and decides what it is (claim question, prior authorisation, find a provider, ID card, billing, pharmacy, complaint, appeal, and so on) and how urgent it is. About 6 percent of messages describe something we must act on within 24 hours: a denied medication a member needs now, a pregnancy-related access problem, an appeal deadline, a safety concern. Our median time to first human response is 31 hours, and we have missed urgent cases that were buried in long messages or written in Creole.\n\nWe want a system that reads each message, assigns an intent and an urgency level, and routes urgent cases to a human within the hour. I have 18 months of messages with the agents' tags, though the tags are inconsistent, and I can share 200 de-identified sample messages across the three languages. I need a design, a plan to evaluate it that is fair to our Creole-speaking members, and the rule that decides when a case is urgent. If the honest answer is that some part of this should stay with humans, tell me.\n\nEmployer names are stand-ins until a partner signs on; the problem is real to the industry.",
+    "domain": "Healthcare",
+    "stakeholderRole": "Director of member services",
+    "deliverable": "An NLP system design and evaluation plan: labelling scheme, model options compared, metrics with a per-language fairness check, error analysis on the sample messages, and the escalation rule for urgent cases.",
+    "skillKeys": [
+      "intent-classification",
+      "multilingual-evaluation",
+      "evaluation-design",
+      "error-analysis",
+      "fairness-analysis",
+      "risk-prioritisation"
+    ],
+    "contributedBy": "Marie-Josée Alexis"
+  },
+  "partner": {
+    "organisation": "Coral Health Plan",
+    "sector": "Healthcare",
+    "contactName": "Marie-Josée Alexis",
+    "contactRole": "Director of Member Services",
+    "contactEmail": "mj.alexis@coralhealthplan.example"
+  },
+  "skills": [
+    {
+      "key": "intent-classification",
+      "label": "Intent classification",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2051.01 · Text classification"
+    },
+    {
+      "key": "multilingual-evaluation",
+      "label": "Multilingual evaluation",
+      "source": "employer",
+      "externalRef": "Coral Health Plan MS-2 · Member-services language access"
+    },
+    {
+      "key": "evaluation-design",
+      "label": "Evaluation design",
+      "source": "instructor"
+    },
+    {
+      "key": "error-analysis",
+      "label": "Error analysis",
+      "source": "instructor"
+    },
+    {
+      "key": "fairness-analysis",
+      "label": "Fairness analysis",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2051.01 · Fairness assessment of models"
+    },
+    {
+      "key": "risk-prioritisation",
+      "label": "Risk prioritisation",
+      "source": "taxonomy",
+      "externalRef": "O*NET 13-2054.00 · Risk assessment"
+    }
+  ],
+  "preExtracted": null
+}

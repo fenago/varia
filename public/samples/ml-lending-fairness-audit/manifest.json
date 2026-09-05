@@ -1,12 +1,13 @@
 {
-  "id": "lending-loan-default-audit",
+  "id": "ml-lending-fairness-audit",
   "industry": "Lending",
   "organisation": "Bayfront Regional Bank",
   "title": "Audit our loan-default classifier",
-  "summary": "A regional bank's default model is declining applicants in two lending regions at a rate underwriting cannot explain. Audit it from the partial model card.",
+  "summary": "A regional bank's default model is declining applicants in two lending regions at a rate underwriting cannot explain. Audit it from the partial model card: performance and fairness gaps, robustness under shift, documentation gaps, and what to fix first.",
   "course": {
-    "code": "DAT 4100",
-    "title": "Applied AI and Data Analytics"
+    "code": "CAP 4631C",
+    "title": "Machine Learning for Data Analytics I",
+    "program": "Bachelor of Science in Data Analytics"
   },
   "files": [
     {
@@ -33,10 +34,10 @@
   "challenge": {
     "organisation": "Bayfront Regional Bank",
     "title": "Audit our loan-default classifier",
-    "brief": "We put a loan-default classifier into production in March across our three lending regions. In August the underwriting team in the Southwest and Coastal regions raised a complaint: applicants there are being declined at a rate that does not match what underwriters see in the files. The model vendor gave us a partial model card. It reports an aggregate accuracy of 0.91 and says \"no disparate impact detected,\" but it does not break anything down by region, income band, or the age of the credit file.\n\nWhat we want back is not a rebuild. We want an audit a model risk committee can read in one sitting: what the card proves, what it leaves out, where the model is likely to be fragile when the applicant mix changes, and which three things we should fix first and why. If the card cannot support the \"no disparate impact\" claim, say so plainly and tell us what evidence would.\n\nThe skills this exercises are the ones we hire for in our model risk group: fairness analysis, robustness evaluation, technical documentation review, and risk prioritisation. Whoever does this well would be someone we want to meet.",
+    "brief": "We put a loan-default classifier into production in March across our three lending regions. In August the underwriting team in the Southwest and Coastal regions raised a complaint: applicants there are being declined at a rate that does not match what underwriters see in the files. The model vendor gave us a partial model card. It reports an aggregate accuracy of 0.91 and an AUC of 0.88, says \"no disparate impact detected,\" and lists 41 features, but it does not break anything down by region, income band, or the age of the credit file, and it does not report calibration.\n\nWhat we want back is not a rebuild. We want an audit a model risk committee can read in one sitting: what the card proves, what it leaves out, where the model is likely to be fragile when the applicant mix changes, and which three things we should fix first and why. If the card cannot support the \"no disparate impact\" claim, say so plainly and tell us what evidence would.\n\nThe skills this exercises are the ones we hire for in our model risk group: fairness analysis, robustness evaluation, technical documentation review, and risk prioritisation. Whoever does this well would be someone we want to meet.\n\nEmployer names are stand-ins until a partner signs on; the problem is real to the industry.",
     "domain": "Lending",
     "stakeholderRole": "Risk officer",
-    "deliverable": "A structured audit identifying fairness, robustness and documentation gaps, with prioritised recommendations the model risk committee can act on.",
+    "deliverable": "A structured audit from the partial model card: performance and fairness gaps with evidence, robustness under shift, documentation gaps, and prioritised recommendations the model risk committee can act on.",
     "skillKeys": [
       "fairness-analysis",
       "robustness-evaluation",

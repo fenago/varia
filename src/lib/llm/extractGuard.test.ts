@@ -6,7 +6,7 @@ import { sampleById } from "@shared/samples";
 import { guardDraft } from "./extractGuard";
 
 const root = path.resolve(__dirname, "..", "..", "..");
-const sample = sampleById("lending-loan-default-audit")!;
+const sample = sampleById("ml-lending-fairness-audit")!;
 const files: SourceFile[] = sample.files
   .filter((f) => !f.name.endsWith(".csv"))
   .map((f) => ({

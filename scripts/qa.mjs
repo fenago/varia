@@ -87,10 +87,9 @@ await check("deep-link hard reload on /roster", async () => {
 await check("no console errors so far", async () => { assert(consoleErrors.length === 0, consoleErrors.join(" | ")); });
 
 console.log("\n2. Header chips");
-await check("header shows course tag and demo chip", async () => {
+await check("header shows the demo chip", async () => {
   await go("/");
   const h = await page.locator(".va-header").innerText();
-  assert(h.includes("DAT 4100 · Fall 2026"), "course tag");
   assert(h.includes("Demo mode · add a key"), "demo chip");
   await page.locator(".va-header").getByText("Demo mode · add a key").click();
   await page.waitForURL("**/settings");

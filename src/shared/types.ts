@@ -781,13 +781,14 @@ export interface UsageTotals {
 // ---------------------------------------------------------------------------
 
 export interface SampleAssessment {
-  id: string; // "lending-loan-default-audit"
+  id: string; // "data-mining-churn"
   industry: string; // "Lending"
   organisation: string; // "Bayfront Regional Bank"
   title: string; // "Audit our loan-default classifier"
   /** One sentence for the samples panel */
   summary: string;
-  course: { code: string; title: string };
+  /** Metadata only: the real MDC course this assessment is used in */
+  course: { code: string; title: string; program: string };
   /** Files served from /samples/<id>/… and parsed by the real ingest path */
   files: { name: string; kind: SourceKind; path: string }[];
   /** The employer challenge that this assessment is built from */

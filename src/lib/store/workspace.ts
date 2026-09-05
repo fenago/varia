@@ -33,7 +33,10 @@ import type {
   EmployerChallenge,
   Endorsement,
   OutcomeEvent,
-  PortfolioShare, PreScoreOutput } from "@shared/types";
+  PortfolioShare,
+  PreScoreOutput,
+  Course,
+} from "@shared/types";
 import { PROPERTY_LABELS } from "@shared/thresholds";
 import { computeReport } from "@lib/metrics";
 import { estimateRunCost } from "@lib/llm";
@@ -65,6 +68,7 @@ export interface WorkspaceActions {
   importJson: (json: string) => void;
 
   setRoster: (roster: Roster) => void;
+  setCourse: (patch: Partial<Course>) => void;
   setPendingDraft: (draft: BlueprintDraft | null) => void;
   saveDraftAsBlueprint: () => Blueprint;
   addBlueprint: (bp: Blueprint) => void;
@@ -223,6 +227,7 @@ export const useWorkspace = create<WorkspaceState>()(
       },
 
       setRoster: (roster) => set({ roster }),
+      setCourse: (patch) => set((ws) => ({ course: { ...ws.course, ...patch, instructor: ws.course.instructor } })),
 
       setPendingDraft: (draft) => set({ pendingDraft: draft }),
 

@@ -75,9 +75,9 @@ export function fixtureWorkspace(ids?: string[], seededAt = new Date().toISOStri
   const firstSample = sampleById(first.sampleId);
   const course = {
     id: first.blueprint.courseId,
-    code: firstSample?.course.code ?? "DAT 4100",
+    code: firstSample?.course.code ?? "CAP 4767",
     term: "Fall 2026",
-    title: firstSample?.course.title ?? "Applied AI and Data Analytics",
+    title: firstSample?.course.title ?? "Data Mining",
     instructor: { name: "Dr. E. Lee", institution: "Miami Dade College", role: "Instructor" },
   };
 

@@ -1,0 +1,3066 @@
+{
+  "version": 1,
+  "sampleId": "data-mining-churn",
+  "recordedAt": "2026-09-05T17:23:12.943Z",
+  "recordedWith": "demo-provider",
+  "models": {
+    "generator": "claude-opus-5",
+    "judge": "claude-sonnet-5"
+  },
+  "strategy": "structured-cot",
+  "blueprint": {
+    "code": "CAP 4767",
+    "name": "Subscription Churn Root-Cause Brief for Palmetto & Pine Market",
+    "construct": "Produce a data-mining brief for the Director of E-commerce that selects and justifies an analytical method, identifies the root cause of the churn increase with quantified evidence from the appendix, recommends an action for each affected segment, and designs a test that would confirm the cause before the company spends on a fix.",
+    "constructDimensions": [
+      "Method selection with justification",
+      "Root cause with quantified evidence",
+      "Segment-level recommendations",
+      "Confirmation test design"
+    ],
+    "rubric": [
+      {
+        "id": "crit-data-mining-churn-1",
+        "name": "Method selection with justification",
+        "points": 3,
+        "weight": 0.25,
+        "levels": 4,
+        "anchors": [
+          "No method is chosen, or the choice is asserted without reasons.",
+          "A method is chosen with reasons, but the alternatives are not considered.",
+          "At least two methods are compared and the choice is tied to the question being asked.",
+          "Methods are compared, the choice is tied to the question, and the brief states what the chosen method cannot tell the director."
+        ],
+        "anchorsConfidence": "high",
+        "skillKeys": [
+          "statistical-method-selection",
+          "experiment-design"
+        ]
+      },
+      {
+        "id": "crit-data-mining-churn-2",
+        "name": "Root cause with quantified evidence",
+        "points": 3,
+        "weight": 0.25,
+        "levels": 4,
+        "anchors": [
+          "No root cause, or a cause with no numbers.",
+          "A cause is named with a figure but competing explanations are ignored.",
+          "A cause is named, supported by figures from the appendix, and at least one competing explanation is ruled out with evidence.",
+          "The cause is supported, competitors are ruled out, and the brief separates what the data proves from what it only suggests."
+        ],
+        "anchorsConfidence": "high",
+        "skillKeys": [
+          "cohort-analysis",
+          "evidence-based-reasoning"
+        ]
+      },
+      {
+        "id": "crit-data-mining-churn-3",
+        "name": "Segment-level recommendations",
+        "points": 3,
+        "weight": 0.25,
+        "levels": 4,
+        "anchors": [
+          "No recommendations, or one recommendation for everyone.",
+          "Recommendations differ by segment but are not tied to the cause.",
+          "Each affected segment gets a recommendation tied to the cause with an expected effect.",
+          "Recommendations are tied to the cause, sized by expected effect, and ordered by revenue at risk."
+        ],
+        "anchorsConfidence": "high",
+        "skillKeys": [
+          "churn-analysis"
+        ]
+      },
+      {
+        "id": "crit-data-mining-churn-4",
+        "name": "Confirmation test design",
+        "points": 3,
+        "weight": 0.25,
+        "levels": 4,
+        "anchors": [
+          "No confirmation test is proposed.",
+          "A test is proposed without the unit of assignment or the metric.",
+          "The test states unit, metric, minimum detectable effect and duration.",
+          "The test is fully specified and the brief explains what result would falsify the root-cause claim."
+        ],
+        "anchorsConfidence": "high",
+        "skillKeys": [
+          "root-cause-analysis"
+        ]
+      }
+    ],
+    "canonicalSolution": "# Pantry Plan Churn: Root-Cause Brief\n\n**Prepared for:** Daniela Ferrer, Director of E-commerce, Palmetto & Pine Market\n\n## 1. Method\n\nThe question is why subscribers leave, by segment, not which subscriber will leave next. That rules out the obvious choice. A classification model (gradient boosting on churn within 30 days) would score customers well and would confirm that substitutions, on-time rate and tier are predictive, but it would not separate cause from correlation, and its output is a list of names rather than a decision. Association rules would surface co-occurrences (Broward, Essentials, high substitutions) without telling us which one to fix.\n\nThe method that fits is cohort and survival analysis: Kaplan-Meier retention curves by join cohort, store and tier, followed by a Cox proportional-hazards model with substitutions per order, on-time rate, tier, store and support tickets as covariates. It answers the director's question in her own terms (when in the subscriber's life do they leave, and what makes leaving faster), and the hazard ratios are the segment-level effect sizes she needs. What it cannot do is prove causation from observational data. The confirmation test in section 4 does that.\n\n## 2. Root cause\n\nThe appendix supports one cause and rules out two.\n\n**The cause is order quality, specifically substitutions, concentrated in the Essentials tier at the Broward stores.** Substitutions average 1.9 per order in Broward against 0.8 in Miami-Dade. In the survival model, each additional substitution per order raises the weekly hazard of churn by about 28 percent, and the Broward store effect disappears once substitutions are in the model: the stores are not different, their orders are. The late-2025 cohort is 71 percent Essentials against 44 percent for the early cohort, and Essentials orders are assembled from a narrower range so substitutions run higher. The cohort effect is therefore a mix effect: we acquired more Essentials subscribers, in Broward, at the moment Broward substitutions rose.\n\n**The courier is not the cause.** On-time rate is 91 percent in Broward and 94 percent in Miami-Dade, a three-point gap. In the model that gap accounts for less than a tenth of the Broward excess hazard, and the courier change in Broward produced no change in the churn curve. The win-back coupon failed for the same reason: it discounted a service whose problem was the order, not the price.\n\n**Acquisition quality is a partial explanation, not the root.** The late-2025 cohort's six-month retention is 61 percent against 78 percent, but within tier and substitution band the cohorts retain alike. The cohort looks worse because of what it bought and where.\n\nWhat the data proves: subscribers who receive more substitutions leave sooner, and the pattern explains both anomalies. What it only suggests: that reducing substitutions would reduce churn. That is a causal claim about an intervention, and observational data cannot close it.\n\n## 3. Segment recommendations\n\nOrdered by revenue at risk.\n\n1. **Broward Essentials subscribers (about 1,900 subscribers, roughly $2.1 million annual basket value).** Reduce substitutions by holding Essentials inventory for Pantry Plan assembly at the two Broward stores and enabling a pre-delivery substitution approval message. Expected effect from the hazard ratio: cutting substitutions from 1.9 to 1.0 per order lowers the monthly churn hazard for this segment by roughly a fifth.\n2. **Miami-Dade Essentials subscribers.** Same inventory hold, lower urgency; substitutions are already near the floor.\n3. **Full Pantry subscribers, both regions.** No product change. Stop sending them the win-back coupon; their churn is at the February baseline.\n4. **Acquisition.** Keep acquiring Essentials subscribers, but not in Broward until the substitution fix is live. The cohort problem is a mix problem and will resolve itself once the order problem does.\n\n## 4. Confirmation test\n\n- **Unit of assignment:** Broward Essentials subscribers, randomised at the subscriber level, 50/50.\n- **Treatment:** inventory hold plus pre-delivery substitution approval. Control: current process.\n- **Primary metric:** 8-week churn rate. Secondary: substitutions per order (the mechanism check).\n- **Minimum detectable effect:** a 2.0 percentage-point reduction in 8-week churn, from a baseline of about 12 percent, at 80 percent power and 5 percent significance, which needs roughly 900 subscribers per arm. The segment has about 1,900, so the test is feasible at full enrolment.\n- **Duration:** 8 weeks, with a pre-registered analysis of substitutions at week 2 to confirm the treatment actually lowered them.\n\n**What would falsify the claim:** substitutions fall in the treatment arm but churn does not separate from control. That result would mean order quality is a marker, not a cause, and the next candidate is the Essentials assortment itself.",
+    "canonicalSolutionSource": "found",
+    "surfaceDimensions": [
+      {
+        "key": "domain",
+        "label": "Industry domain",
+        "values": [
+          "retail",
+          "grocery",
+          "meal-kit subscriptions",
+          "e-commerce",
+          "specialty retail"
+        ],
+        "locked": false,
+        "enabled": true,
+        "note": "from the employer brief"
+      },
+      {
+        "key": "stakeholder",
+        "label": "Stakeholder role",
+        "values": [
+          "director of e-commerce",
+          "growth director",
+          "head of retention",
+          "chief operating officer",
+          "store operations lead"
+        ],
+        "locked": false,
+        "enabled": true,
+        "note": "from the employer brief"
+      },
+      {
+        "key": "scenario",
+        "label": "Organisation and scenario",
+        "values": [
+          "This assignment is built from the brief Palmetto & Pine Market sent us; the employer brief is attached and is the primary document.",
+          "Palmetto & Pine Market is a four-store specialty grocer with a weekly online-order subscription, Pantry Plan, launched in 2024.",
+          "It has 6,140 active subscribers."
+        ],
+        "locked": false,
+        "enabled": true,
+        "note": "3 drafted from the assignment"
+      },
+      {
+        "key": "jargon",
+        "label": "Jargon register",
+        "values": [
+          "plain",
+          "professional",
+          "technical"
+        ],
+        "locked": false,
+        "enabled": true,
+        "note": "3 bands"
+      },
+      {
+        "key": "readingLevel",
+        "label": "Reading level",
+        "values": [],
+        "locked": true,
+        "enabled": false,
+        "note": "held constant"
+      },
+      {
+        "key": "stepCount",
+        "label": "Number of findings required",
+        "values": [],
+        "locked": true,
+        "enabled": false,
+        "note": "held constant"
+      }
+    ],
+    "taskPrompt": "# Assignment 4 — Subscription Churn Root-Cause Brief for Palmetto & Pine Market (12 points)\n\n## Context\n\nThis assignment is built from the brief Palmetto & Pine Market sent us; the employer brief is attached and is the primary document.\n\nPalmetto & Pine Market is a four-store specialty grocer with a weekly online-order subscription, Pantry Plan, launched in 2024. It has 6,140 active subscribers. Monthly churn rose from 4.1 percent in February to 7.6 percent in August. A 15 percent win-back coupon and a courier change in Broward did not reduce it. The Director of E-commerce reports two patterns the retention team cannot explain: subscribers who joined in the second half of 2025 churn faster than earlier cohorts, and the two Broward stores churn faster than the two Miami-Dade stores.\n\nYou have the subscriber-level table described in the employer brief: join date, home store, delivery window, plan tier (Essentials or Full Pantry), average weekly basket value, substitutions per order, courier on-time rate, support tickets in the last 60 days, and churn date if any, for 18 months. Summary statistics are provided in the data appendix: the July 2025 to December 2025 join cohort has a six-month retention of 61 percent against 78 percent for the January to June cohort; substitutions per order average 1.9 in Broward and 0.8 in Miami-Dade; on-time rate is 91 percent in Broward after the courier change and 94 percent in Miami-Dade; the Essentials tier is 71 percent of the late-2025 cohort and 44 percent of the early cohort.\n\n## What you must produce\n\nProduce a data-mining brief for the Director of E-commerce that selects and justifies an analytical method, identifies the root cause of the churn increase with quantified evidence from the appendix, recommends an action for each affected segment, and designs a test that would confirm the cause before the company spends on a fix. The brief must have exactly four sections in that order: Method, Root cause, Segment recommendations, Confirmation test.\n\nWrite for a director who reads numbers well but does not run code.\n\n## Constraints\n\n- Length: 900 to 1,300 words.\n- The Method section must compare at least two candidate approaches (for example cohort and survival analysis, a classification model, association rules) and state why the chosen one fits the question of why customers leave rather than who will leave.\n- Every causal claim must cite a figure from the data appendix. Where the appendix cannot separate two explanations, say so and let the confirmation test resolve it.\n- The confirmation test must state the unit of assignment, the metric, the minimum detectable effect, and the duration.\n- Submit as a single document.",
+    "source": {
+      "files": [
+        {
+          "name": "assignment.md",
+          "kind": "task+rubric",
+          "recognisedAs": "Task prompt + rubric",
+          "sizeBytes": 4274,
+          "status": "read"
+        },
+        {
+          "name": "model-answer.md",
+          "kind": "solution",
+          "recognisedAs": "Canonical solution",
+          "sizeBytes": 4916,
+          "status": "read"
+        },
+        {
+          "name": "employer-brief.md",
+          "kind": "solution",
+          "recognisedAs": "Canonical solution",
+          "sizeBytes": 1609,
+          "status": "read"
+        },
+        {
+          "name": "roster.csv",
+          "kind": "roster",
+          "recognisedAs": "28 enrolled students",
+          "sizeBytes": 1380,
+          "status": "read"
+        }
+      ],
+      "extractedAt": "2026-09-05T17:23:08.320Z",
+      "extractionConfidence": "medium"
+    },
+    "fewShotAnchors": null,
+    "lastUsed": null,
+    "id": "bp-data-mining-churn",
+    "courseId": "course-cap4767",
+    "createdAt": "2026-09-05T17:23:08.321Z",
+    "updatedAt": "2026-09-05T17:23:08.321Z",
+    "challengeIds": []
+  },
+  "roster": {
+    "courseId": "course-cap4767",
+    "students": [
+      {
+        "id": "s-acosta-v",
+        "name": "Acosta, V.",
+        "email": "vacosta@students.mdc.example"
+      },
+      {
+        "id": "s-almonte-j",
+        "name": "Almonte, J.",
+        "email": "jalmonte@students.mdc.example"
+      },
+      {
+        "id": "s-bautista-m",
+        "name": "Bautista, M.",
+        "email": "mbautista@students.mdc.example"
+      },
+      {
+        "id": "s-brito-a",
+        "name": "Brito, A.",
+        "email": "abrito@students.mdc.example"
+      },
+      {
+        "id": "s-cisneros-y",
+        "name": "Cisneros, Y.",
+        "email": "ycisneros@students.mdc.example"
+      },
+      {
+        "id": "s-dorsainvil-j",
+        "name": "Dorsainvil, J.",
+        "email": "jdorsainvil@students.mdc.example"
+      },
+      {
+        "id": "s-espinal-r",
+        "name": "Espinal, R.",
+        "email": "respinal@students.mdc.example"
+      },
+      {
+        "id": "s-fontaine-n",
+        "name": "Fontaine, N.",
+        "email": "nfontaine@students.mdc.example"
+      },
+      {
+        "id": "s-guerrero-l",
+        "name": "Guerrero, L.",
+        "email": "lguerrero@students.mdc.example"
+      },
+      {
+        "id": "s-hoang-t",
+        "name": "Hoang, T.",
+        "email": "thoang@students.mdc.example"
+      },
+      {
+        "id": "s-iglesias-j",
+        "name": "Iglesias, J.",
+        "email": "jiglesias@students.mdc.example"
+      },
+      {
+        "id": "s-jean-baptiste-w",
+        "name": "Jean-Baptiste, W.",
+        "email": "wjeanbaptiste@students.mdc.example"
+      },
+      {
+        "id": "s-kowalczyk-p",
+        "name": "Kowalczyk, P.",
+        "email": "pkowalczyk@students.mdc.example"
+      },
+      {
+        "id": "s-lozano-a",
+        "name": "Lozano, A.",
+        "email": "alozano@students.mdc.example"
+      },
+      {
+        "id": "s-mbeki-t",
+        "name": "Mbeki, T.",
+        "email": "tmbeki@students.mdc.example"
+      },
+      {
+        "id": "s-novak-k",
+        "name": "Novak, K.",
+        "email": "knovak@students.mdc.example"
+      },
+      {
+        "id": "s-ortiz-d",
+        "name": "Ortiz, D.",
+        "email": "dortiz@students.mdc.example"
+      },
+      {
+        "id": "s-pham-l",
+        "name": "Pham, L.",
+        "email": "lpham@students.mdc.example"
+      },
+      {
+        "id": "s-qui-ones-i",
+        "name": "Quiñones, I.",
+        "email": "iquiones@students.mdc.example"
+      },
+      {
+        "id": "s-ramkissoon-d",
+        "name": "Ramkissoon, D.",
+        "email": "dramkissoon@students.mdc.example"
+      },
+      {
+        "id": "s-saintil-m",
+        "name": "Saintil, M.",
+        "email": "msaintil@students.mdc.example"
+      },
+      {
+        "id": "s-tavares-b",
+        "name": "Tavares, B.",
+        "email": "btavares@students.mdc.example"
+      },
+      {
+        "id": "s-urbina-c",
+        "name": "Urbina, C.",
+        "email": "curbina@students.mdc.example"
+      },
+      {
+        "id": "s-villanueva-e",
+        "name": "Villanueva, E.",
+        "email": "evillanueva@students.mdc.example"
+      },
+      {
+        "id": "s-wallace-j",
+        "name": "Wallace, J.",
+        "email": "jwallace@students.mdc.example"
+      },
+      {
+        "id": "s-xavier-r",
+        "name": "Xavier, R.",
+        "email": "rxavier@students.mdc.example"
+      },
+      {
+        "id": "s-yanez-r",
+        "name": "Yanez, R.",
+        "email": "ryanez@students.mdc.example"
+      },
+      {
+        "id": "s-zayas-m",
+        "name": "Zayas, M.",
+        "email": "mzayas@students.mdc.example"
+      }
+    ],
+    "source": "roster.csv"
+  },
+  "run": {
+    "id": "run-data-mining-churn",
+    "blueprintId": "bp-data-mining-churn",
+    "blueprintName": "Subscription Churn Root-Cause Brief for Palmetto & Pine Market",
+    "courseId": "course-cap4767",
+    "strategy": "structured-cot",
+    "threatProfile": "high-stakes",
+    "generatorModel": "claude-opus-5",
+    "judgeModel": "claude-sonnet-5",
+    "judgeSamples": 5,
+    "n": 28,
+    "enabledDimensions": [
+      "domain",
+      "stakeholder",
+      "scenario",
+      "jargon"
+    ],
+    "mode": "demo",
+    "status": "complete",
+    "progress": {
+      "phase": "complete",
+      "done": 1,
+      "total": 1,
+      "message": "28 versions generated, judged and scored"
+    },
+    "startedAt": "2026-09-05T17:23:08.321Z",
+    "finishedAt": "2026-09-05T17:23:12.942Z",
+    "variants": [
+      {
+        "id": "v-01",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-acosta-v",
+        "text": "Bayview Community Health deployed a readmission-risk classifier in January. You are auditing on behalf of the quality director, who has the partial model card below and a complaint from the discharge planning team about who is being flagged.\n\nThe card reports an AUROC of 0.84 on the full population, but does not include any breakdown by insurance type or primary language. Validation is described as a validation set drawn from the same two quarters as training. The card is silent on the threshold used to trigger a discharge-planner visit.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the quality director.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an AUROC of 0.84 on the full population but omits any breakdown by insurance type or primary language. Without that breakdown, a complaint from the discharge planning team about who is being flagged can be neither substantiated nor dismissed, and any claim that a readmission-risk classifier treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a validation set drawn from the same two quarters as training, so the reported figures cannot speak to performance under subgroup or temporal shift. For Bayview Community Health this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the threshold used to trigger a discharge-planner visit. Intended use is asserted but not bounded, which leaves the quality director unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the language subgroup gap, because the complaint names it directly. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the threshold used to trigger a discharge-planner visit and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "healthcare",
+          "stakeholder": "quality director",
+          "scenario": "Bayview Community Health · a readmission-risk classifier",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 48.5,
+          "lexicalComplexity": 0.56,
+          "stepCount": 4,
+          "solutionFleschEase": 47.3,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 3,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain healthcare; stakeholder quality director; organisation Bayview Community Health; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 48.5,
+            "lexicalComplexity": 0.56,
+            "stepCount": 4,
+            "solutionFleschEase": 47.3,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-02",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-almonte-j",
+        "text": "The chief lending officer at Harbor Credit Union has asked for an independent audit of a small-business loan pre-screening model that went live last spring. What they can give you is a partial model card and a member complaint alleging that businesses in two ZIP codes are routinely screened out.\n\nThe card reports an overall approval precision of 0.88, but does not include approval rates by ZIP code or business age. Validation is described as a holdout from a single pre-rate-rise quarter. The card is silent on who can override a screen-out and how often that happens.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the chief lending officer should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an overall approval precision of 0.88 but omits approval rates by ZIP code or business age. Without that breakdown, a member complaint alleging that businesses in two ZIP codes are routinely screened out can be neither substantiated nor dismissed, and any claim that a small-business loan pre-screening model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a holdout from a single pre-rate-rise quarter, so the reported figures cannot speak to performance under subgroup or temporal shift. For Harbor Credit Union this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state who can override a screen-out and how often that happens. Intended use is asserted but not bounded, which leaves the chief lending officer unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the geographic disparity, which is both a fairness and a regulatory exposure. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with who can override a screen-out and how often that happens and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "lending",
+          "stakeholder": "chief lending officer",
+          "scenario": "Harbor Credit Union · a small-business loan pre-screening model",
+          "jargon": "plain"
+        },
+        "metrics": {
+          "fleschEase": 50.4,
+          "lexicalComplexity": 0.6,
+          "stepCount": 4,
+          "solutionFleschEase": 51,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 3,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain lending; stakeholder chief lending officer; organisation Harbor Credit Union; register plain.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 50.4,
+            "lexicalComplexity": 0.6,
+            "stepCount": 4,
+            "solutionFleschEase": 51,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-03",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-bautista-m",
+        "text": "You have been retained by Cobalt Retail Group to audit a store-associate application ranker deployed in February. Your client is the talent acquisition lead; the materials are a partial model card and an internal note that shortlists from one region skew younger than the applicant pool.\n\nThe card reports a shortlist hit rate of 0.31, but does not include shortlist rates by age band or region. Validation is described as validation on one hiring season only. The card is silent on the features derived from application timestamps.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the talent acquisition lead.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a shortlist hit rate of 0.31 but omits shortlist rates by age band or region. Without that breakdown, an internal note that shortlists from one region skew younger than the applicant pool can be neither substantiated nor dismissed, and any claim that a store-associate application ranker treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on one hiring season only, so the reported figures cannot speak to performance under subgroup or temporal shift. For Cobalt Retail Group this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the features derived from application timestamps. Intended use is asserted but not bounded, which leaves the talent acquisition lead unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the age skew, since it may indicate proxy discrimination through availability fields. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the features derived from application timestamps and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "hiring",
+          "stakeholder": "talent acquisition lead",
+          "scenario": "Cobalt Retail Group · a store-associate application ranker",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 71.8,
+          "lexicalComplexity": 0.64,
+          "stepCount": 4,
+          "solutionFleschEase": 71.2,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 3,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain hiring; stakeholder talent acquisition lead; organisation Cobalt Retail Group; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 71.8,
+            "lexicalComplexity": 0.64,
+            "stepCount": 4,
+            "solutionFleschEase": 71.2,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-04",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-brito-a",
+        "text": "A regional bank deployed a loan-default classifier in March. You are auditing for the risk officer, who has the partial card and a complaint from the underwriting team.\n\nThe card reports aggregate accuracy of 0.91, but does not include per-subgroup false-positive rates. Validation is described as an evaluation set drawn from the same window as training. The card is silent on any statement of out-of-scope uses.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the risk officer.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports aggregate accuracy of 0.91 but omits per-subgroup false-positive rates. Without that breakdown, a complaint from the underwriting team can be neither substantiated nor dismissed, and any claim that a loan-default classifier treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on an evaluation set drawn from the same window as training, so the reported figures cannot speak to performance under subgroup or temporal shift. For a regional bank this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state any statement of out-of-scope uses. Intended use is asserted but not bounded, which leaves the risk officer unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the missing subgroup false-positive rates, which leave the no-disparate-impact claim unsupported. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with any statement of out-of-scope uses and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "lending",
+          "stakeholder": "risk officer",
+          "scenario": "a regional bank · a loan-default classifier",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 52.1,
+          "lexicalComplexity": 0.59,
+          "stepCount": 4,
+          "solutionFleschEase": 53.3,
+          "equivalence": 1,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain lending; stakeholder risk officer; organisation a regional bank; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 52.1,
+            "lexicalComplexity": 0.59,
+            "stepCount": 4,
+            "solutionFleschEase": 53.3,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-05",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-cisneros-y",
+        "text": "Meridian Freight deployed a late-delivery prediction model over the summer. You are auditing on behalf of the network planner, who has the partial model card below and an escalation from rural depots that their routes are flagged late far more often.\n\nThe card reports a macro-F1 of 0.77, but does not include any breakdown by depot type or route density. Validation is described as a validation window that excludes the winter season. The card is silent on the definition of a 'late' label.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the network planner should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a macro-F1 of 0.77 but omits any breakdown by depot type or route density. Without that breakdown, an escalation from rural depots that their routes are flagged late far more often can be neither substantiated nor dismissed, and any claim that a late-delivery prediction model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a validation window that excludes the winter season, so the reported figures cannot speak to performance under subgroup or temporal shift. For Meridian Freight this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the definition of a 'late' label. Intended use is asserted but not bounded, which leaves the network planner unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the rural flagging pattern, because it drives resourcing decisions. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the definition of a 'late' label and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "logistics",
+          "stakeholder": "network planner",
+          "scenario": "Meridian Freight · a late-delivery prediction model",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 49.5,
+          "lexicalComplexity": 0.63,
+          "stepCount": 4,
+          "solutionFleschEase": 49.5,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 4
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 3
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain logistics; stakeholder network planner; organisation Meridian Freight; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 49.5,
+            "lexicalComplexity": 0.63,
+            "stepCount": 4,
+            "solutionFleschEase": 49.5,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-06",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-dorsainvil-j",
+        "text": "The practice manager at Northgate Dental Partners has asked for an independent audit of an appointment no-show predictor that went live in April. What they can give you is a partial model card and front-desk staff reporting that overbooking hits one clinic disproportionately.\n\nThe card reports an accuracy of 0.79, but does not include no-show prediction rates by clinic or patient age. Validation is described as one clinic's data used for both training and testing. The card is silent on how predictions translate into overbooking decisions.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the practice manager.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an accuracy of 0.79 but omits no-show prediction rates by clinic or patient age. Without that breakdown, front-desk staff reporting that overbooking hits one clinic disproportionately can be neither substantiated nor dismissed, and any claim that an appointment no-show predictor treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on one clinic's data used for both training and testing, so the reported figures cannot speak to performance under subgroup or temporal shift. For Northgate Dental Partners this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state how predictions translate into overbooking decisions. Intended use is asserted but not bounded, which leaves the practice manager unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the clinic imbalance, which directly affects patient access. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with how predictions translate into overbooking decisions and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "healthcare",
+          "stakeholder": "practice manager",
+          "scenario": "Northgate Dental Partners · an appointment no-show predictor",
+          "jargon": "plain"
+        },
+        "metrics": {
+          "fleschEase": 51.4,
+          "lexicalComplexity": 0.58,
+          "stepCount": 4,
+          "solutionFleschEase": 50.2,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 3,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain healthcare; stakeholder practice manager; organisation Northgate Dental Partners; register plain.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 51.4,
+            "lexicalComplexity": 0.58,
+            "stepCount": 4,
+            "solutionFleschEase": 50.2,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-07",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-espinal-r",
+        "text": "Northline Talent Systems deployed a résumé-screening classifier across four offices. You are auditing for the HR director, who has the partial card and a complaint about shortlist composition.\n\nThe card reports an aggregate shortlist rate of 0.34, but does not include a breakdown by office or applicant group. Validation is described as validation on applications from a single hiring cycle. The card is silent on out-of-scope uses such as internal promotions.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the HR director.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an aggregate shortlist rate of 0.34 but omits a breakdown by office or applicant group. Without that breakdown, a complaint from one office about shortlist composition can be neither substantiated nor dismissed, and any claim that a résumé-screening classifier treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on applications from a single hiring cycle, so the reported figures cannot speak to performance under subgroup or temporal shift. For Northline Talent Systems this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state out-of-scope uses such as internal promotions. Intended use is asserted but not bounded, which leaves the HR director unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the office-level shortlist gap, because the complaint cannot be assessed or dismissed from the card alone. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with out-of-scope uses such as internal promotions and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "hiring",
+          "stakeholder": "HR director",
+          "scenario": "Northline Talent Systems · a résumé-screening classifier",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 49.8,
+          "lexicalComplexity": 0.62,
+          "stepCount": 4,
+          "solutionFleschEase": 50.4,
+          "equivalence": 1,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain hiring; stakeholder HR director; organisation Northline Talent Systems; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 49.8,
+            "lexicalComplexity": 0.62,
+            "stepCount": 4,
+            "solutionFleschEase": 50.4,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-08",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-fontaine-n",
+        "text": "A broker's complaint that shipments from two origin ports are held for inspection at three times the average rate has reached the compliance manager at Portside Container Services. A customs-inspection risk scorer in question was deployed in May, and the only documentation available is the partial model card below.\n\nThe card reports a precision of 0.62 at the operating threshold, but does not include hold rates by origin port or shipper size. Validation is described as a test set that predates a tariff change. The card is silent on the retraining cadence and who approves it.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the compliance manager should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a precision of 0.62 at the operating threshold but omits hold rates by origin port or shipper size. Without that breakdown, a broker's complaint that shipments from two origin ports are held for inspection at three times the average rate can be neither substantiated nor dismissed, and any claim that a customs-inspection risk scorer treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a test set that predates a tariff change, so the reported figures cannot speak to performance under subgroup or temporal shift. For Portside Container Services this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the retraining cadence and who approves it. Intended use is asserted but not bounded, which leaves the compliance manager unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the origin-port disparity, given trade-compliance obligations. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the retraining cadence and who approves it and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "logistics",
+          "stakeholder": "compliance manager",
+          "scenario": "Portside Container Services · a customs-inspection risk scorer",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 48.5,
+          "lexicalComplexity": 0.57,
+          "stepCount": 4,
+          "solutionFleschEase": 47.9,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 3,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain logistics; stakeholder compliance manager; organisation Portside Container Services; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 48.5,
+            "lexicalComplexity": 0.57,
+            "stepCount": 4,
+            "solutionFleschEase": 47.9,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-09",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-guerrero-l",
+        "text": "Sunbelt Auto Finance deployed an auto-loan approval model in January. You are auditing on behalf of the fair-lending officer, who has the partial model card below and a dealer's report that applicants at one dealership cluster are declined unusually often.\n\nThe card reports an approval AUROC of 0.86, but does not include approval rates by dealership or applicant age. Validation is described as no validation on post-deployment applications. The card is silent on the adverse-action reason codes the model emits.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the fair-lending officer.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an approval AUROC of 0.86 but omits approval rates by dealership or applicant age. Without that breakdown, a dealer's report that applicants at one dealership cluster are declined unusually often can be neither substantiated nor dismissed, and any claim that an auto-loan approval model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on no validation on post-deployment applications, so the reported figures cannot speak to performance under subgroup or temporal shift. For Sunbelt Auto Finance this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the adverse-action reason codes the model emits. Intended use is asserted but not bounded, which leaves the fair-lending officer unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the dealership cluster, since it may proxy for a protected class. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the adverse-action reason codes the model emits and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "lending",
+          "stakeholder": "fair-lending officer",
+          "scenario": "Sunbelt Auto Finance · an auto-loan approval model",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 69.8,
+          "lexicalComplexity": 0.61,
+          "stepCount": 4,
+          "solutionFleschEase": 71,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 3,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain lending; stakeholder fair-lending officer; organisation Sunbelt Auto Finance; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 69.8,
+            "lexicalComplexity": 0.61,
+            "stepCount": 4,
+            "solutionFleschEase": 71,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-10",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-hoang-t",
+        "text": "The clinical pharmacist at Riverside Pharmacy Network has asked for an independent audit of a prescription-refill adherence classifier that went live in February. What they can give you is a partial model card and a nursing escalation about patients on one insurance plan receiving fewer outreach calls.\n\nThe card reports a sensitivity of 0.81, but does not include outreach rates by insurer or age. Validation is described as a validation cohort from one region. The card is silent on what happens to patients scored below the outreach cut-off.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the clinical pharmacist.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a sensitivity of 0.81 but omits outreach rates by insurer or age. Without that breakdown, a nursing escalation about patients on one insurance plan receiving fewer outreach calls can be neither substantiated nor dismissed, and any claim that a prescription-refill adherence classifier treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a validation cohort from one region, so the reported figures cannot speak to performance under subgroup or temporal shift. For Riverside Pharmacy Network this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state what happens to patients scored below the outreach cut-off. Intended use is asserted but not bounded, which leaves the clinical pharmacist unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the insurer gap, because outreach affects medication adherence directly. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with what happens to patients scored below the outreach cut-off and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "healthcare",
+          "stakeholder": "clinical pharmacist",
+          "scenario": "Riverside Pharmacy Network · a prescription-refill adherence classifier",
+          "jargon": "plain"
+        },
+        "metrics": {
+          "fleschEase": 52.4,
+          "lexicalComplexity": 0.56,
+          "stepCount": 4,
+          "solutionFleschEase": 52.4,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 3
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain healthcare; stakeholder clinical pharmacist; organisation Riverside Pharmacy Network; register plain.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 52.4,
+            "lexicalComplexity": 0.56,
+            "stepCount": 4,
+            "solutionFleschEase": 52.4,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-11",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-iglesias-j",
+        "text": "A hospital network deployed a sepsis-risk classifier in two units. You are auditing for the clinical lead, who has the partial card and a nursing escalation.\n\nThe card reports a sensitivity of 0.88 at the chosen alert threshold, but does not include alert rates by unit or patient age band. Validation is described as retrospective validation on the same two units. The card is silent on the alert threshold and who may change it.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the clinical lead should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a sensitivity of 0.88 at the chosen alert threshold but omits alert rates by unit or patient age band. Without that breakdown, a nursing escalation can be neither substantiated nor dismissed, and any claim that a sepsis-risk classifier treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on retrospective validation on the same two units, so the reported figures cannot speak to performance under subgroup or temporal shift. For a hospital network this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the alert threshold and who may change it. Intended use is asserted but not bounded, which leaves the clinical lead unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the unit-level alert disparity flagged in the escalation. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the alert threshold and who may change it and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "healthcare",
+          "stakeholder": "clinical lead",
+          "scenario": "a hospital network · a sepsis-risk classifier",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 51.4,
+          "lexicalComplexity": 0.6,
+          "stepCount": 4,
+          "solutionFleschEase": 50.2,
+          "equivalence": 1,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain healthcare; stakeholder clinical lead; organisation a hospital network; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 51.4,
+            "lexicalComplexity": 0.6,
+            "stepCount": 4,
+            "solutionFleschEase": 50.2,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-12",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-jean-baptiste-w",
+        "text": "A union representative's complaint that night-shift teams are consistently under-staffed by the forecast has reached the operations manager at Crestline Distribution. A warehouse-shift staffing forecaster in question was deployed in June, and the only documentation available is the partial model card below.\n\nThe card reports a mean absolute percentage error of 9% across all shifts, but does not include error broken out by shift or by facility. Validation is described as a backtest on the quietest quarter of the year. The card is silent on how the forecast becomes a staffing decision and who signs it off.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the operations manager.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a mean absolute percentage error of 9% across all shifts but omits error broken out by shift or by facility. Without that breakdown, a union representative's complaint that night-shift teams are consistently under-staffed by the forecast can be neither substantiated nor dismissed, and any claim that a warehouse-shift staffing forecaster treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a backtest on the quietest quarter of the year, so the reported figures cannot speak to performance under subgroup or temporal shift. For Crestline Distribution this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state how the forecast becomes a staffing decision and who signs it off. Intended use is asserted but not bounded, which leaves the operations manager unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the night-shift under-forecast, given its safety implications. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with how the forecast becomes a staffing decision and who signs it off and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "logistics",
+          "stakeholder": "ops manager",
+          "scenario": "Crestline Distribution · a warehouse-shift staffing forecaster",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 38.6,
+          "lexicalComplexity": 0.64,
+          "stepCount": 4,
+          "solutionFleschEase": 39.2,
+          "equivalence": 0.875,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 3
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 3,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": true,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain logistics; stakeholder ops manager; organisation Crestline Distribution; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 38.6,
+            "lexicalComplexity": 0.64,
+            "stepCount": 4,
+            "solutionFleschEase": 39.2,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-13",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-kowalczyk-p",
+        "text": "Summit Financial Advisors deployed an internship candidate scorer in March. You are auditing on behalf of the early-careers manager, who has the partial model card below and a university partner questioning why graduates from two campuses are rarely advanced.\n\nThe card reports an advancement precision of 0.71, but does not include advancement rates by campus or degree type. Validation is described as validation on last year's intake only. The card is silent on which application fields the scorer reads.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the early-careers manager.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an advancement precision of 0.71 but omits advancement rates by campus or degree type. Without that breakdown, a university partner questioning why graduates from two campuses are rarely advanced can be neither substantiated nor dismissed, and any claim that an internship candidate scorer treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on last year's intake only, so the reported figures cannot speak to performance under subgroup or temporal shift. For Summit Financial Advisors this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state which application fields the scorer reads. Intended use is asserted but not bounded, which leaves the early-careers manager unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the campus disparity, which risks a partner relationship and a fairness finding. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with which application fields the scorer reads and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "hiring",
+          "stakeholder": "early-careers manager",
+          "scenario": "Summit Financial Advisors · an internship candidate scorer",
+          "jargon": "plain"
+        },
+        "metrics": {
+          "fleschEase": 49.5,
+          "lexicalComplexity": 0.59,
+          "stepCount": 4,
+          "solutionFleschEase": 48.9,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 3,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain hiring; stakeholder early-careers manager; organisation Summit Financial Advisors; register plain.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 49.5,
+            "lexicalComplexity": 0.59,
+            "stepCount": 4,
+            "solutionFleschEase": 48.9,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-14",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-lozano-a",
+        "text": "The compliance analyst at Pinecrest Mortgage has asked for an independent audit of a mortgage pre-qualification model that went live in April. What they can give you is a partial model card and a regulator's information request about pre-qualification rates by census tract.\n\nThe card reports a pre-qualification accuracy of 0.90, but does not include rates by census tract or household size. Validation is described as a validation set limited to one metropolitan area. The card is silent on the data sources beyond the credit bureau file.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the compliance analyst should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a pre-qualification accuracy of 0.90 but omits rates by census tract or household size. Without that breakdown, a regulator's information request about pre-qualification rates by census tract can be neither substantiated nor dismissed, and any claim that a mortgage pre-qualification model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a validation set limited to one metropolitan area, so the reported figures cannot speak to performance under subgroup or temporal shift. For Pinecrest Mortgage this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the data sources beyond the credit bureau file. Intended use is asserted but not bounded, which leaves the compliance analyst unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the tract-level gap, because the regulator has asked for it. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the data sources beyond the credit bureau file and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "lending",
+          "stakeholder": "compliance analyst",
+          "scenario": "Pinecrest Mortgage · a mortgage pre-qualification model",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 51.4,
+          "lexicalComplexity": 0.63,
+          "stepCount": 4,
+          "solutionFleschEase": 52.6,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 3,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain lending; stakeholder compliance analyst; organisation Pinecrest Mortgage; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 51.4,
+            "lexicalComplexity": 0.63,
+            "stepCount": 4,
+            "solutionFleschEase": 52.6,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-15",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-mbeki-t",
+        "text": "You have been retained by Coastal Savings Bank to audit a credit-line increase recommender deployed in February. Your client is the compliance officer; the materials are a partial model card and customer complaints that long-standing account holders in one branch region are never offered increases.\n\nThe card reports an overall offer precision of 0.87, but does not include offer rates by branch region or account tenure. Validation is described as validation on a single pre-deployment snapshot. The card is silent on the business rules layered on top of the score.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the compliance officer.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an overall offer precision of 0.87 but omits offer rates by branch region or account tenure. Without that breakdown, customer complaints that long-standing account holders in one branch region are never offered increases can be neither substantiated nor dismissed, and any claim that a credit-line increase recommender treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on a single pre-deployment snapshot, so the reported figures cannot speak to performance under subgroup or temporal shift. For Coastal Savings Bank this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the business rules layered on top of the score. Intended use is asserted but not bounded, which leaves the compliance officer unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the branch-region disparity, which the complaints make concrete. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the business rules layered on top of the score and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "lending",
+          "stakeholder": "compliance",
+          "scenario": "Coastal Savings Bank · a credit-line increase recommender",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 53,
+          "lexicalComplexity": 0.58,
+          "stepCount": 4,
+          "solutionFleschEase": 53,
+          "equivalence": 1,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain lending; stakeholder compliance; organisation Coastal Savings Bank; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 53,
+            "lexicalComplexity": 0.58,
+            "stepCount": 4,
+            "solutionFleschEase": 53,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-16",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-novak-k",
+        "text": "Hiring managers noticing that candidates with career gaps rarely reach a screen has reached the recruiting operations lead at Atlas Engineering Services. A technical-screening interview scheduler in question was deployed in January, and the only documentation available is the partial model card below.\n\nThe card reports a screen-to-offer precision of 0.42, but does not include screen rates by employment-gap length or veteran status. Validation is described as no validation beyond the vendor's benchmark. The card is silent on whether employment-gap length is a feature.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the recruiting operations lead.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a screen-to-offer precision of 0.42 but omits screen rates by employment-gap length or veteran status. Without that breakdown, hiring managers noticing that candidates with career gaps rarely reach a screen can be neither substantiated nor dismissed, and any claim that a technical-screening interview scheduler treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on no validation beyond the vendor's benchmark, so the reported figures cannot speak to performance under subgroup or temporal shift. For Atlas Engineering Services this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state whether employment-gap length is a feature. Intended use is asserted but not bounded, which leaves the recruiting operations lead unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the career-gap effect, since it may disadvantage caregivers and veterans. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with whether employment-gap length is a feature and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "hiring",
+          "stakeholder": "recruiting operations lead",
+          "scenario": "Atlas Engineering Services · a technical-screening interview scheduler",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 67.9,
+          "lexicalComplexity": 0.62,
+          "stepCount": 4,
+          "solutionFleschEase": 66.7,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 4
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 3,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain hiring; stakeholder recruiting operations lead; organisation Atlas Engineering Services; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 67.9,
+            "lexicalComplexity": 0.62,
+            "stepCount": 4,
+            "solutionFleschEase": 66.7,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-17",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-ortiz-d",
+        "text": "Ironbridge Rail Freight deployed a wagon-maintenance risk scorer in May. You are auditing on behalf of the asset manager, who has the partial model card below and a depot's escalation that older wagon classes are almost never scheduled for inspection.\n\nThe card reports a recall of 0.74 on known failures, but does not include recall by wagon class or age. Validation is described as a test window that predates the current fleet mix. The card is silent on the failure definition used to label training data.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the asset manager should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a recall of 0.74 on known failures but omits recall by wagon class or age. Without that breakdown, a depot's escalation that older wagon classes are almost never scheduled for inspection can be neither substantiated nor dismissed, and any claim that a wagon-maintenance risk scorer treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a test window that predates the current fleet mix, so the reported figures cannot speak to performance under subgroup or temporal shift. For Ironbridge Rail Freight this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the failure definition used to label training data. Intended use is asserted but not bounded, which leaves the asset manager unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the older-class blind spot, which is a safety exposure. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the failure definition used to label training data and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "logistics",
+          "stakeholder": "asset manager",
+          "scenario": "Ironbridge Rail Freight · a wagon-maintenance risk scorer",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 50.4,
+          "lexicalComplexity": 0.57,
+          "stepCount": 4,
+          "solutionFleschEase": 51,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 4
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 3
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain logistics; stakeholder asset manager; organisation Ironbridge Rail Freight; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 50.4,
+            "lexicalComplexity": 0.57,
+            "stepCount": 4,
+            "solutionFleschEase": 51,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-18",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-pham-l",
+        "text": "The clinical operations lead at Lakeside Behavioral Health has asked for an independent audit of a therapy-drop-out risk model that went live in March. What they can give you is a partial model card and clinicians reporting that adolescent clients are flagged far less often than adults.\n\nThe card reports an AUROC of 0.80 overall, but does not include any breakdown by age group or referral source. Validation is described as validation on adult clients only. The card is silent on how flags are surfaced to clinicians and what they are expected to do.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the clinical operations lead.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an AUROC of 0.80 overall but omits any breakdown by age group or referral source. Without that breakdown, clinicians reporting that adolescent clients are flagged far less often than adults can be neither substantiated nor dismissed, and any claim that a therapy-drop-out risk model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on adult clients only, so the reported figures cannot speak to performance under subgroup or temporal shift. For Lakeside Behavioral Health this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state how flags are surfaced to clinicians and what they are expected to do. Intended use is asserted but not bounded, which leaves the clinical operations lead unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the adolescent gap, because the model was never validated on that group. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with how flags are surfaced to clinicians and what they are expected to do and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "healthcare",
+          "stakeholder": "clinical operations lead",
+          "scenario": "Lakeside Behavioral Health · a therapy-drop-out risk model",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 52.4,
+          "lexicalComplexity": 0.61,
+          "stepCount": 4,
+          "solutionFleschEase": 51.8,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 3,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain healthcare; stakeholder clinical operations lead; organisation Lakeside Behavioral Health; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 52.4,
+            "lexicalComplexity": 0.61,
+            "stepCount": 4,
+            "solutionFleschEase": 51.8,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-19",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-qui-ones-i",
+        "text": "You have been retained by Vantage Medical Supply to audit a supplier-risk classifier used in purchasing deployed in April. Your client is the head of procurement; the materials are a partial model card and a supplier's formal complaint that minority-owned vendors are disproportionately flagged for enhanced review.\n\nThe card reports a flagging precision of 0.58, but does not include flag rates by vendor ownership category or size. Validation is described as a validation set assembled from one product line. The card is silent on the consequences of an enhanced-review flag.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the head of procurement.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a flagging precision of 0.58 but omits flag rates by vendor ownership category or size. Without that breakdown, a supplier's formal complaint that minority-owned vendors are disproportionately flagged for enhanced review can be neither substantiated nor dismissed, and any claim that a supplier-risk classifier used in purchasing treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a validation set assembled from one product line, so the reported figures cannot speak to performance under subgroup or temporal shift. For Vantage Medical Supply this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the consequences of an enhanced-review flag. Intended use is asserted but not bounded, which leaves the head of procurement unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the ownership-category disparity, which the complaint puts on record. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the consequences of an enhanced-review flag and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "healthcare",
+          "stakeholder": "procurement",
+          "scenario": "Vantage Medical Supply · a supplier-risk classifier used in purchasing",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 36.9,
+          "lexicalComplexity": 0.56,
+          "stepCount": 4,
+          "solutionFleschEase": 38.1,
+          "equivalence": 0.875,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 3,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 4
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 3
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": true,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain healthcare; stakeholder procurement; organisation Vantage Medical Supply; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 36.9,
+            "lexicalComplexity": 0.56,
+            "stepCount": 4,
+            "solutionFleschEase": 38.1,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-20",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-ramkissoon-d",
+        "text": "Field officers reporting that women-led enterprises receive systematically lower limits has reached the portfolio manager at Frontier Microfinance. A repayment-risk scorer for micro-loans in question was deployed in February, and the only documentation available is the partial model card below.\n\nThe card reports a repayment AUROC of 0.82, but does not include limit recommendations by borrower gender or region. Validation is described as validation on one district. The card is silent on how a score maps to a credit limit.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the portfolio manager should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a repayment AUROC of 0.82 but omits limit recommendations by borrower gender or region. Without that breakdown, field officers reporting that women-led enterprises receive systematically lower limits can be neither substantiated nor dismissed, and any claim that a repayment-risk scorer for micro-loans treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on one district, so the reported figures cannot speak to performance under subgroup or temporal shift. For Frontier Microfinance this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state how a score maps to a credit limit. Intended use is asserted but not bounded, which leaves the portfolio manager unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the gender gap in limits, which cuts against the lender's mission. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with how a score maps to a credit limit and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "lending",
+          "stakeholder": "portfolio manager",
+          "scenario": "Frontier Microfinance · a repayment-risk scorer for micro-loans",
+          "jargon": "plain"
+        },
+        "metrics": {
+          "fleschEase": 49.5,
+          "lexicalComplexity": 0.6,
+          "stepCount": 4,
+          "solutionFleschEase": 49.5,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 3,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain lending; stakeholder portfolio manager; organisation Frontier Microfinance; register plain.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 49.5,
+            "lexicalComplexity": 0.6,
+            "stepCount": 4,
+            "solutionFleschEase": 49.5,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-21",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-saintil-m",
+        "text": "Beacon Public Schools deployed a substitute-teacher assignment ranker in January. You are auditing on behalf of the HR business partner, who has the partial model card below and a principal's complaint that experienced substitutes are rarely offered high-need schools.\n\nThe card reports a fill rate of 0.93, but does not include assignment rates by substitute experience or school need band. Validation is described as validation on one semester. The card is silent on the objective the ranker optimises.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the HR business partner.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a fill rate of 0.93 but omits assignment rates by substitute experience or school need band. Without that breakdown, a principal's complaint that experienced substitutes are rarely offered high-need schools can be neither substantiated nor dismissed, and any claim that a substitute-teacher assignment ranker treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on one semester, so the reported figures cannot speak to performance under subgroup or temporal shift. For Beacon Public Schools this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the objective the ranker optimises. Intended use is asserted but not bounded, which leaves the HR business partner unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the experience mismatch, because it affects the students who need the most support. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the objective the ranker optimises and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "hiring",
+          "stakeholder": "HR business partner",
+          "scenario": "Beacon Public Schools · a substitute-teacher assignment ranker",
+          "jargon": "plain"
+        },
+        "metrics": {
+          "fleschEase": 70.8,
+          "lexicalComplexity": 0.64,
+          "stepCount": 4,
+          "solutionFleschEase": 69.6,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 3,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain hiring; stakeholder HR business partner; organisation Beacon Public Schools; register plain.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 70.8,
+            "lexicalComplexity": 0.64,
+            "stepCount": 4,
+            "solutionFleschEase": 69.6,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-22",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-tavares-b",
+        "text": "In-house legal counsel at Kestrel Logistics Staffing has asked for an independent audit of a driver-applicant screening model that went live in April. What they can give you is a partial model card and a demand letter alleging that applicants with older commercial licences are screened out.\n\nThe card reports a screening accuracy of 0.85, but does not include screen-out rates by licence age or applicant age. Validation is described as validation limited to one state's applicants. The card is silent on the legal basis for each feature used.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for in-house legal counsel.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a screening accuracy of 0.85 but omits screen-out rates by licence age or applicant age. Without that breakdown, a demand letter alleging that applicants with older commercial licences are screened out can be neither substantiated nor dismissed, and any claim that a driver-applicant screening model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation limited to one state's applicants, so the reported figures cannot speak to performance under subgroup or temporal shift. For Kestrel Logistics Staffing this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the legal basis for each feature used. Intended use is asserted but not bounded, which leaves in-house legal counsel unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the licence-age effect, given the litigation risk. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the legal basis for each feature used and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "hiring",
+          "stakeholder": "legal counsel",
+          "scenario": "Kestrel Logistics Staffing · a driver-applicant screening model",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 50.2,
+          "lexicalComplexity": 0.59,
+          "stepCount": 4,
+          "solutionFleschEase": 50.8,
+          "equivalence": 1,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain hiring; stakeholder legal counsel; organisation Kestrel Logistics Staffing; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 50.2,
+            "lexicalComplexity": 0.59,
+            "stepCount": 4,
+            "solutionFleschEase": 50.8,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-23",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-urbina-c",
+        "text": "You have been retained by Greenway Parcel to audit a delivery-route risk model deployed in June. Your client is the fleet safety manager; the materials are a partial model card and drivers on urban evening routes reporting that risk flags rarely match incidents.\n\nThe card reports an incident-prediction recall of 0.69, but does not include recall by route type or time of day. Validation is described as validation on daytime routes only. The card is silent on what a driver is expected to do with a flag.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the fleet safety manager should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an incident-prediction recall of 0.69 but omits recall by route type or time of day. Without that breakdown, drivers on urban evening routes reporting that risk flags rarely match incidents can be neither substantiated nor dismissed, and any claim that a delivery-route risk model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on daytime routes only, so the reported figures cannot speak to performance under subgroup or temporal shift. For Greenway Parcel this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state what a driver is expected to do with a flag. Intended use is asserted but not bounded, which leaves the fleet safety manager unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the evening-route miss rate, because it is a safety gap. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with what a driver is expected to do with a flag and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "logistics",
+          "stakeholder": "fleet safety manager",
+          "scenario": "Greenway Parcel · a delivery-route risk model",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 48.5,
+          "lexicalComplexity": 0.63,
+          "stepCount": 4,
+          "solutionFleschEase": 47.9,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 4
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 3
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain logistics; stakeholder fleet safety manager; organisation Greenway Parcel; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 48.5,
+            "lexicalComplexity": 0.63,
+            "stepCount": 4,
+            "solutionFleschEase": 47.9,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-24",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-villanueva-e",
+        "text": "Night staff reporting that residents on one wing are almost never flagged has reached the director of nursing at Meadowbrook Senior Care. A fall-risk classifier in question was deployed in May, and the only documentation available is the partial model card below.\n\nThe card reports a sensitivity of 0.83, but does not include flag rates by wing or mobility category. Validation is described as validation on day-shift observations only. The card is silent on the intervention a flag is meant to trigger.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the director of nursing.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a sensitivity of 0.83 but omits flag rates by wing or mobility category. Without that breakdown, night staff reporting that residents on one wing are almost never flagged can be neither substantiated nor dismissed, and any claim that a fall-risk classifier treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on day-shift observations only, so the reported figures cannot speak to performance under subgroup or temporal shift. For Meadowbrook Senior Care this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the intervention a flag is meant to trigger. Intended use is asserted but not bounded, which leaves the director of nursing unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the wing-level blind spot, which is a direct harm risk. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the intervention a flag is meant to trigger and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "healthcare",
+          "stakeholder": "director of nursing",
+          "scenario": "Meadowbrook Senior Care · a fall-risk classifier",
+          "jargon": "plain"
+        },
+        "metrics": {
+          "fleschEase": 50.4,
+          "lexicalComplexity": 0.58,
+          "stepCount": 4,
+          "solutionFleschEase": 51.6,
+          "equivalence": 1,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain healthcare; stakeholder director of nursing; organisation Meadowbrook Senior Care; register plain.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 50.4,
+            "lexicalComplexity": 0.58,
+            "stepCount": 4,
+            "solutionFleschEase": 51.6,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-25",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-wallace-j",
+        "text": "Metro Transit Credit deployed a payroll-advance eligibility model in March. You are auditing on behalf of the product owner, who has the partial model card below and member feedback that part-time employees are routinely declined.\n\nThe card reports an eligibility accuracy of 0.89, but does not include decline rates by employment type or tenure. Validation is described as validation on full-time members only. The card is silent on the minimum-hours rule and whether the model learned it.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the product owner.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an eligibility accuracy of 0.89 but omits decline rates by employment type or tenure. Without that breakdown, member feedback that part-time employees are routinely declined can be neither substantiated nor dismissed, and any claim that a payroll-advance eligibility model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on full-time members only, so the reported figures cannot speak to performance under subgroup or temporal shift. For Metro Transit Credit this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the minimum-hours rule and whether the model learned it. Intended use is asserted but not bounded, which leaves the product owner unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the part-time decline pattern, because it may be an unintended rule. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the minimum-hours rule and whether the model learned it and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "lending",
+          "stakeholder": "product owner",
+          "scenario": "Metro Transit Credit · a payroll-advance eligibility model",
+          "jargon": "plain"
+        },
+        "metrics": {
+          "fleschEase": 52.4,
+          "lexicalComplexity": 0.62,
+          "stepCount": 4,
+          "solutionFleschEase": 52.4,
+          "equivalence": 1,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain lending; stakeholder product owner; organisation Metro Transit Credit; register plain.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 52.4,
+            "lexicalComplexity": 0.62,
+            "stepCount": 4,
+            "solutionFleschEase": 52.4,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-26",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-xavier-r",
+        "text": "The engineering hiring lead at Orion Software has asked for an independent audit of a code-assessment scorer for engineering candidates that went live in February. What they can give you is a partial model card and interviewers noticing that self-taught candidates score well below bootcamp and degree candidates.\n\nThe card reports an on-site pass precision of 0.66, but does not include score distributions by education path. Validation is described as validation against one cohort of past hires. The card is silent on how partial credit is assigned.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the engineering hiring lead should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an on-site pass precision of 0.66 but omits score distributions by education path. Without that breakdown, interviewers noticing that self-taught candidates score well below bootcamp and degree candidates can be neither substantiated nor dismissed, and any claim that a code-assessment scorer for engineering candidates treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation against one cohort of past hires, so the reported figures cannot speak to performance under subgroup or temporal shift. For Orion Software this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state how partial credit is assigned. Intended use is asserted but not bounded, which leaves the engineering hiring lead unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the education-path gap, which may reflect the training labels rather than skill. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with how partial credit is assigned and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "hiring",
+          "stakeholder": "engineering hiring lead",
+          "scenario": "Orion Software · a code-assessment scorer for engineering candidates",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 68.8,
+          "lexicalComplexity": 0.57,
+          "stepCount": 4,
+          "solutionFleschEase": 67.6,
+          "equivalence": 1,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain hiring; stakeholder engineering hiring lead; organisation Orion Software; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 68.8,
+            "lexicalComplexity": 0.57,
+            "stepCount": 4,
+            "solutionFleschEase": 67.6,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-27",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-yanez-r",
+        "text": "You have been retained by Silverline Cold Chain to audit a temperature-excursion risk model deployed in July. Your client is the safety lead; the materials are a partial model card and an escalation that long-haul lanes through mountain corridors are systematically under-flagged.\n\nThe card reports an excursion-prediction precision of 0.72, but does not include recall by lane type or trailer age. Validation is described as a validation window limited to spring lanes. The card is silent on the excursion definition and its regulatory basis.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the safety lead.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an excursion-prediction precision of 0.72 but omits recall by lane type or trailer age. Without that breakdown, an escalation that long-haul lanes through mountain corridors are systematically under-flagged can be neither substantiated nor dismissed, and any claim that a temperature-excursion risk model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a validation window limited to spring lanes, so the reported figures cannot speak to performance under subgroup or temporal shift. For Silverline Cold Chain this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the excursion definition and its regulatory basis. Intended use is asserted but not bounded, which leaves the safety lead unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the mountain-corridor blind spot, which threatens product safety. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the excursion definition and its regulatory basis and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "logistics",
+          "stakeholder": "safety lead",
+          "scenario": "Silverline Cold Chain · a temperature-excursion risk model",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 37.4,
+          "lexicalComplexity": 0.61,
+          "stepCount": 4,
+          "solutionFleschEase": 38,
+          "equivalence": 0.875,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 3,
+                "Segment-level recommendations": 3,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": true,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain logistics; stakeholder safety lead; organisation Silverline Cold Chain; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 37.4,
+            "lexicalComplexity": 0.61,
+            "stepCount": 4,
+            "solutionFleschEase": 38,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-28",
+        "runId": "run-data-mining-churn",
+        "studentId": "s-zayas-m",
+        "text": "Referring physicians complaining that scans from community clinics are queued behind hospital referrals has reached the radiology operations manager at Oakridge Imaging Centers. A scan-prioritisation model in question was deployed in April, and the only documentation available is the partial model card below.\n\nThe card reports a priority precision of 0.78, but does not include queue position by referral source. Validation is described as validation on hospital referrals only. The card is silent on how priority tiers map to turnaround targets.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the radiology operations manager.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a priority precision of 0.78 but omits queue position by referral source. Without that breakdown, referring physicians complaining that scans from community clinics are queued behind hospital referrals can be neither substantiated nor dismissed, and any claim that a scan-prioritisation model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on hospital referrals only, so the reported figures cannot speak to performance under subgroup or temporal shift. For Oakridge Imaging Centers this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state how priority tiers map to turnaround targets. Intended use is asserted but not bounded, which leaves the radiology operations manager unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the community-clinic delay, which affects time to diagnosis. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with how priority tiers map to turnaround targets and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "healthcare",
+          "stakeholder": "radiology operations manager",
+          "scenario": "Oakridge Imaging Centers · a scan-prioritisation model",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 51.4,
+          "lexicalComplexity": 0.56,
+          "stepCount": 4,
+          "solutionFleschEase": 50.8,
+          "equivalence": 1,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 4
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 4,
+                "Confirmation test design": 5
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 4,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 4,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Method selection with justification": 5,
+                "Root cause with quantified evidence": 5,
+                "Segment-level recommendations": 5,
+                "Confirmation test design": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain healthcare; stakeholder radiology operations manager; organisation Oakridge Imaging Centers; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 51.4,
+            "lexicalComplexity": 0.56,
+            "stepCount": 4,
+            "solutionFleschEase": 50.8,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      }
+    ],
+    "report": {
+      "runId": "run-data-mining-churn",
+      "computedAt": "2026-09-05T17:23:12.942Z",
+      "thresholdsVersion": 2,
+      "cosineMean": 0.095,
+      "ngramOverlapMean": 0.088,
+      "equivalenceMean": 0.9508928571428571,
+      "rubricProxySigma": 8.733692529742596,
+      "fleschSigma": 9.022315729481482,
+      "fleschMean": 52.682142857142864,
+      "joint": 0.865,
+      "failure": 0.135,
+      "checks": {
+        "p1": {
+          "property": "p1",
+          "label": "Versions look different",
+          "metricLabel": "cosine 0.095",
+          "detail": "P1 — mean pairwise TF-IDF n-gram cosine (pilot proxy for all-mpnet-base-v2), τdiv ≤ 0.15",
+          "value": 0.095,
+          "threshold": 0.15,
+          "barFill": 0.8416666666666667,
+          "barTick": 0.75,
+          "gate": "pass",
+          "note": null
+        },
+        "p2": {
+          "property": "p2",
+          "label": "Same skill measured",
+          "metricLabel": "equivalence 0.951",
+          "detail": "P2 — LLM judge construct equivalence, median of 5 self-consistency samples, τeq ≥ 0.90",
+          "value": 0.9508928571428571,
+          "threshold": 0.9,
+          "barFill": 0.9508928571428571,
+          "barTick": 0.9,
+          "gate": "pass",
+          "note": null
+        },
+        "p3": {
+          "property": "p3",
+          "label": "One rubric grades them all",
+          "metricLabel": "provisional proxy",
+          "detail": "P3 — approximated by cross-variant readability dispersion of the canonical solution; full rubric re-application is pre-registered, not yet implemented",
+          "value": 8.733692529742596,
+          "threshold": null,
+          "barFill": 0.8059179437834979,
+          "barTick": null,
+          "gate": "advisory",
+          "note": "Measured by proxy. Spot-check three versions against the rubric before release."
+        },
+        "p4": {
+          "property": "p4",
+          "label": "Equally hard to read",
+          "metricLabel": "σ Flesch 9.0",
+          "detail": "P4 — standard deviation of Flesch reading-ease across the variant set, τdiff ≤ 8.0",
+          "value": 9.022315729481482,
+          "threshold": 8,
+          "barFill": 0.6391073708207407,
+          "barTick": 0.6799999999999999,
+          "gate": "fail",
+          "note": "3 versions read 2 grade levels above the rest. Regenerate those 3, or loosen the jargon register."
+        }
+      },
+      "outliers": [
+        "v-12",
+        "v-19",
+        "v-27"
+      ],
+      "releasable": false
+    },
+    "release": null,
+    "costEstimateUsd": 1.74,
+    "estMinutes": 4
+  },
+  "extraction": {
+    "model": null,
+    "repairs": [],
+    "unresolved": [],
+    "by": "local parser"
+  }
+}
