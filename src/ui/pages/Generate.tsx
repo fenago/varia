@@ -6,11 +6,13 @@ import { useSettings } from "@lib/store/settings";
 import { activeBlueprint, activeRun } from "@lib/store/selectors";
 import { runCompletion } from "@lib/store/orchestrator";
 import { estimateRunCost } from "@lib/llm";
-import { STRATEGY_LABELS, THREAT_OPTIONS, THREAT_TO_STRATEGY } from "@shared/thresholds";
-import { GENERATOR_MODELS, JUDGE_MODELS, type Strategy, type ThreatProfile } from "@shared/types";
+import { PILOT_DP_FLESCH_SIGMA, STRATEGY_LABELS, THREAT_OPTIONS, THREAT_TO_STRATEGY } from "@shared/thresholds";
+import { currentThresholds } from "@lib/store/selectors";
+import { GENERATOR_MODELS, JUDGE_MODELS, type AdvancedRunOptions, type Strategy, type ThreatProfile } from "@shared/types";
 import { modelCaveat, modelOptionText, modelsByFamily, type ModelRole } from "@shared/models";
 
 const RED = "#8d4a3c";
+const AMBER = "#8a6d2f";
 const IN_FLIGHT = new Set(["queued", "generating", "judging", "scoring"]);
 
 function modelLabel(id: string): string {
@@ -62,12 +64,16 @@ export default function Generate() {
   const [n, setN] = useState<number>(Math.max(2, Math.min(200, rosterSize || 10)));
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [judgeSamples, setJudgeSamplesLocal] = useState<number>(Math.max(3, Math.min(9, settings.judgeSamples)));
+  const adv: AdvancedRunOptions = settings.advancedDefaults;
+  const thresholds = currentThresholds(ws);
 
   const strategy: Strategy = threat === "manual" ? manual : THREAT_TO_STRATEGY[threat];
   const est = useMemo(
-    () => estimateRunCost(n, settings.judgeSamples, settings.generatorModel, settings.judgeModel),
-    [n, settings.judgeSamples, settings.generatorModel, settings.judgeModel],
+    () => estimateRunCost(n, judgeSamples, settings.generatorModel, settings.judgeModel),
+    [n, judgeSamples, settings.generatorModel, settings.judgeModel],
   );
+  const sameModel = settings.generatorModel === settings.judgeModel;
   const inFlight = !!run && IN_FLIGHT.has(run.status) && (starting || run.blueprintId === bp?.id);
 
   if (!bp) {
@@ -101,7 +107,8 @@ export default function Generate() {
         enabledDimensions: enabledDims,
         generatorModel: settings.generatorModel,
         judgeModel: settings.judgeModel,
-        judgeSamples: settings.judgeSamples,
+        judgeSamples,
+        advanced: adv,
       });
       const finished = useWorkspace.getState().runs.find((r) => r.id === runId);
       if (!finished) throw new Error("The run disappeared.");
@@ -141,7 +148,12 @@ export default function Generate() {
                   </span>
                   <span>
                     <span className="va-heading-16" style={{ display: "block" }}>{opt.title}</span>
-                    <span className="text-muted" style={{ fontSize: 13 }}>{opt.description}</span>
+                    <span className="text-muted" style={{ fontSize: 13 }}>
+                      {opt.description}
+                      {opt.id === "copy-at-scale"
+                        ? ` Note: at the institution's current difficulty limit (${thresholds.p4FleschSigma.toFixed(1)} σ Flesch) dimension-preserving sets usually need regeneration or a reasoned release; the pilot measured σ ${PILOT_DP_FLESCH_SIGMA[0]}–${PILOT_DP_FLESCH_SIGMA[1]} for this strategy.`
+                        : ""}
+                    </span>
                   </span>
                 </Blueprint>
               );
@@ -195,6 +207,46 @@ export default function Generate() {
             <div style={{ color: RED, fontSize: 12.5, marginTop: 10 }}>Enable at least one dimension, or every version will read the same.</div>
           )}
         </Blueprint>
+
+        <details className="blueprint" style={{ padding: "16px 22px" }}>
+          <summary style={{ cursor: "pointer", fontFamily: "var(--font-heading)", fontSize: 13, letterSpacing: ".12em", textTransform: "uppercase" }}>
+            Advanced · the paper's ablations and the app's policies
+          </summary>
+          <p className="card-body" style={{ margin: "10px 0 14px", maxWidth: "66ch" }}>
+            Defaults reproduce the pilot. Change these to reproduce an ablation or to tune the outlier rule. They are saved for this browser and recorded on every run.
+          </p>
+          <div className="va-two" style={{ gap: 14 }}>
+            <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13.5 }}>
+              <input type="checkbox" checked={adv.negativeAnchors} disabled={inFlight} onChange={(e) => settings.setAdvanced({ negativeAnchors: e.target.checked })} />
+              <span>
+                Negative anchors in few-shot
+                <span className="va-muted-115" style={{ display: "block" }}>Off reproduces the θ−FS ablation (equivalence −0.02 in the pilot, J unchanged).</span>
+              </span>
+            </label>
+            <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13.5 }}>
+              <input type="checkbox" checked={adv.constructMap} disabled={inFlight} onChange={(e) => settings.setAdvanced({ constructMap: e.target.checked })} />
+              <span>
+                Construct-map step in structured CoT
+                <span className="va-muted-115" style={{ display: "block" }}>Off reproduces the θ−SC ablation (equivalence −0.01, J unchanged).</span>
+              </span>
+            </label>
+            <Field label="Readability band (dimension-preserving)" hint={`— ±${adv.readabilityBand} Flesch points around the original`}>
+              <input className="input" type="number" min={3} max={15} step={1} value={adv.readabilityBand} disabled={inFlight} onChange={(e) => settings.setAdvanced({ readabilityBand: Number(e.target.value) })} />
+            </Field>
+            <Field label="Outlier rule: σ multiplier" hint="— versions more than k·σ harder than the mean are named">
+              <input className="input" type="number" min={0.5} max={2} step={0.1} value={adv.outlierSigma} disabled={inFlight} onChange={(e) => settings.setAdvanced({ outlierSigma: Number(e.target.value) })} />
+            </Field>
+            <Field label="Outlier rule: minimum named" hint="— always name at least this many hardest when P4 fails">
+              <input className="input" type="number" min={1} max={5} step={1} value={adv.outlierMinNamed} disabled={inFlight} onChange={(e) => settings.setAdvanced({ outlierMinNamed: Number(e.target.value) })} />
+            </Field>
+            <Field label="Concurrency" hint="— generation / judge requests in flight">
+              <div style={{ display: "flex", gap: 8 }}>
+                <input className="input" type="number" min={1} max={8} value={adv.concurrencyGenerate} disabled={inFlight} onChange={(e) => settings.setAdvanced({ concurrencyGenerate: Number(e.target.value) })} aria-label="Generation concurrency" />
+                <input className="input" type="number" min={1} max={8} value={adv.concurrencyJudge} disabled={inFlight} onChange={(e) => settings.setAdvanced({ concurrencyJudge: Number(e.target.value) })} aria-label="Judge concurrency" />
+              </div>
+            </Field>
+          </div>
+        </details>
       </div>
 
       <div className="va-sticky">
@@ -221,7 +273,7 @@ export default function Generate() {
         ) : null}
         {inFlight && run ? (
           <>
-            <ProgressBlock progress={run.progress} onCancel={ws.cancelRun} title={`Generating ${run.n} versions`} />
+            <ProgressBlock progress={run.progress} usage={run.usage} startedAt={run.startedAt} onCancel={ws.cancelRun} onResume={() => void ws.resumeRun(run.id)} error={run.error ?? null} title={`Generating ${run.n} versions`} />
             {actualSoFar(run) && (
               <div className="va-muted-12" style={{ marginTop: 8, lineHeight: 1.5 }}>
                 {actualSoFar(run)}
@@ -247,12 +299,32 @@ export default function Generate() {
               </select>
               <ModelCaveat id={settings.generatorModel} />
             </Field>
-            <Field label="Judge (held fixed)" hint={`— ${settings.judgeSamples} samples per version`} style={{ marginBottom: 14 }}>
+            <Field label="Judge (held fixed)" style={{ marginBottom: 10 }}>
               <select className="input" value={settings.judgeModel} onChange={(e) => settings.setModels({ judgeModel: e.target.value })}>
                 <ModelOptions role="judge" />
               </select>
               <ModelCaveat id={settings.judgeModel} />
+              {sameModel ? (
+                <div style={{ color: AMBER, fontSize: 12.5, marginTop: 6, lineHeight: 1.5 }} role="alert">
+                  The judge is the same model as the generator. The paper flags intra-family judging as a validity threat; pick a different judge if you can.
+                </div>
+              ) : (
+                <div className="va-muted-12" style={{ marginTop: 6, lineHeight: 1.5 }}>Every model in the catalog is from one vendor; the paper's follow-up uses a cross-family judge panel.</div>
+              )}
             </Field>
+            <Field label="Judge samples per version" hint="— self-consistency; the pilot used 5" style={{ marginBottom: 14 }}>
+              <input
+                className="input"
+                type="number"
+                min={3}
+                max={9}
+                value={judgeSamples}
+                onChange={(e) => setJudgeSamplesLocal(Math.max(3, Math.min(9, Math.round(Number(e.target.value) || 5))))}
+              />
+            </Field>
+            <div className="va-muted-12" style={{ lineHeight: 1.5, marginBottom: 10 }}>
+              Validate your specific model and prompt pair. In the pilot, the same strategy ranged from J 0.70 to 0.90 across models.
+            </div>
             <div className="text-muted" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 12 }}>
               Est. {est.minutes} min · ~${est.usd.toFixed(2)} at list prices for {modelLabel(settings.generatorModel)} and {modelLabel(settings.judgeModel)}.
               {actualSoFar(run) && (

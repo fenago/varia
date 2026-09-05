@@ -111,7 +111,9 @@ describe("buildGenerationPrompt", () => {
       expect(p.user).toContain("A".repeat(200) + "…");
       expect(p.user).not.toContain("A".repeat(201));
       expect(p.system).toMatch(/adaptedSolution/);
-      expect(p.system).toContain("Fairness analysis; Robustness analysis; Documentation gaps");
+      // Wave 6c: the variant text is the scenario and task statement only; the app attaches the rubric.
+      expect(p.system).toContain("Do not include the rubric, grading levels, points, or generic instructions");
+      expect(p.system).toContain("SCENARIO AND TASK STATEMENT ONLY");
       expect(p.user).toContain("Reading level");
       expect(p.user).toContain("LOCKED");
     }

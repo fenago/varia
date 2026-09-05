@@ -9,7 +9,20 @@ export const DEFAULT_THRESHOLDS: ThresholdSet = {
   p2Equivalence: 0.9,
   p3: "advisory",
   p4FleschSigma: 8.0,
+  allowOverThresholdRelease: true,
+  metricsVersion: 3,
 };
+
+/** Human label for a metric definition version (wave 6c). */
+export function metricsVersionLabel(v: number | undefined): string {
+  if (v === 3) return "metric definition v3 (stop words removed; lines shared by most versions stripped before P1)";
+  if (v === 2) return "metric definition v2 (stop words removed)";
+  if (v === 1) return "metric definition v1 (no stop-word removal)";
+  return "metric definition unversioned";
+}
+
+/** Pilot σ Flesch range for dimension-preserving generation (paper Table 3). */
+export const PILOT_DP_FLESCH_SIGMA: [number, number] = [10.4, 11.3];
 
 /** Frontier band from the pilot, shown for context next to J. */
 export const FRONTIER_BAND: [number, number] = [0.81, 0.88];

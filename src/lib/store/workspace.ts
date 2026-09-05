@@ -6,6 +6,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type {
+  AdvancedRunOptions,
   Appeal,
   AuditKind,
   Blueprint,
@@ -48,7 +49,7 @@ import { applyChallengeToBlueprint, bridgeFor, recordCanonicalPure, resolveSkill
 import { ensureSigningKey, signCanonical } from "@lib/badges/keys";
 import { activeBlueprint, currentThresholds, evidenceForVariant, institutionRowForRun, runById, studentById, submissionForVariant, validationsForBlueprint, variantById } from "./selectors";
 import { applyScenarioEdits, buildReviewPackagePure, evidenceCanonical, findPartnerByOrganisation, hashEvidence, nextEvidenceId, validationStatusText } from "./employer";
-import { getProvider, getSettings } from "./settings";
+import { clampAdvanced, clampJudgeSamples, getProvider, getSettings, useSettings } from "./settings";
 
 const LS_KEY = "varia.workspace.v1";
 
@@ -60,6 +61,8 @@ export interface StartRunOptions {
   generatorModel: ModelId;
   judgeModel: ModelId;
   judgeSamples: number;
+  /** Wave 6c: Advanced panel values for this run (defaults from settings when absent) */
+  advanced?: AdvancedRunOptions;
 }
 
 export interface WorkspaceActions {
@@ -84,7 +87,14 @@ export interface WorkspaceActions {
   resumeRun: (runId: string) => Promise<void>;
   /** Replace the workspace with recorded sample runs (see src/lib/store/fixtures). */
   loadFixtures: (ids?: string[]) => void;
+  /** Regenerate the named outliers, re-judge, re-score, and stop (never releases). */
+  regenerateOutliers: (runId: string) => Promise<void>;
+  /** Regenerate, then release only if the set is now releasable. */
   regenerateAndRelease: (runId: string) => Promise<void>;
+  /** Disable the jargon surface dimension on the run's blueprint, then regenerate the outliers. */
+  loosenJargonAndRegenerate: (runId: string) => Promise<void>;
+  /** Release a releasable set (all gated checks pass). */
+  releaseRun: (runId: string) => void;
   releaseAnyway: (runId: string, reason: string) => void;
   sendToReviewer: (runId: string) => void;
 
@@ -96,7 +106,7 @@ export interface WorkspaceActions {
   openAppeal: (variantId: string, note: string) => void;
   resolveAppeal: (id: string, resolution: string) => void;
 
-  setThreshold: (patch: Partial<Pick<ThresholdSet, "p1Cosine" | "p2Equivalence" | "p4FleschSigma">>, by: string) => void;
+  setThreshold: (patch: Partial<Pick<ThresholdSet, "p1Cosine" | "p2Equivalence" | "p4FleschSigma" | "allowOverThresholdRelease">>, by: string) => void;
   addAudit: (kind: AuditKind, text: string, runId?: string) => void;
 
   addPartner: (p: { organisation: string; sector: string; contactName?: string; contactRole?: string; contactEmail?: string }) => EmployerPartner;
@@ -328,7 +338,9 @@ export const useWorkspace = create<WorkspaceState>()(
           release: null,
           costEstimateUsd: est.usd,
           estMinutes: est.minutes,
+          advanced: clampAdvanced(opts.advanced ?? useSettings.getState().advancedDefaults),
         };
+        run.judgeSamples = clampJudgeSamples(run.judgeSamples);
         const abort = new AbortController();
         set((s) => ({
           runs: [...s.runs, run],
@@ -440,39 +452,77 @@ export const useWorkspace = create<WorkspaceState>()(
         set({ ...next, runAbort: null });
       },
 
-      regenerateAndRelease: async (runId) => {
+      regenerateOutliers: async (runId) => {
         const ws = get();
         const run = runById(ws, runId);
         if (!run || !run.report) throw new Error("Run has no report yet.");
         const bp = ws.blueprints.find((b) => b.id === run.blueprintId) ?? activeBlueprint(ws);
         if (!bp) throw new Error("Blueprint for this run is missing.");
         const outliers = run.report.outliers;
-        let updated = run;
-        if (outliers.length) {
-          const provider = getProvider();
-          const abort = new AbortController();
-          set({ runAbort: abort, activeRunId: run.id });
-          updated = await runGeneration({
-            run: { ...run, release: null },
-            blueprint: bp,
-            provider,
-            thresholds: currentThresholds(ws),
-            signal: abort.signal,
-            onlyVariantIds: outliers,
-            onUpdate: (r) => set((s) => ({ runs: withRun(s, r) })),
-          });
-          set((s) => ({ runs: withRun(s, updated), runAbort: null }));
-          get().addAudit("run", `Regenerated ${outliers.join(", ")}; σ Flesch now ${updated.report?.fleschSigma.toFixed(1) ?? "—"}`, run.id);
+        if (!outliers.length) return;
+        const provider = getProvider();
+        const abort = new AbortController();
+        set({ runAbort: abort, activeRunId: run.id });
+        const updated = await runGeneration({
+          run: { ...run, release: null },
+          blueprint: bp,
+          provider,
+          thresholds: currentThresholds(ws),
+          signal: abort.signal,
+          onlyVariantIds: outliers,
+          onUpdate: (r) => set((s) => ({ runs: withRun(s, r) })),
+        });
+        set((s) => ({ runs: withRun(s, updated), runAbort: null }));
+        const rep = updated.report;
+        const failing = rep ? (["p1", "p2", "p4"] as const).filter((p) => rep.checks[p].gate === "fail") : [];
+        if (rep?.releasable) {
+          get().addAudit("run", `Regenerated ${outliers.join(", ")}; σ Flesch now ${rep.fleschSigma.toFixed(1)} — all four checks clear, ready to release`, run.id);
+        } else {
+          const label = failing.map((p) => PROPERTY_LABELS[p].label.toLowerCase()).join(", ") || "an advisory check";
+          get().addAudit("run", `Regenerated ${outliers.length} version${outliers.length === 1 ? "" : "s"}; set still over threshold on ${label}`, run.id);
         }
-        if (updated.status === "cancelled") return;
-        const releasable = updated.report?.releasable ?? false;
-        set((s) => releaseRun(s, runId, !releasable, releasable ? undefined : "Released after regeneration; residual outliers accepted", outliers));
+      },
+
+      regenerateAndRelease: async (runId) => {
+        await get().regenerateOutliers(runId);
+        const run = runById(get(), runId);
+        if (run?.status === "cancelled") return;
+        if (run?.report?.releasable) get().releaseRun(runId);
+      },
+
+      loosenJargonAndRegenerate: async (runId) => {
+        const ws = get();
+        const run = runById(ws, runId);
+        if (!run) throw new Error("Run not found.");
+        const bp = ws.blueprints.find((b) => b.id === run.blueprintId);
+        if (bp && bp.surfaceDimensions.some((d) => d.key === "jargon" && d.enabled)) {
+          get().updateBlueprint(bp.id, {
+            surfaceDimensions: bp.surfaceDimensions.map((d) => (d.key === "jargon" ? { ...d, enabled: false, note: "disabled to loosen the register" } : d)),
+          });
+          set((s) => ({
+            runs: withRun(s, { ...run, enabledDimensions: run.enabledDimensions.filter((k) => k !== "jargon") }),
+            audit: [auditEvent("run", `Jargon register loosened: the jargon dimension is no longer varied for "${bp.name}"`, s.course.instructor.name, runId), ...s.audit],
+          }));
+        }
+        await get().regenerateOutliers(runId);
+      },
+
+      releaseRun: (runId) => {
+        set((s) => {
+          const run = runById(s, runId);
+          if (!run?.report?.releasable) return s;
+          const regenerated = run.variants.filter((v) => v.status === "regenerated").map((v) => v.id);
+          return releaseRun(s, runId, false, undefined, regenerated);
+        });
       },
 
       releaseAnyway: (runId, reason) => {
         set((s) => {
           const run = runById(s, runId);
           const over = !(run?.report?.releasable ?? false);
+          if (over && currentThresholds(s).allowOverThresholdRelease === false) {
+            return { audit: [auditEvent("release", `${s.course.code} ${run?.blueprintName ?? runId}: over-threshold release refused by institution policy`, s.course.instructor.name, runId), ...s.audit] };
+          }
           return releaseRun(s, runId, over, reason, []);
         });
       },
@@ -603,6 +653,9 @@ export const useWorkspace = create<WorkspaceState>()(
           describe("p1", cur.p1Cosine, next.p1Cosine, true);
           describe("p2", cur.p2Equivalence, next.p2Equivalence, false);
           describe("p4", cur.p4FleschSigma, next.p4FleschSigma, true);
+          const wasAllowed = cur.allowOverThresholdRelease !== false;
+          const nowAllowed = next.allowOverThresholdRelease !== false;
+          if (wasAllowed !== nowAllowed) events.push(auditEvent("policy", `Over-threshold release ${nowAllowed ? "allowed with a recorded reason" : "blocked by institution policy"}`, by));
           return { thresholds: [...s.thresholds, next], audit: [...events, ...s.audit] };
         }),
 

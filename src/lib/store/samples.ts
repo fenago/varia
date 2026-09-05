@@ -33,12 +33,15 @@ export interface SampleLoadResult {
   repairs: string[];
 }
 
+export type SamplePhase = "fetching" | "reading" | "extracting" | "repairing" | "done";
+
 export interface SampleLoadOptions {
   provider: LlmProvider;
   ws: Workspace;
   actions: SampleLoadActions;
   courseId?: string;
-  onPhase?: (phase: "fetching" | "reading" | "extracting", message: string) => void;
+  /** Progress callback. `detail` carries counts/model names for the UI ("4 files", "claude-opus-5"). */
+  onPhase?: (phase: SamplePhase, message: string, detail?: { count?: number; model?: string | null; repairs?: number }) => void;
   signal?: AbortSignal;
 }
 
@@ -90,7 +93,7 @@ export async function loadSample(id: string, opts: SampleLoadOptions): Promise<S
   onPhase?.("fetching", `Fetching the ${sample.organisation} files…`);
   const files = await fetchSampleFiles(sample, signal);
 
-  onPhase?.("reading", `Reading ${files.length} files…`);
+  onPhase?.("reading", `Reading ${files.length} files…`, { count: files.length });
   const parsed = await parseFiles(files, courseId);
   if (!parsed.roster) throw new Error("The sample roster did not parse.");
   actions.setRoster(parsed.roster);
@@ -106,7 +109,7 @@ export async function loadSample(id: string, opts: SampleLoadOptions): Promise<S
   let repairs: string[] = [];
 
   if (provider.mode === "live") {
-    onPhase?.("extracting", "Extracting the blueprint with Claude…");
+    onPhase?.("extracting", "Extracting the blueprint with Claude…", { model: (provider as unknown as { generatorModel?: string }).generatorModel ?? null });
     const out = await provider.extractBlueprint({ files: parsed.sources, rawText: parsed.rawText, course: ws.course, signal });
     draft = {
       ...out,
@@ -117,6 +120,7 @@ export async function loadSample(id: string, opts: SampleLoadOptions): Promise<S
     const guarded = guardDraft(draft, parsed.sources, sample);
     draft = guarded.draft;
     repairs = guarded.repairs;
+    if (repairs.length) onPhase?.("repairing", `Repairing ${repairs.length} field${repairs.length === 1 ? "" : "s"} from the files…`, { repairs: repairs.length });
   } else if (sample.preExtracted) {
     onPhase?.("extracting", "Loading the recorded extraction…");
     draft = { ...sample.preExtracted.blueprint, source: { ...sample.preExtracted.blueprint.source, files: parsed.sources.map(({ text: _t, ...rest }) => rest), readSeconds: parsed.readSeconds } };

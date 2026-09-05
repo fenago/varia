@@ -111,6 +111,10 @@ export const StructuredCotSchema = z.object({
 });
 export type StructuredCotWire = z.infer<typeof StructuredCotSchema>;
 
+/** θ−SC ablation (wave 6c): structured CoT without the explicit construct-map step. */
+export const StructuredCotNoMapSchema = StructuredCotSchema.omit({ constructMap: true });
+export type StructuredCotNoMapWire = z.infer<typeof StructuredCotNoMapSchema>;
+
 export const DimensionScoreSchema = z.object({
   dimension: z.string().describe("The construct dimension text, copied exactly"),
   score: z.number().int().describe("1 (does not measure it) to 5 (measures it exactly as the original does)"),

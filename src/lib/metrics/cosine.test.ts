@@ -40,7 +40,8 @@ describe("pairwiseCosineMean", () => {
   });
 
   it("mean of three texts: two identical, one disjoint → 1/3", () => {
-    expect(pairwiseCosineMean(["a", "a", "b"])).toBeCloseTo(1 / 3, 10);
+    // 'a' is a stop word under metric v2; use content tokens.
+    expect(pairwiseCosineMean(["alpha", "alpha", "beta"])).toBeCloseTo(1 / 3, 10);
   });
 
   it("mean of three texts with shared unigrams, hand-computed", () => {

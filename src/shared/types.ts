@@ -210,6 +210,10 @@ export interface IntegrityReport {
   runId: string;
   computedAt: string;
   thresholdsVersion: number;
+  /** Wave 6c: metric definition used to compute this report */
+  metricsVersion?: number;
+  /** Wave 6c (v3): lines shared by most versions that were removed before P1 metrics */
+  boilerplateLinesRemoved?: number;
   cosineMean: number;
   ngramOverlapMean: number;
   /** mean over variants of normalised median judge score */
@@ -244,7 +248,44 @@ export interface RunProgress {
   done: number;
   total: number;
   message: string;
+  /** Wave 6b: honest, visible progress. All optional so older persisted runs load. */
+  startedAt?: string;
+  phaseStartedAt?: string;
+  /** What is being worked on right now, e.g. "v-07 · judging sample 3 of 5" */
+  current?: string;
+  /** The last item that finished, e.g. "v-06 generated (1,140 words)" */
+  lastDone?: string;
+  /** Rolling estimate of seconds remaining, from observed per-item time */
+  etaSeconds?: number | null;
+  /** Non-fatal problems so far (retries, one failed variant) */
+  warnings?: string[];
 }
+
+/** Wave 6c: per-run advanced options (paper ablations and app policies). */
+export interface AdvancedRunOptions {
+  /** Few-shot: include the two negative anchors (paper θFS vs θ−FS) */
+  negativeAnchors: boolean;
+  /** Structured CoT: include the explicit construct-map step (θSC vs θ−SC) */
+  constructMap: boolean;
+  /** Dimension-preserving: Flesch band around the original task, ± points */
+  readabilityBand: number;
+  /** Outlier rule: variants more than k·σ harder than the mean are named */
+  outlierSigma: number;
+  /** Outlier rule: always name at least this many hardest variants when P4 fails */
+  outlierMinNamed: number;
+  concurrencyGenerate: number;
+  concurrencyJudge: number;
+}
+
+export const DEFAULT_ADVANCED: AdvancedRunOptions = {
+  negativeAnchors: true,
+  constructMap: true,
+  readabilityBand: 5,
+  outlierSigma: 1.0,
+  outlierMinNamed: 3,
+  concurrencyGenerate: 3,
+  concurrencyJudge: 4,
+};
 
 export interface Run {
   id: string;
@@ -270,6 +311,8 @@ export interface Run {
   estMinutes: number;
   /** Actual usage accumulated from API responses (wave 1) */
   usage?: UsageTotals;
+  /** Wave 6c: the advanced options this run used (defaults when absent) */
+  advanced?: AdvancedRunOptions;
   error?: string;
 }
 
@@ -341,6 +384,10 @@ export interface ThresholdSet {
   p3: "advisory";
   /** P4: σ Flesch must be ≤ */
   p4FleschSigma: number;
+  /** Wave 6c policy: may an instructor release a set over threshold with a recorded reason? */
+  allowOverThresholdRelease?: boolean;
+  /** Wave 6c: which metric definition these thresholds were set against (1 = no stop-word removal, 2 = stop words removed) */
+  metricsVersion?: number;
 }
 
 export type AuditKind =
@@ -462,6 +509,8 @@ export interface GenerateVariantInput {
   signal?: AbortSignal;
   /** Called once per API request this call makes (wave 1: real usage) */
   onUsage?: (u: UsageTotals) => void;
+  /** Wave 6c: ablation switches and the readability band for this run */
+  advanced?: AdvancedRunOptions;
 }
 
 export interface GenerateVariantOutput {

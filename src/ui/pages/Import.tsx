@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, Field, FileDrop, Pill } from "@ui/components";
+import { Blueprint, BlueprintButton, Field, FileDrop, Pill, StepProgressBlock, type StepProgress } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
-import { getProvider } from "@lib/store/settings";
+import { getSettings, getProvider } from "@lib/store/settings";
 import { extractionSummary } from "@lib/store/selectors";
 import { parseFiles, parsePastedText } from "@lib/ingest";
 import { loadSample } from "@lib/store/samples";
@@ -41,6 +41,8 @@ export default function Import() {
 
   const [phase, setPhase] = useState<Phase>(draft ? "ready" : "idle");
   const [message, setMessage] = useState<string>("");
+  const [step, setStep] = useState<StepProgress | null>(null);
+  const [retry, setRetry] = useState<(() => void) | null>(null);
   const [error, setError] = useState<ReactNode>(null);
   const [sources, setSources] = useState<SourceFile[]>(draft?.source.files ?? []);
   const [readSeconds, setReadSeconds] = useState<number | undefined>(draft?.source.readSeconds);
@@ -53,6 +55,25 @@ export default function Import() {
   useEffect(() => {
     if (draft && phase === "idle") setPhase("ready");
   }, [draft, phase]);
+
+  const modelName = () => {
+    try {
+      const st = getSettings();
+      return st.mode === "live" ? st.generatorModel : "the local parser";
+    } catch {
+      return "Claude";
+    }
+  };
+  function beginStep(phase: string, headline: string, detail?: string, note?: string, pct: number | null = null) {
+    setStep((prev) => ({ phase, headline, detail, note, pct, startedAt: prev && !prev.done && !prev.error ? prev.startedAt : new Date().toISOString(), error: null, done: false }));
+  }
+  function failStep(msg: string) {
+    setStep((prev) => (prev ? { ...prev, error: msg, done: false } : { phase: "error", headline: "Something went wrong", startedAt: new Date().toISOString(), error: msg }));
+  }
+  function finishStep(headline: string, detail?: string) {
+    setStep((prev) => (prev ? { ...prev, headline, detail, done: true, error: null, pct: 100 } : null));
+    window.setTimeout(() => setStep((cur) => (cur && cur.done ? null : cur)), 2500);
+  }
 
   function patchDraft(patch: Partial<BlueprintDraft>) {
     if (!draft) return;
@@ -74,15 +95,27 @@ export default function Import() {
     } else {
       setError((e as Error)?.message ?? String(e));
     }
+    failStep((e as Error)?.message ?? String(e));
     setPhase("error");
   }
 
   async function extract(files: SourceFile[], rawText: string, secs: number | undefined) {
     setPhase("extracting");
     setMessage("Extracting the blueprint…");
+    setRetry(() => () => extract(files, rawText, secs));
+    const provider = getProvider();
+    const live = provider.mode === "live";
+    beginStep(
+      "extracting",
+      live ? `Extracting the blueprint with ${modelName()}` : "Reading the rubric and model answer",
+      "Finding the construct, the rubric criteria and the model answer.",
+      live ? "Extraction with Claude usually takes 20–60 seconds." : undefined,
+      70,
+    );
     try {
-      const out = await getProvider().extractBlueprint({ files, rawText, course: ws.course });
+      const out = await provider.extractBlueprint({ files, rawText, course: ws.course });
       const guarded = guardDraft(out, files);
+      if (guarded.repairs.length) beginStep("repairing", `Repairing ${guarded.repairs.length} field${guarded.repairs.length === 1 ? "" : "s"} from your files`, guarded.repairs.join("; "), undefined, 90);
       const merged: BlueprintDraft = {
         ...guarded.draft,
         source: {
@@ -93,6 +126,7 @@ export default function Import() {
       };
       setRepairNote(guarded.repairs.length ? `Repaired from your files: ${guarded.repairs.join("; ")}.` : "");
       ws.setPendingDraft(merged);
+      finishStep("Blueprint extracted", `${merged.rubric.length} criteria, ${merged.canonicalSolution ? "model answer found" : "no model answer"}.`);
       setPhase("ready");
       setMessage("");
     } catch (e) {
@@ -104,6 +138,9 @@ export default function Import() {
     setError(null);
     setPhase("reading");
     setMessage(`Reading ${files.length} file${files.length === 1 ? "" : "s"}…`);
+    setRetry(() => () => handleFiles(files));
+    setStep(null);
+    beginStep("reading", `Reading ${files.length} file${files.length === 1 ? "" : "s"}`, "Parsing the files in your browser. Nothing is uploaded.", undefined, 25);
     try {
       const parsed = await parseFiles(files, ws.course.id);
       if (parsed.roster) ws.setRoster(parsed.roster);
@@ -125,14 +162,22 @@ export default function Import() {
     setSampleNote(null);
     setLoadingSample(id);
     setPhase("reading");
+    setRetry(() => () => handleSample(id));
+    setStep(null);
+    beginStep("fetching", "Fetching the sample files", undefined, undefined, 10);
     try {
       const result = await loadSample(id, {
         provider: getProvider(),
         ws,
         actions: { addPartner: ws.addPartner, addChallenge: ws.addChallenge, addSkill: ws.addSkill, setRoster: ws.setRoster, setCourse: ws.setCourse },
-        onPhase: (ph, msg) => {
-          setPhase(ph === "extracting" ? "extracting" : "reading");
+        onPhase: (ph, msg, detail) => {
+          setPhase(ph === "extracting" || ph === "repairing" ? "extracting" : "reading");
           setMessage(msg);
+          if (ph === "reading") beginStep("reading", `Reading ${detail?.count ?? ""} files`.replace("  ", " "), "Parsing the files in your browser. Nothing is uploaded.", undefined, 30);
+          else if (ph === "extracting") {
+            const live = getProvider().mode === "live";
+            beginStep("extracting", live ? `Extracting the blueprint with ${detail?.model ?? modelName()}` : msg.replace(/…$/, ""), "Finding the construct, the rubric criteria and the model answer.", live ? "Extraction with Claude usually takes 20–60 seconds." : undefined, 70);
+          } else if (ph === "repairing") beginStep("repairing", `Repairing ${detail?.repairs ?? ""} field${detail?.repairs === 1 ? "" : "s"} from the files`.replace("  ", " "), undefined, undefined, 90);
         },
       });
       setSources(result.parsed.sources);
@@ -141,6 +186,7 @@ export default function Import() {
       const by = result.extractedBy === "claude" ? "Claude" : result.extractedBy === "recorded" ? `a recorded ${result.extractionModel} extraction` : "the local parser";
       setSampleNote(`Loaded from the ${result.sample.organisation} sample · extracted by ${by}`);
       setRepairNote(result.repairs.length ? `Repaired from the sample files: ${result.repairs.join("; ")}.` : "");
+      finishStep(`${result.sample.organisation} loaded`, `${result.draft.rubric.length} criteria · ${result.roster.students.length} students · extracted by ${by}.`);
       setPhase("ready");
       setMessage("");
     } catch (e) {
@@ -157,6 +203,7 @@ export default function Import() {
     setSources(parsed.sources);
     setReadSeconds(1);
     setPasteOpen(false);
+    setStep(null);
     await extract(parsed.sources, parsed.rawText, 1);
   }
 
@@ -273,16 +320,12 @@ export default function Import() {
           </Blueprint>
         )}
 
-        {busy && (
-          <Blueprint style={{ padding: "18px 20px" }} role="status" aria-live="polite">
-            <div className="va-heading-16">{message}</div>
-            <div className="va-progress" style={{ marginTop: 10 }}>
-              <div className="va-progress-fill" style={{ width: phase === "reading" ? "30%" : "70%" }} />
-            </div>
-            <div className="va-muted-12" style={{ marginTop: 8 }}>
-              {phase === "extracting" ? "Finding the construct, the rubric criteria and the model answer." : "Parsing the files in your browser. Nothing is uploaded."}
-            </div>
-          </Blueprint>
+        {step && (
+          <StepProgressBlock
+            step={step}
+            title={busy ? "Loading your assessment" : step.error ? "Loading stopped" : "Loaded"}
+            onRetry={retry ? () => { setError(null); retry(); } : undefined}
+          />
         )}
 
         {error && (

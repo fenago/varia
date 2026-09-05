@@ -305,13 +305,24 @@ describe("computeReport", () => {
   });
 
   it("P1 fails on near-identical texts", () => {
-    const t = "audit the model card for the hospital triage classifier and report gaps";
-    const vs = FLESCH.map((_, i) => mkVariant(`v-0${i + 1}`, 60, 0.95, t));
+    // Each text differs by one word so no line is verbatim-shared (v3 would strip a fully shared line).
+    const t = "audit the model card for the hospital triage classifier and report gaps in region";
+    const vs = FLESCH.map((_, i) => mkVariant(`v-0${i + 1}`, 60, 0.95, `${t} ${["north", "south", "east", "west", "central", "coastal"][i]}`));
     const r = computeReport(mkRun(vs), DEFAULT_THRESHOLDS);
-    expect(r.cosineMean).toBeCloseTo(1, 10);
-    expect(r.ngramOverlapMean).toBeCloseTo(1, 10);
+    expect(r.cosineMean).toBeGreaterThan(0.5);
+    expect(r.ngramOverlapMean).toBeGreaterThan(0.5);
+    expect(r.boilerplateLinesRemoved).toBe(0);
     expect(r.checks.p1.gate).toBe("fail");
     expect(r.releasable).toBe(false);
+  });
+
+  it("P1 is computed after stripping a line shared by every version", () => {
+    const shared = "Assignment 3: Model card audit (12 points) — what you must produce";
+    const bodies = ["bank underwriting complaint", "hospital sepsis escalation", "hiring shortlist composition", "carrier vendor scoring", "hotel cancellation chatbot", "grocer subscription churn"];
+    const vs = FLESCH.map((_, i) => mkVariant(`v-0${i + 1}`, 60, 0.95, `${shared}\n${bodies[i]} scenario ${i}`));
+    const r = computeReport(mkRun(vs), DEFAULT_THRESHOLDS);
+    expect(r.boilerplateLinesRemoved).toBe(1);
+    expect(r.checks.p1.gate).toBe("pass");
   });
 });
 

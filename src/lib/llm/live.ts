@@ -30,6 +30,7 @@ import {
   FewShotAnchorsSchema,
   JudgeSchema,
   StructuredCotSchema,
+  StructuredCotNoMapSchema,
   VariantSchema,
   pairsToRecord,
   type BlueprintDraftWire,
@@ -453,6 +454,16 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
           adaptedSolution: out.adaptedSolution.trim(),
           surfaceAssignment: mergeAssignment(input, pairsToRecord(out.surfaceAssignment)),
           scaffold: { constructMap: out.constructMap, surfacePlan: out.surfacePlan, selfCheck: out.selfCheck },
+          usage: total,
+        };
+      }
+      if (prompt.schema === "structured-cot-nomap") {
+        const out = await callStream("generate", base, betaZodOutputFormat(StructuredCotNoMapSchema), input.signal, onUsage);
+        return {
+          text: out.final.trim(),
+          adaptedSolution: out.adaptedSolution.trim(),
+          surfaceAssignment: mergeAssignment(input, pairsToRecord(out.surfaceAssignment)),
+          scaffold: { constructMap: null, surfacePlan: out.surfacePlan, selfCheck: out.selfCheck, ablation: "no-construct-map" },
           usage: total,
         };
       }

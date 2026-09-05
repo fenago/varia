@@ -1,4 +1,4 @@
-import type { GenerateVariantInput, ThresholdSet } from "@shared/types";
+import { DEFAULT_ADVANCED, type GenerateVariantInput, type ThresholdSet } from "@shared/types";
 import {
   formatAssignment,
   formatBlueprint,
@@ -7,7 +7,7 @@ import {
   summarisePriorVariants,
 } from "./shared";
 
-export type GenerationSchemaKind = "variant" | "structured-cot";
+export type GenerationSchemaKind = "variant" | "structured-cot" | "structured-cot-nomap";
 
 export interface GenerationPrompt {
   system: string;
@@ -29,6 +29,7 @@ export interface GenerationPrompt {
  */
 export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: ThresholdSet): GenerationPrompt {
   const { blueprint, strategy } = input;
+  const adv = { ...DEFAULT_ADVANCED, ...(input.advanced ?? {}) };
   const enabledDims = blueprint.surfaceDimensions.filter((d) => !d.locked && d.enabled);
   const lockedDims = blueprint.surfaceDimensions.filter((d) => d.locked);
 
@@ -39,7 +40,7 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
     propertyConstraints(thresholds),
     ``,
     `OUTPUT REQUIREMENTS (every strategy):`,
-    `- text: a complete, self-contained, student-facing task prompt. It must ask for the same deliverable as the original (same format, same length expectation), state the scenario fully enough that a student can answer without seeing the original, and name the same rubric criteria the student will be graded on (${blueprint.rubric.map((c) => c.name).join("; ") || "as in the original"}). Do not address the instructor, do not explain the variation, do not include headings like "Variant".`,
+    `- text: the SCENARIO AND TASK STATEMENT ONLY, written to the student in the employer's or instructor's voice. State the organisation, the stakeholder, the situation and the data the student has, then what they must produce and how many findings or sections it needs, expressed inside the scenario text (for example "The risk officer wants four findings, each tied to evidence in the card"). Do not include the rubric, grading levels, points, or generic instructions; the app attaches them from the blueprint. Do not copy the assignment header, the "What you must produce" or "Constraints" sections, or any line of the original sheet verbatim. Do not address the instructor, do not explain the variation, do not include headings like "Variant", "Rubric" or "Assignment".`,
     `- adaptedSolution: the canonical solution rewritten into this variant's scenario. Keep the same findings, the same number of steps and the same structure; change only the surface details so that it is the correct expert answer to the new text.`,
     `- surfaceAssignment: the value you actually used for each enabled surface dimension.`,
     `- Locked dimensions are never varied: ${lockedDims.map((d) => d.label.toLowerCase()).join(", ") || "reading level, step count"} must match the original task.`,
@@ -57,7 +58,7 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
         `ENABLED SURFACE DIMENSIONS TO VARY:`,
         formatDimensions(enabledDims, true),
         ``,
-        `Suggested assignment for this version (you may adjust it to satisfy P1 against the prior versions):`,
+        `SURFACE ASSIGNMENT FOR THIS VERSION (strong hint): use this domain and stakeholder unless doing so would change the skill being measured. Every version in the set has a distinct assignment; keeping to it is what makes the set diverse.`,
         formatAssignment(input.surfaceAssignment),
       );
       break;
@@ -65,9 +66,12 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
 
     case "few-shot": {
       const anchors = blueprint.fewShotAnchors;
+      const withNeg = adv.negativeAnchors;
       systemParts.push(
         ``,
-        `STRATEGY: few-shot with anchors. Two positive anchor variants show what satisfies all four properties. Two negative anchors show the failure modes to avoid: the first is a paraphrastic near-copy (fails P1: same scenario, reworded), the second is construct drift (fails P2: a different skill dressed in a new scenario). Match the positives' level of departure from the original; never resemble either negative.`,
+        withNeg
+          ? `STRATEGY: few-shot with anchors. Two positive anchor variants show what satisfies all four properties. Two negative anchors show the failure modes to avoid: the first is a paraphrastic near-copy (fails P1: same scenario, reworded), the second is construct drift (fails P2: a different skill dressed in a new scenario). Match the positives' level of departure from the original; never resemble either negative.`
+          : `STRATEGY: few-shot with positive anchors only (ablation θ−FS). Two positive anchor variants show what satisfies all four properties. Match their level of departure from the original.`,
       );
       userParts.push(
         `POSITIVE ANCHORS (satisfy P1–P4):`,
@@ -75,40 +79,54 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
           ? anchors.positive.map((a, i) => `<positive_anchor n="${i + 1}">\n${a}\n</positive_anchor>`)
           : ["(no anchors cached — treat this as zero-shot)"]),
         ``,
-        `NEGATIVE ANCHORS (do not produce anything like these):`,
-        ...(anchors?.negative?.length
-          ? anchors.negative.map(
-              (a, i) =>
-                `<negative_anchor n="${i + 1}" failure="${i === 0 ? "paraphrastic near-copy (P1)" : "construct drift (P2)"}">\n${a}\n</negative_anchor>`,
-            )
-          : ["(none)"]),
-        ``,
+      );
+      if (withNeg) {
+        userParts.push(
+          `NEGATIVE ANCHORS (do not produce anything like these):`,
+          ...(anchors?.negative?.length
+            ? anchors.negative.map(
+                (a, i) =>
+                  `<negative_anchor n="${i + 1}" failure="${i === 0 ? "paraphrastic near-copy (P1)" : "construct drift (P2)"}">\n${a}\n</negative_anchor>`,
+              )
+            : ["(none)"]),
+          ``,
+        );
+      }
+      userParts.push(
         `ENABLED SURFACE DIMENSIONS TO VARY:`,
         formatDimensions(enabledDims, true),
         ``,
-        `Suggested assignment for this version:`,
+        `SURFACE ASSIGNMENT FOR THIS VERSION (strong hint): use this domain and stakeholder unless doing so would change the skill being measured.`,
         formatAssignment(input.surfaceAssignment),
       );
       break;
     }
 
     case "structured-cot": {
+      const withMap = adv.constructMap;
+      const steps = [
+        ...(withMap
+          ? [`constructMap — an explicit construct-map reading: what competency the task measures and how each construct dimension shows up in a good answer. Ground this in the rubric and canonical solution.`]
+          : []),
+        `surfacePlan — a surface-variation plan keyed to the enabled dimensions: the domain, stakeholder, scenario and jargon you will use, and what you hold constant for difficulty parity (reading level, step count, number of required findings, length).`,
+        `draft — a first full draft of the student-facing scenario and task statement.`,
+        `selfCheck — check the draft against P1, P2, P3 and P4 honestly, one boolean each, and note what needs fixing. This self-check is mandatory: a false on any property must be repaired in the final.`,
+        `final — the final scenario and task statement after applying the self-check (scenario and task only, no rubric or grading levels).`,
+        `adaptedSolution — the canonical solution rewritten for the final.`,
+        `surfaceAssignment — the values used in the final.`,
+      ];
       systemParts.push(
         ``,
-        `STRATEGY: structured chain-of-thought. Fill the output fields in this order and let each one build on the last:`,
-        `1. constructMap — an explicit construct-map reading: what competency the task measures and how each construct dimension shows up in a good answer. Ground this in the rubric and canonical solution.`,
-        `2. surfacePlan — a surface-variation plan keyed to the enabled dimensions: the domain, stakeholder, scenario and jargon you will use, and what you hold constant for difficulty parity (reading level, step count, number of required findings, length).`,
-        `3. draft — a first full draft of the student-facing task.`,
-        `4. selfCheck — check the draft against P1, P2, P3 and P4 honestly, one boolean each, and note what needs fixing. This self-check is mandatory: a false on any property must be repaired in the final.`,
-        `5. final — the final task prompt after applying the self-check.`,
-        `6. adaptedSolution — the canonical solution rewritten for the final.`,
-        `7. surfaceAssignment — the values used in the final.`,
+        withMap
+          ? `STRATEGY: structured chain-of-thought. Fill the output fields in this order and let each one build on the last:`
+          : `STRATEGY: structured chain-of-thought without the construct-map step (ablation θ−SC). Fill the output fields in this order and let each one build on the last:`,
+        ...steps.map((t, i) => `${i + 1}. ${t}`),
       );
       userParts.push(
         `ENABLED SURFACE DIMENSIONS TO VARY:`,
         formatDimensions(enabledDims, true),
         ``,
-        `Suggested assignment for this version:`,
+        `SURFACE ASSIGNMENT FOR THIS VERSION (strong hint): use this domain and stakeholder unless doing so would change the skill being measured.`,
         formatAssignment(input.surfaceAssignment),
       );
       break;
@@ -118,7 +136,7 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
       systemParts.push(
         ``,
         `STRATEGY: dimension-preserving constrained generation. The surface-dimension assignment given below is mandatory: use exactly those values, do not substitute or blend them. Everything not named in the assignment is held constant. Explicit parity constraints:`,
-        `- same reading level as the original task (match its sentence length and vocabulary difficulty; the set's Flesch reading-ease standard deviation must stay at or below ${thresholds.p4FleschSigma});`,
+        `- same reading level as the original task: keep the Flesch reading-ease within ±${adv.readabilityBand} points of the original (match its sentence length and vocabulary difficulty; the set's Flesch reading-ease standard deviation must stay at or below ${thresholds.p4FleschSigma});`,
         `- same number of required findings or steps as the canonical solution (${countSteps(blueprint.canonicalSolution)} in the original);`,
         `- same number of rubric criteria referenced (${blueprint.rubric.length});`,
         `- same deliverable format and approximately the same word count as the original task (${wordCount(blueprint.taskPrompt)} words).`,
@@ -144,7 +162,7 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
   return {
     system: systemParts.join("\n"),
     user: userParts.join("\n"),
-    schema: strategy === "structured-cot" ? "structured-cot" : "variant",
+    schema: strategy === "structured-cot" ? (adv.constructMap ? "structured-cot" : "structured-cot-nomap") : "variant",
   };
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { Blueprint, BlueprintButton, Dialog, EmptyState, Pill, SegScale } from "@ui/components";
+import { Blueprint, BlueprintButton, Dialog, EmptyState, Pill, SegScale, StepProgressBlock, type StepProgress } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
 import {
   activeRun,
@@ -88,6 +88,7 @@ function GradeView({ variantId }: { variantId: string }) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [suggesting, setSuggesting] = useState(false);
+  const [suggestStep, setSuggestStep] = useState<StepProgress | null>(null);
   const [suggestError, setSuggestError] = useState<string | null>(null);
   const settings = useSettings();
   const preScore = submission?.preScore ?? null;
@@ -145,6 +146,8 @@ function GradeView({ variantId }: { variantId: string }) {
     if (!submission?.text || !blueprint) return;
     setSuggesting(true);
     setSuggestError(null);
+    const modelLabel = getProvider().mode === "live" ? settings.judgeModel : "the demo grader";
+    setSuggestStep({ phase: "prescore", headline: `Reading the submission against the rubric with ${modelLabel}`, detail: "Each criterion gets a suggested level and a one-sentence reason. You decide what to save.", note: getProvider().mode === "live" ? "Usually 15–40 seconds." : undefined, startedAt: new Date().toISOString(), pct: 60 });
     try {
       const provider = getProvider();
       if (!provider.preScoreSubmission) throw new Error("This provider cannot suggest scores.");
@@ -155,8 +158,12 @@ function GradeView({ variantId }: { variantId: string }) {
         judgeModel: settings.judgeModel,
       });
       ws.applyPreScore(variant.id, out, provider.mode === "demo" ? "demo-provider" : settings.judgeModel, run.id);
+      setSuggestStep((prev) => (prev ? { ...prev, headline: "Suggestions ready", detail: out.summary, done: true, pct: 100 } : null));
+      window.setTimeout(() => setSuggestStep((cur) => (cur && cur.done ? null : cur)), 2500);
     } catch (e) {
-      setSuggestError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setSuggestError(msg);
+      setSuggestStep((prev) => (prev ? { ...prev, error: msg } : null));
     } finally {
       setSuggesting(false);
     }
@@ -272,6 +279,11 @@ function GradeView({ variantId }: { variantId: string }) {
           </div>
           {canGrade && (
             <div style={{ marginTop: 12, borderTop: "1px solid var(--color-divider)", paddingTop: 10 }}>
+              {suggestStep && (
+                <div style={{ marginBottom: 10 }}>
+                  <StepProgressBlock step={suggestStep} onRetry={suggestStep.error ? suggest : undefined} />
+                </div>
+              )}
               <div className="va-btn-row">
                 <button type="button" className="btn btn-secondary" onClick={suggest} disabled={suggesting}>
                   {suggesting ? "Reading the submission…" : preScore ? "Suggest again" : "Suggest scores"}
@@ -286,7 +298,7 @@ function GradeView({ variantId }: { variantId: string }) {
                   <div style={{ marginTop: 4 }}>{preScore.summary}</div>
                 </div>
               )}
-              {suggestError && <div style={{ marginTop: 6, fontSize: 12.5, color: RED }}>{suggestError}</div>}
+              {suggestError && !suggestStep && <div style={{ marginTop: 6, fontSize: 12.5, color: RED }}>{suggestError}</div>}
             </div>
           )}
           <BlueprintButton block style={{ marginTop: 16 }} disabled={!canGrade || !allScored} onClick={save}>

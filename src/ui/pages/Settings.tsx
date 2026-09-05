@@ -240,18 +240,18 @@ export default function Settings() {
             <ModelCaveat id={s.judgeModel} />
           </Field>
         </div>
-        <Field label="Judge samples per version" htmlFor="judgeSamples" hint="Self-consistency: independent judge calls whose median is taken. The pilot used 5.">
+        <Field label="Judge samples per version (default for new runs)" htmlFor="judgeSamples" hint="Self-consistency: independent judge calls whose median is taken. The pilot used 5. You can change it per run on Generate.">
           <input
             id="judgeSamples"
             className="input"
             type="number"
             min={3}
-            max={7}
+            max={9}
             step={1}
             value={s.judgeSamples}
             onChange={(e) => {
               const n = Math.round(Number(e.target.value));
-              if (n >= 3 && n <= 7) s.setJudgeSamples(n);
+              if (n >= 3 && n <= 9) s.setJudgeSamples(n);
             }}
             style={{ width: 96 }}
           />

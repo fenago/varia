@@ -552,3 +552,21 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 /* Home: one student's path */
 @media (max-width: 1100px) { .va-path-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
 @media (max-width: 720px) { .va-path-grid { grid-template-columns: minmax(0, 1fr) !important; } }
+
+/* Wave 6b — progress you can see */
+.va-progress-headline { font-family: var(--font-heading); font-size: 17px; line-height: 1.15; }
+.va-progress-fill.is-running { background-image: linear-gradient(90deg, var(--color-accent) 0 60%, var(--color-accent-400) 60% 100%); background-size: 40px 100%; animation: va-progress-slide 1.2s linear infinite; }
+.va-progress-fill.is-fail { background: #8d4a3c; }
+@keyframes va-progress-slide { from { background-position: 0 0; } to { background-position: 40px 0; } }
+@media (prefers-reduced-motion: reduce) { .va-progress-fill.is-running { animation: none; background-image: none; } .va-progress-fill { transition: none; } }
+.va-progress-now { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 10px; margin: 8px 0 0; font-size: 12.5px; }
+.va-progress-now dt { font-family: var(--font-heading); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); align-self: baseline; }
+.va-progress-now dd { margin: 0; color: var(--color-text); overflow-wrap: anywhere; }
+.va-progress-warnings { margin: 8px 0 0; padding-left: 16px; font-size: 12.5px; color: #8a6d2f; display: flex; flex-direction: column; gap: 3px; }
+.va-progress-fatal { margin-top: 8px; font-size: 13px; color: #8d4a3c; border-left: 2px solid #8d4a3c; padding: 4px 10px; }
+.va-progress-compact { display: flex; align-items: center; gap: 10px; font-size: 12.5px; min-width: 0; }
+.va-progress-compact-head { font-family: var(--font-heading); font-size: 13.5px; white-space: nowrap; }
+.va-progress-strip { display: flex; align-items: center; gap: 12px; padding: 8px 32px; border-bottom: 1px solid var(--color-divider); background: var(--color-accent-100); font-size: 12.5px; text-decoration: none; color: var(--color-text); }
+.va-progress-strip:hover { background: var(--color-accent-200); }
+.va-progress-strip .va-progress { flex: 1; max-width: 320px; }
+.va-progress-strip .va-strip-link { margin-left: auto; font-family: var(--font-heading); color: var(--color-accent-700); white-space: nowrap; }

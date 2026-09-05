@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
-import type { LlmProvider, Mode, ModelId, Settings } from "@shared/types";
+import { DEFAULT_ADVANCED, type AdvancedRunOptions, type LlmProvider, type Mode, type ModelId, type Settings } from "@shared/types";
 import { createProvider } from "@lib/llm";
 import { DEFAULT_GENERATOR, DEFAULT_JUDGE } from "@shared/models";
 
@@ -15,6 +15,31 @@ export interface SettingsState extends Settings {
   setJudgeSamples: (n: number) => void;
   markVerified: (model: ModelId) => void;
   forgetKey: () => void;
+  /** Wave 6c: per-workspace defaults for the Advanced panel on Generate */
+  advancedDefaults: AdvancedRunOptions;
+  setAdvanced: (patch: Partial<AdvancedRunOptions>) => void;
+}
+
+/** Clamp the Advanced options to their documented ranges. */
+export function clampAdvanced(a: Partial<AdvancedRunOptions>, base: AdvancedRunOptions = DEFAULT_ADVANCED): AdvancedRunOptions {
+  const num = (v: unknown, lo: number, hi: number, d: number) => {
+    const n = typeof v === "number" && Number.isFinite(v) ? v : d;
+    return Math.min(hi, Math.max(lo, n));
+  };
+  return {
+    negativeAnchors: typeof a.negativeAnchors === "boolean" ? a.negativeAnchors : base.negativeAnchors,
+    constructMap: typeof a.constructMap === "boolean" ? a.constructMap : base.constructMap,
+    readabilityBand: Math.round(num(a.readabilityBand, 3, 15, base.readabilityBand)),
+    outlierSigma: Math.round(num(a.outlierSigma, 0.5, 2, base.outlierSigma) * 10) / 10,
+    outlierMinNamed: Math.round(num(a.outlierMinNamed, 1, 5, base.outlierMinNamed)),
+    concurrencyGenerate: Math.round(num(a.concurrencyGenerate, 1, 8, base.concurrencyGenerate)),
+    concurrencyJudge: Math.round(num(a.concurrencyJudge, 1, 8, base.concurrencyJudge)),
+  };
+}
+
+/** Judge self-consistency samples: 3–9 everywhere (paper used 5). */
+export function clampJudgeSamples(n: number): number {
+  return Math.max(3, Math.min(9, Math.round(Number.isFinite(n) ? n : 5)));
 }
 
 const DEFAULTS: Settings = {
@@ -106,6 +131,8 @@ export const useSettings = create<SettingsState>()(
     (set) => ({
       ...DEFAULTS,
       mode: "demo",
+      advancedDefaults: { ...DEFAULT_ADVANCED },
+      setAdvanced: (patch) => set((st) => ({ advancedDefaults: clampAdvanced({ ...st.advancedDefaults, ...patch }, st.advancedDefaults) })),
       setApiKey: (key, remember) => {
         const clean = key ? key.trim() : null;
         set({
@@ -120,7 +147,7 @@ export const useSettings = create<SettingsState>()(
           generatorModel: m.generatorModel ?? s.generatorModel,
           judgeModel: m.judgeModel ?? s.judgeModel,
         })),
-      setJudgeSamples: (n) => set({ judgeSamples: Math.max(1, Math.min(9, Math.round(n))) }),
+      setJudgeSamples: (n) => set({ judgeSamples: clampJudgeSamples(n) }),
       setWorkspaceId: (id) => set({ workspaceId: id && id.trim().length ? id.trim() : null, keyVerifiedAt: null }),
       markVerified: (_model) => set({ keyVerifiedAt: new Date().toISOString() }),
       forgetKey: () => set({ apiKey: null, mode: "demo", keyVerifiedAt: null }),
@@ -136,10 +163,17 @@ export const useSettings = create<SettingsState>()(
         judgeModel: s.judgeModel,
         judgeSamples: s.judgeSamples,
         keyVerifiedAt: s.keyVerifiedAt,
+        advancedDefaults: s.advancedDefaults,
       }),
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<Settings>;
-        return { ...current, ...p, mode: modeOf(p.apiKey ?? null) };
+        const p = (persisted ?? {}) as Partial<Settings> & { advancedDefaults?: Partial<AdvancedRunOptions> };
+        return {
+          ...current,
+          ...p,
+          judgeSamples: clampJudgeSamples(p.judgeSamples ?? current.judgeSamples),
+          advancedDefaults: clampAdvanced(p.advancedDefaults ?? {}, current.advancedDefaults),
+          mode: modeOf(p.apiKey ?? null),
+        };
       },
     },
   ),

@@ -4,6 +4,7 @@ import { Blueprint, DataTable, Pill, SegChoice, StatTile, type Column, type Pill
 import { useWorkspace } from "@lib/store/workspace";
 import { auditNewestFirst, consoleRows, consoleStats, currentThresholds, employerStats, outcomeStats, strategyLabel } from "@lib/store/selectors";
 import { THRESHOLD_ATTRIBUTION } from "@lib/store/seed";
+import { metricsVersionLabel } from "@shared/thresholds";
 import { PROPERTY_LABELS } from "@shared/thresholds";
 import type { InstitutionSet, InstitutionSetStatus, Property } from "@shared/types";
 
@@ -202,7 +203,21 @@ export default function Console() {
 
       <div className="va-two">
         <Blueprint style={{ padding: "20px 22px" }}>
-          <h6 style={{ margin: "0 0 12px" }}>Institution thresholds</h6>
+          <h6 style={{ margin: "0 0 6px" }}>Institution thresholds</h6>
+          <div className="va-muted-12" style={{ marginBottom: 10 }}>
+            Set against {metricsVersionLabel(currentThresholds(ws).metricsVersion)}. A change of metric definition starts a new threshold version; released sets are never re-scored.
+          </div>
+          <div className="va-row-flex" style={{ gap: 10, marginBottom: 12, fontSize: 13.5 }}>
+            <span>Over-threshold release</span>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={currentThresholds(ws).allowOverThresholdRelease !== false}
+                onChange={(e) => ws.setThreshold({ allowOverThresholdRelease: e.target.checked }, "Assessment office")}
+              />
+              {currentThresholds(ws).allowOverThresholdRelease !== false ? "allowed with a recorded reason" : "blocked by policy"}
+            </label>
+          </div>
           <table className="table">
             <thead>
               <tr>

@@ -1,12 +1,30 @@
 /**
- * TF-IDF n-gram cosine (P1). Unigrams + bigrams, raw term frequency,
- * idf = ln((1+N)/(1+df)) + 1, L2-normalised. Paper §4.5 used this as the
- * local proxy for the embedding cosine; no embedding model in the browser.
+ * TF-IDF n-gram cosine (P1). Stop words removed, then unigrams + bigrams,
+ * raw term frequency, idf = ln((1+N)/(1+df)) + 1, L2-normalised. Paper §4.5
+ * used TF-IDF n-gram cosine as the local proxy for the embedding cosine; no
+ * embedding model in the browser. Metric definition v2 (see METRICS_VERSION).
  */
 import { tokenize } from "./ngram";
 
+/**
+ * Standard English stop words, removed before TF-IDF (metric definition v2).
+ * The pilot removed stop words (author's walkthrough); leaving them in inflates
+ * similarity between any two English texts and makes τdiv stricter than it looks.
+ */
+export const STOP_WORDS: ReadonlySet<string> = new Set([
+  "a","an","the","and","or","but","if","then","than","so","as","of","at","by","for","from","in","into","on","onto","to","with","without","about","over","under","between","through","during","before","after","above","below","up","down","out","off","again","further","once",
+  "is","am","are","was","were","be","been","being","have","has","had","having","do","does","did","doing","will","would","shall","should","can","could","may","might","must",
+  "i","me","my","mine","myself","we","us","our","ours","ourselves","you","your","yours","yourself","yourselves","he","him","his","himself","she","her","hers","herself","it","its","itself","they","them","their","theirs","themselves",
+  "this","that","these","those","what","which","who","whom","whose","where","when","why","how","all","any","both","each","few","more","most","other","some","such","no","nor","not","only","own","same","too","very","s","t","just","also","here","there","now",
+]);
+
+/** Tokens with stop words removed. */
+export function contentTokens(text: string): string[] {
+  return tokenize(text).filter((t) => !STOP_WORDS.has(t));
+}
+
 function features(text: string): string[] {
-  const toks = tokenize(text);
+  const toks = contentTokens(text);
   const out: string[] = [...toks];
   for (let i = 0; i + 1 < toks.length; i++) out.push(toks[i] + " " + toks[i + 1]);
   return out;

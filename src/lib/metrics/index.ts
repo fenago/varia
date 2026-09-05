@@ -1,3 +1,5 @@
+export * from "./version";
+export * from "./boilerplate";
 export * from "./stats";
 export * from "./flesch";
 export * from "./ngram";

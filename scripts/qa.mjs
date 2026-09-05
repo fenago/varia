@@ -120,7 +120,7 @@ await check("report content", async () => {
   const polylines = await page.locator("svg polyline").count();
   assert(polylines === 34, `polylines ${polylines}`);
   assert(t.includes("v-12, v-19, v-27"), "outlier label");
-  assert(await page.getByRole("button", { name: /Regenerate 3 and release/ }).count() === 1, "regenerate button");
+  assert(await page.getByRole("button", { name: /^Regenerate 3/ }).count() === 1, "regenerate button");
   assert(t.includes("Open roster") || t.includes("Release all 34 anyway"), "release/roster action");
   return `${polylines} polylines`;
 });
@@ -231,16 +231,22 @@ await check("demo generate flow", async () => {
   const t = await snapshotText("/report-generated");
   assert(t.includes("Versions look different") && t.includes("Equally hard to read"), "four checks");
   await shot("report_generated");
-  const regen = page.getByRole("button", { name: /Regenerate \d+ and release/ });
+  const regen = page.getByRole("button", { name: /^Regenerate \d+/ });
   if (await regen.count()) {
     await regen.click();
-    await page.getByText(/^Released /).first().waitFor({ timeout: 40000 });
-  } else {
-    const clean = page.getByRole("button", { name: /^Release \d+ versions$/ });
-    assert(await clean.count() === 1, "expected regenerate or clean release button");
-    await clean.click();
-    await page.getByText(/^Released /).first().waitFor({ timeout: 5000 });
+    // Regeneration never releases by itself (wave 6c): wait for it to finish, then release.
+    await page.getByRole("button", { name: /^(Release \d+ versions|Release all \d+ anyway)$/ }).first().waitFor({ timeout: 40000 });
+    assert((await page.getByText(/^Released /).count()) === 0, "regenerate must not auto-release");
   }
+  const clean = page.getByRole("button", { name: /^Release \d+ versions$/ });
+  if (await clean.count()) {
+    await clean.click();
+  } else {
+    await page.getByRole("button", { name: /^Release all \d+ anyway$/ }).click();
+    await page.locator("textarea").last().fill("QA: formative, low stakes");
+    await page.getByRole("button", { name: /Release with this reason/ }).click();
+  }
+  await page.getByText(/^Released /).first().waitFor({ timeout: 5000 });
   await snapshotText("/report-released");
   await go("/roster");
   const r = await page.locator("body").innerText();
