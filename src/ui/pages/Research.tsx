@@ -40,13 +40,13 @@ export default function Research() {
 
       <Blueprint style={{ padding: "16px 20px" }}>
         <div className="va-kicker" style={{ marginBottom: 8 }}>Contents</div>
-        <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: "4px 24px", fontSize: 13.5 }}>
+        <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: "4px 24px", fontSize: 13.5 }}>
           {top.map((s) => (
             <li key={s.id}>
               <a href={`#${s.id}`} style={{ color: "var(--color-accent-700)", textDecoration: "none" }}>{s.title}</a>
             </li>
           ))}
-        </ol>
+        </ul>
       </Blueprint>
 
       {RESEARCH_SECTIONS.map((s) =>
