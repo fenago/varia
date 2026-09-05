@@ -10,6 +10,7 @@ import { sampleById } from "@shared/samples";
 import { parseFiles, type ParsedFiles } from "@lib/ingest";
 import { localExtract } from "@lib/ingest/localExtract";
 import { guardDraft } from "@lib/llm/extractGuard";
+import { getFixture } from "@lib/store/fixtures";
 
 export interface SampleLoadActions {
   addPartner: (p: { organisation: string; sector: string; contactName?: string; contactRole?: string; contactEmail?: string }) => EmployerPartner;
@@ -43,6 +44,8 @@ export interface SampleLoadOptions {
   /** Progress callback. `detail` carries counts/model names for the UI ("4 files", "claude-opus-5"). */
   onPhase?: (phase: SamplePhase, message: string, detail?: { count?: number; model?: string | null; repairs?: number }) => void;
   signal?: AbortSignal;
+  /** Only when the instructor explicitly asks: extract with the key instead of the recorded blueprint. */
+  forReal?: boolean;
 }
 
 async function fetchSampleFiles(sample: SampleAssessment, signal?: AbortSignal): Promise<File[]> {
@@ -96,7 +99,10 @@ export async function loadSample(id: string, opts: SampleLoadOptions): Promise<S
   onPhase?.("reading", `Reading ${files.length} files…`, { count: files.length });
   const parsed = await parseFiles(files, courseId);
   if (!parsed.roster) throw new Error("The sample roster did not parse.");
-  actions.setRoster(parsed.roster);
+  const fixture = getFixture(sample.id);
+  // The recorded run carries its own roster (the ids the recorded versions were assigned to).
+  const roster: Roster = fixture?.roster ?? parsed.roster;
+  actions.setRoster(roster);
   actions.setCourse?.({ code: sample.course.code, title: sample.course.title });
 
   ensureSkills(sample, ws, actions);
@@ -108,7 +114,14 @@ export async function loadSample(id: string, opts: SampleLoadOptions): Promise<S
   let extractionModel: string | null = null;
   let repairs: string[] = [];
 
-  if (provider.mode === "live") {
+  if (fixture && !opts.forReal) {
+    // Recorded walkthrough: the blueprint Claude extracted when the run was recorded. Nothing is spent.
+    onPhase?.("extracting", "Loading the recorded blueprint…", { model: fixture.extraction.model });
+    const { id: _id, courseId: _c, createdAt: _a, updatedAt: _u, ...recorded } = fixture.blueprint;
+    draft = { ...recorded, source: { ...recorded.source, files: parsed.sources.map(({ text: _t, ...rest }) => rest), readSeconds: parsed.readSeconds } };
+    extractedBy = "recorded";
+    extractionModel = fixture.extraction.model;
+  } else if (provider.mode === "live") {
     onPhase?.("extracting", "Extracting the blueprint with Claude…", { model: (provider as unknown as { generatorModel?: string }).generatorModel ?? null });
     const out = await provider.extractBlueprint({ files: parsed.sources, rawText: parsed.rawText, course: ws.course, signal });
     draft = {
@@ -137,6 +150,8 @@ export async function loadSample(id: string, opts: SampleLoadOptions): Promise<S
   const skillKeys = sample.skills.map((s) => s.key);
   draft.rubric = draft.rubric.map((c, i) => (c.skillKeys?.length ? c : { ...c, skillKeys: skillKeys.filter((_, k) => k % Math.max(1, draft.rubric.length) === i) }));
   draft.code = draft.code ?? sample.course.code;
+  draft.sampleId = sample.id;
+  draft.recordedRunAvailable = !!fixture;
 
-  return { sample, draft, roster: parsed.roster, partner, challenge, parsed, extractedBy, extractionModel, repairs };
+  return { sample, draft, roster, partner, challenge, parsed, extractedBy, extractionModel, repairs };
 }

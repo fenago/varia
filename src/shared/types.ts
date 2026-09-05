@@ -102,6 +102,10 @@ export interface SourceFile {
   status: "read" | "failed";
   /** Raw extracted text (not for roster). */
   text?: string;
+  /** PDF had no usable text layer (a scan); text came from OCR or from Claude reading the pages */
+  scanned?: boolean;
+  pageCount?: number;
+  ocr?: { engine: "tesseract" | "claude"; confidence?: number };
 }
 
 export interface Blueprint {
@@ -134,6 +138,10 @@ export interface Blueprint {
   lastUsed?: { term: string; joint: number } | null;
   /** Employer challenges this blueprint draws scenarios from */
   challengeIds?: string[];
+  /** Set when the blueprint came from one of the five sample assessments */
+  sampleId?: string | null;
+  /** True when a recorded run exists for this sample, so "Make the versions" can replay it for free */
+  recordedRunAvailable?: boolean;
 }
 
 /** What the extraction call returns before the instructor confirms it. */
@@ -315,6 +323,8 @@ export interface Run {
   usage?: UsageTotals;
   /** Wave 6c: the advanced options this run used (defaults when absent) */
   advanced?: AdvancedRunOptions;
+  /** Set when this run replayed a recorded sample run instead of calling the API */
+  recordedFrom?: { sampleId: string; recordedAt: string; models: { generator: ModelId; judge: ModelId } } | null;
   error?: string;
 }
 
@@ -554,6 +564,8 @@ export interface ExtractInput {
   /** Concatenated text of all non-roster files, or pasted text */
   rawText: string;
   course: Course;
+  /** PDFs as base64 (in memory only, never persisted) so the model can read the pages themselves */
+  documents?: { name: string; mediaType: "application/pdf"; base64: string; scanned?: boolean }[];
   signal?: AbortSignal;
   /** Called once per API request extraction makes (wave 1: real usage) */
   onUsage?: (u: UsageTotals) => void;

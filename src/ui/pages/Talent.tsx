@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+/* type-scale: applied */
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Blueprint, EmptyState, Funnel, OutcomeStamps, SegScale, SkillTags, Stamp } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
@@ -110,8 +111,8 @@ function CandidateCard({ row, partner }: { row: TalentRow; partner: EmployerPart
       <div className="va-worksample-head">
         <div>
           <div className="va-worksample-title">
-            <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 15 }}>{learnerId}</span>
-            <span className="text-muted" style={{ fontFamily: "var(--font-body)", fontSize: 13, marginLeft: 10 }}>
+            <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 17 }}>{learnerId}</span>
+            <span className="text-muted" style={{ fontFamily: "var(--font-body)", fontSize: 15, marginLeft: 10 }}>
               {view.course.code} · {view.course.term}
             </span>
           </div>
@@ -132,7 +133,7 @@ function CandidateCard({ row, partner }: { row: TalentRow; partner: EmployerPart
 
       <div className="va-worksample-body">
         <div className="va-row-flex" style={{ gap: 14, flexWrap: "wrap", alignItems: "baseline" }}>
-          <span style={{ fontFamily: "var(--font-heading)", fontSize: 22, lineHeight: 1 }}>{total == null ? "—" : `${total} / ${view.grade?.maxTotal ?? ""}`}</span>
+          <span style={{ fontFamily: "var(--font-heading)", fontSize: 24, lineHeight: 1 }}>{total == null ? "—" : `${total} / ${view.grade?.maxTotal ?? ""}`}</span>
           <span className="va-muted-12">rubric result</span>
           <Stamp gate={record.bridge?.signature ? "pass" : "watch"}>{record.bridge?.signature ? "Signed" : "Unsigned"}</Stamp>
           <span className="va-muted-12">{SHARED_VIA_TEXT[sharedVia]}</span>
@@ -147,7 +148,7 @@ function CandidateCard({ row, partner }: { row: TalentRow; partner: EmployerPart
                 {showSubmission ? "Hide the work sample" : "Read the work sample"}
               </button>
               {showSubmission && (
-                <div className="va-surface-box" style={{ marginTop: 8, fontSize: 13.5, lineHeight: 1.6 }}>
+                <div className="va-surface-box" style={{ marginTop: 8, fontSize: 15.5, lineHeight: 1.6 }}>
                   {paragraphs(sample.submissionText).map((p, i) => (
                     <p key={i} style={{ margin: "0 0 8px" }}>
                       {p}
@@ -214,7 +215,7 @@ function CandidateCard({ row, partner }: { row: TalentRow; partner: EmployerPart
             <label>Against your own bar, 1 (well below) to 5 (ready to hire)</label>
             <SegScale name={`endorse-${record.id}`} value={score} onChange={setScore} options={[1, 2, 3, 4, 5]} />
           </div>
-          <label style={{ display: "inline-flex", gap: 8, alignItems: "center", fontSize: 13.5, cursor: "pointer" }}>
+          <label style={{ display: "inline-flex", gap: 8, alignItems: "center", fontSize: 15.5, cursor: "pointer" }}>
             <input type="checkbox" checked={meetsBar} onChange={(e) => setMeetsBar(e.target.checked)} />
             <span>This work meets the bar we would set for a new hire</span>
           </label>
@@ -273,7 +274,7 @@ function CandidateCard({ row, partner }: { row: TalentRow; partner: EmployerPart
         </div>
       )}
 
-      {error && <div style={{ color: "#8d4a3c", fontSize: 12.5 }}>{error}</div>}
+      {error && <div style={{ color: "#8d4a3c", fontSize: 14 }}>{error}</div>}
     </Blueprint>
   );
 }
@@ -316,7 +317,7 @@ export default function Talent() {
             {partner.contactEmail ? ` · ${partner.contactEmail}` : ""}
           </div>
         )}
-        <p className="text-muted" style={{ margin: "12px 0 0", fontSize: 13, maxWidth: "72ch", lineHeight: 1.55 }}>
+        <p className="text-muted" style={{ margin: "12px 0 0", fontSize: 15, maxWidth: "72ch", lineHeight: 1.55 }}>
           Learners below completed a version of your challenge and chose to share it with you. You see a learner id, never a name, plus the task, the
           result, the skills evidenced, and the signed record. Endorse the ones that meet your bar and tell us what happened next.
         </p>
@@ -330,7 +331,7 @@ export default function Talent() {
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(activeChallenges.length, 3)}, minmax(0, 1fr))`, gap: 16 }} className="va-split">
             {activeChallenges.map((c) => (
               <Blueprint key={c.id} style={{ padding: "14px 16px" }}>
-                <div style={{ fontFamily: "var(--font-heading)", fontSize: 16 }}>{c.title}</div>
+                <div style={{ fontFamily: "var(--font-heading)", fontSize: 18 }}>{c.title}</div>
                 <div className="va-muted-12" style={{ margin: "4px 0 8px" }}>
                   {c.domain} · {c.stakeholderRole}
                 </div>
@@ -354,14 +355,16 @@ export default function Talent() {
         />
       )}
 
-      {rows.length === 0 ? (
-        <EmptyState
-          heading={`No learner has shared a sample with ${partner.organisation} yet`}
-          text="Samples appear here only when a learner chooses to share them, from their portfolio or their record's share page. That consent is recorded on the record and can be revoked by the learner."
-        />
-      ) : (
-        rows.map((row) => <CandidateCard key={row.record.id} row={row} partner={partner} />)
-      )}
+      <div data-walk="candidates" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        {rows.length === 0 ? (
+          <EmptyState
+            heading={`No learner has shared a sample with ${partner.organisation} yet`}
+            text="Samples appear here only when a learner chooses to share them, from their portfolio or their record's share page. That consent is recorded on the record and can be revoked by the learner."
+          />
+        ) : (
+          rows.map((row) => <CandidateCard key={row.record.id} row={row} partner={partner} />)
+        )}
+      </div>
 
       {ws.employerPartners.length > 1 && (
         <div className="va-muted-12">

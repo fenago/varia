@@ -1,6 +1,7 @@
 import { useMemo } from "react";
+/* type-scale: applied */
 import { Link, useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, Stamp, SkillTags, OutcomeStamps } from "@ui/components";
+import { Blueprint, BlueprintButton, Stamp, SkillTags, OutcomeStamps, WalkthroughButton } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
 import {
@@ -111,18 +112,19 @@ export default function Home() {
   return (
     <div className="va-page" style={{ gap: 30, maxWidth: 1180 }}>
       {/* 1. North Star */}
-      <Blueprint className="va-dark" style={{ padding: "30px 32px 28px" }}>
+      <Blueprint className="va-dark" style={{ padding: "30px 32px 28px" }} data-walk="promise">
         <div className="va-kicker">{NORTH_STAR.kicker}</div>
         <h2 style={{ margin: "8px 0 14px", color: "#fff", maxWidth: "24ch", fontSize: 40, lineHeight: 1.05 }}>{NORTH_STAR.varia}</h2>
-        <p style={{ margin: "0 0 18px", fontSize: 16, lineHeight: 1.6, color: "#d5e0ea", maxWidth: "70ch", textWrap: "pretty" }}>{NORTH_STAR.sub}</p>
+        <p style={{ margin: "0 0 18px", fontSize: 18, lineHeight: 1.6, color: "#d5e0ea", maxWidth: "70ch", textWrap: "pretty" }}>{NORTH_STAR.sub}</p>
         <div className="va-btn-row">
-          <BlueprintButton onClick={() => document.getElementById("path")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Follow one student's path</BlueprintButton>
+          <WalkthroughButton onDark />
+          <button type="button" className="btn va-btn-onDark" onClick={() => document.getElementById("path")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Follow one student's path</button>
           <button type="button" className="btn va-btn-onDark" onClick={() => nav("/for/employers")}>For employers</button>
           <button type="button" className="btn va-btn-onDark" onClick={() => nav("/for/students")}>For students</button>
         </div>
         <div style={{ marginTop: 22, borderTop: "1px solid rgba(255,255,255,.14)", paddingTop: 14, display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 18 }} className="va-split">
-          <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55, color: "#b7c6d6", maxWidth: "80ch", fontStyle: "italic" }}>“{NORTH_STAR.cohort}”</p>
-          <span style={{ fontSize: 11.5, color: "#7f95ac", alignSelf: "end", whiteSpace: "nowrap" }}>{NORTH_STAR.cohortSource}</span>
+          <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.55, color: "#b7c6d6", maxWidth: "80ch", fontStyle: "italic" }}>“{NORTH_STAR.cohort}”</p>
+          <span style={{ fontSize: 13, color: "#7f95ac", alignSelf: "end", whiteSpace: "nowrap" }}>{NORTH_STAR.cohortSource}</span>
         </div>
       </Blueprint>
 
@@ -130,7 +132,7 @@ export default function Home() {
       <div id="path">
         <div className="va-row-flex" style={{ alignItems: "baseline", gap: 12, marginBottom: 14 }}>
           <h6 style={{ margin: 0 }}>One student's path, with the real records</h6>
-          <span className="text-muted" style={{ fontSize: 12.5 }}>Every panel is live data from this workspace. Click through; nothing here is a mock-up.</span>
+          <span className="text-muted" style={{ fontSize: 14 }}>Every panel is live data from this workspace. Click through; nothing here is a mock-up.</span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 18 }} className="va-path-grid">
           {PATH_STEPS.map((s, i) => {
@@ -141,12 +143,12 @@ export default function Home() {
                   <span style={{ fontFamily: "var(--font-heading)", fontSize: 30, color: "var(--color-accent)", lineHeight: 1 }}>{String(i + 1).padStart(2, "0")}</span>
                   <div>
                     <div className="va-kicker">{s.who}</div>
-                    <div style={{ fontFamily: "var(--font-heading)", fontSize: 18, lineHeight: 1.1 }}>{s.title}</div>
+                    <div style={{ fontFamily: "var(--font-heading)", fontSize: 20, lineHeight: 1.1 }}>{s.title}</div>
                   </div>
                 </div>
-                <div className="va-surface-box" style={{ fontSize: 13.5, lineHeight: 1.55, flex: 1 }}>{live?.text ?? s.fallback}</div>
-                <div style={{ fontSize: 12.5, minHeight: 22 }}>{live?.extra}</div>
-                <Link to={s.link} style={{ fontSize: 13, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)", letterSpacing: ".02em" }}>
+                <div className="va-surface-box" style={{ fontSize: 15.5, lineHeight: 1.55, flex: 1 }}>{live?.text ?? s.fallback}</div>
+                <div style={{ fontSize: 14, minHeight: 22 }}>{live?.extra}</div>
+                <Link to={s.link} style={{ fontSize: 15, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)", letterSpacing: ".02em" }}>
                   {s.linkLabel} →
                 </Link>
               </Blueprint>
@@ -161,13 +163,13 @@ export default function Home() {
           <Blueprint key={b.kicker} className={i === 1 ? "va-dark" : undefined} style={{ padding: "24px 26px", display: "flex", flexDirection: "column", gap: 10 }}>
             <div className="va-kicker">{b.kicker}</div>
             <h3 style={{ margin: 0, maxWidth: "18ch", color: i === 1 ? "#fff" : undefined }}>{b.headline}</h3>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, maxWidth: "58ch", textWrap: "pretty", color: i === 1 ? "#d5e0ea" : undefined, flex: 1 }}>{b.body}</p>
+            <p style={{ margin: 0, fontSize: 17, lineHeight: 1.6, maxWidth: "58ch", textWrap: "pretty", color: i === 1 ? "#d5e0ea" : undefined, flex: 1 }}>{b.body}</p>
             {funnel && i === 1 ? (
-              <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12.5, color: "#b7c6d6", borderTop: "1px solid rgba(255,255,255,.14)", paddingTop: 10 }}>
-                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 18 }}>{funnel.challenges}</b> challenges from local employers</span>
-                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 18 }}>{funnel.completed}</b> students did the work</span>
-                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 18 }}>{funnel.endorsed}</b> endorsed</span>
-                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 18 }}>{funnel.interviewed}</b> interviewed</span>
+              <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 14, color: "#b7c6d6", borderTop: "1px solid rgba(255,255,255,.14)", paddingTop: 10 }}>
+                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 20 }}>{funnel.challenges}</b> challenges from local employers</span>
+                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 20 }}>{funnel.completed}</b> students did the work</span>
+                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 20 }}>{funnel.endorsed}</b> endorsed</span>
+                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 20 }}>{funnel.interviewed}</b> interviewed</span>
               </div>
             ) : null}
             <div>
@@ -185,21 +187,21 @@ export default function Home() {
       <div>
         <div className="va-row-flex" style={{ alignItems: "baseline", gap: 12, marginBottom: 14 }}>
           <h6 style={{ margin: 0 }}>What changes, for each of the four people in the room</h6>
-          <span className="text-muted" style={{ fontSize: 12.5 }}>In the cohort's own framing: from what assessment is now, to what it becomes.</span>
+          <span className="text-muted" style={{ fontSize: 14 }}>In the cohort's own framing: from what assessment is now, to what it becomes.</span>
         </div>
         <div className="va-tiles" style={{ gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 16 }}>
           {SHIFTS.map((col) => (
             <Blueprint key={col.audience} style={{ padding: "18px 18px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontSize: 20 }}>{col.label}</div>
+              <div style={{ fontFamily: "var(--font-heading)", fontSize: 22 }}>{col.label}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
                 {col.shifts.map((sh) => (
-                  <div key={sh.from} style={{ fontSize: 13, lineHeight: 1.4 }}>
+                  <div key={sh.from} style={{ fontSize: 15, lineHeight: 1.4 }}>
                     <div className="text-muted" style={{ textDecoration: "line-through", textDecorationColor: "color-mix(in srgb, var(--color-text) 35%, transparent)" }}>{sh.from}</div>
-                    <div style={{ fontFamily: "var(--font-heading)", fontSize: 15 }}>{sh.to}</div>
+                    <div style={{ fontFamily: "var(--font-heading)", fontSize: 17 }}>{sh.to}</div>
                   </div>
                 ))}
               </div>
-              <Link to={col.to} style={{ fontSize: 13, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>
+              <Link to={col.to} style={{ fontSize: 15, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>
                 For {col.label.toLowerCase()} →
               </Link>
             </Blueprint>
@@ -211,7 +213,7 @@ export default function Home() {
       <Blueprint style={{ padding: "20px 24px", display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 18, alignItems: "center" }} className="va-split">
         <div>
           <div className="va-kicker">{TRUST.kicker}</div>
-          <p style={{ margin: "6px 0 0", fontSize: 14.5, lineHeight: 1.6, maxWidth: "80ch", textWrap: "pretty" }}>{TRUST.body}</p>
+          <p style={{ margin: "6px 0 0", fontSize: 16, lineHeight: 1.6, maxWidth: "80ch", textWrap: "pretty" }}>{TRUST.body}</p>
         </div>
         <div className="va-btn-row">
           <button type="button" className="btn btn-secondary" onClick={() => nav(TRUST.link.to)}>{TRUST.link.label}</button>

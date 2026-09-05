@@ -44,13 +44,14 @@ import {} from "@lib/metrics";
 import { estimateRunCost } from "@lib/llm";
 import { newId, nowIso } from "./ids";
 import { runGeneration } from "./orchestrator";
-import { defaultWorkspace, fixtureWorkspace } from "./fixtures";
+import { defaultWorkspace, fixtureWorkspace, getFixture, fixtureForBlueprint, recordedSubmissionsForRun } from "./fixtures";
 import { applyChallengeToBlueprint, bridgeFor, recordCanonicalPure, resolveSkills, skillKeysForBlueprint, slugify, withBridgeDefaults, deriveChallengeId } from "./employer";
 import { ensureSigningKey, signCanonical } from "@lib/badges/keys";
 import { eligibilityOf, issueCredentialDocs, nextCredentialId } from "@lib/badges/credential";
 import { activeBlueprint, currentThresholds, evidenceForVariant, institutionRowForRun, runById, studentById, submissionForVariant, validationsForBlueprint, variantById, evidenceView, endorsementsForRecord } from "./selectors";
 import { applyScenarioEdits, buildReviewPackagePure, evidenceCanonical, findPartnerByOrganisation, hashEvidence, nextEvidenceId, validationStatusText } from "./employer";
 import { clampAdvanced, clampJudgeSamples, getProvider, getSettings, useSettings } from "./settings";
+import { createDemoProvider } from "./demoProvider";
 
 const LS_KEY = "varia.workspace.v1";
 
@@ -64,6 +65,11 @@ export interface StartRunOptions {
   judgeSamples: number;
   /** Wave 6c: Advanced panel values for this run (defaults from settings when absent) */
   advanced?: AdvancedRunOptions;
+  /**
+   * "recorded" replays the sample's recorded run for free (the default whenever one exists);
+   * "live" calls the API with the instructor's key. Only an explicit "live" spends tokens on a sample.
+   */
+  source?: "recorded" | "live";
 }
 
 export interface WorkspaceActions {
@@ -209,7 +215,15 @@ function releaseRun(ws: Workspace, runId: string, overThreshold: boolean, reason
     ? `${ws.course.code} ${run.blueprintName} released over threshold (${label || "advisory"}). Reason: "${reason ?? ""}"`
     : `${ws.course.code} ${run.blueprintName} released — all four checks cleared${regenerated.length ? ` after regenerating ${regenerated.join(", ")}` : ""}`;
   next.audit = [auditEvent("release", text, ws.course.instructor.name, runId), ...ws.audit];
-  // Existing submissions for a re-released run are kept; new runs start empty.
+  // A replayed sample run brings its recorded, labelled sample submissions with it on first release.
+  // Existing submissions for a re-released run are kept; uploaded assignments start empty.
+  if (released.recordedFrom && !ws.submissions.some((sub) => sub.runId === runId)) {
+    const bp = ws.blueprints.find((b) => b.id === released.blueprintId);
+    if (bp) {
+      const subs = recordedSubmissionsForRun(released, bp);
+      if (subs.length) next.submissions = [...ws.submissions, ...subs];
+    }
+  }
   return next;
 }
 
@@ -322,8 +336,17 @@ export const useWorkspace = create<WorkspaceState>()(
         const bp = activeBlueprint(ws);
         if (!bp) throw new Error("No active blueprint.");
         const settings = getSettings();
-        const provider = getProvider();
-        const est = estimateRunCost(opts.n, opts.judgeSamples);
+        const fixture = bp.sampleId ? getFixture(bp.sampleId) : fixtureForBlueprint(bp.id, bp.name);
+        const source: "recorded" | "live" = opts.source ?? (fixture ? "recorded" : "live");
+        if (source === "live" && settings.mode !== "live") {
+          throw new Error("Add your key in Settings to make versions for your own assignment. The five samples replay their recorded runs without a key.");
+        }
+        if (source === "recorded" && !fixture) {
+          throw new Error("There is no recorded run for this assignment to replay.");
+        }
+        // A recorded replay never touches the API, whatever key is set.
+        const provider = source === "recorded" ? createDemoProvider() : getProvider();
+        const est = source === "recorded" ? { usd: 0, minutes: 1 } : estimateRunCost(opts.n, opts.judgeSamples);
         const run: Run = {
           id: newId("run"),
           blueprintId: bp.id,
@@ -331,12 +354,13 @@ export const useWorkspace = create<WorkspaceState>()(
           courseId: ws.course.id,
           strategy: opts.strategy,
           threatProfile: opts.threatProfile,
-          generatorModel: opts.generatorModel || settings.generatorModel,
-          judgeModel: opts.judgeModel || settings.judgeModel,
+          generatorModel: source === "recorded" && fixture ? fixture.models.generator : opts.generatorModel || settings.generatorModel,
+          judgeModel: source === "recorded" && fixture ? fixture.models.judge : opts.judgeModel || settings.judgeModel,
           judgeSamples: opts.judgeSamples || settings.judgeSamples,
           n: Math.max(2, Math.min(200, Math.round(opts.n))),
           enabledDimensions: opts.enabledDimensions,
-          mode: settings.mode,
+          mode: source === "recorded" ? "demo" : settings.mode,
+          recordedFrom: source === "recorded" && fixture ? { sampleId: fixture.sampleId, recordedAt: fixture.recordedAt, models: fixture.models } : null,
           status: "queued",
           progress: { phase: "queued", done: 0, total: opts.n, message: "Queued" },
           startedAt: nowIso(),

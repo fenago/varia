@@ -6,7 +6,8 @@
 import type { Roster, SourceFile, SourceKind } from "@shared/types";
 import { parseRosterCsv } from "./csv";
 import { extractDocxText } from "./docx";
-import { extractPdfText } from "./pdf";
+import { extractPdf, pdfBase64 } from "./pdf";
+import { OCR_SECONDS_PER_PAGE, ocrPdf } from "./ocr";
 
 export { parseRosterCsv, toRosterName } from "./csv";
 
@@ -16,6 +17,16 @@ export interface ParsedFiles {
   /** All non-roster text, separated by file headers */
   rawText: string;
   readSeconds: number;
+  /** PDFs as base64 for a Claude `document` block. In memory only; never persist. */
+  documents: { name: string; mediaType: "application/pdf"; base64: string; scanned?: boolean }[];
+}
+
+export interface ParseOptions {
+  /** Progress for long steps (OCR). phase: "ocr" */
+  onPhase?: (phase: "reading" | "ocr", message: string, detail?: { page?: number; pages?: number; file?: string }) => void;
+  /** Run in-browser OCR on scanned PDFs (default true in a browser, false in Node) */
+  ocr?: boolean;
+  signal?: AbortSignal;
 }
 
 const SOLUTION_HINT = /(answer|solution|key|exemplar|model[-_ ]?response)/i;
@@ -39,18 +50,36 @@ export function detectKind(name: string, text: string): { kind: SourceKind; reco
   return { kind: "unknown", recognisedAs: "Text — could not classify" };
 }
 
-async function readText(file: File): Promise<string> {
-  const e = ext(file.name);
-  if (e === "docx") return extractDocxText(file);
-  if (e === "pdf") return extractPdfText(file);
-  return (await file.text()).replace(/\r\n/g, "\n").trim();
+interface ReadResult {
+  text: string;
+  pdf?: { base64: string; scanned: boolean; pageCount: number; ocr?: SourceFile["ocr"] };
 }
 
-export async function parseFiles(files: File[], courseId = "dat4100"): Promise<ParsedFiles> {
+async function readText(file: File, opts: ParseOptions): Promise<ReadResult> {
+  const e = ext(file.name);
+  if (e === "docx") return { text: await extractDocxText(file) };
+  if (e === "pdf") {
+    const pdf = await extractPdf(file);
+    const base64 = pdfBase64(pdf.bytes);
+    if (!pdf.scanned) return { text: pdf.text, pdf: { base64, scanned: false, pageCount: pdf.pageCount } };
+    const canOcr = opts.ocr ?? typeof document !== "undefined";
+    if (!canOcr) return { text: "", pdf: { base64, scanned: true, pageCount: pdf.pageCount } };
+    opts.onPhase?.("ocr", `Reading a scanned PDF · ${pdf.pageCount} page${pdf.pageCount === 1 ? "" : "s"} · about ${OCR_SECONDS_PER_PAGE} seconds a page`, { pages: pdf.pageCount, file: file.name });
+    const r = await ocrPdf(pdf.bytes, {
+      signal: opts.signal,
+      onProgress: (page, total) => opts.onPhase?.("ocr", `Reading a scanned PDF · page ${page} of ${total} · this takes about ${OCR_SECONDS_PER_PAGE} seconds a page`, { page, pages: total, file: file.name }),
+    });
+    return { text: r.text, pdf: { base64, scanned: true, pageCount: pdf.pageCount, ocr: { engine: "tesseract", confidence: Math.round(r.confidence) } } };
+  }
+  return { text: (await file.text()).replace(/\r\n/g, "\n").trim() };
+}
+
+export async function parseFiles(files: File[], courseId = "dat4100", opts: ParseOptions = {}): Promise<ParsedFiles> {
   const started = performance.now();
   const sources: SourceFile[] = [];
   let roster: Roster | null = null;
   const chunks: string[] = [];
+  const documents: ParsedFiles["documents"] = [];
 
   for (const file of files) {
     const e = ext(file.name);
@@ -70,14 +99,22 @@ export async function parseFiles(files: File[], courseId = "dat4100"): Promise<P
         sources.push({ name: file.name, kind: "unknown", recognisedAs: `Unsupported type .${e}`, sizeBytes: file.size, status: "failed" });
         continue;
       }
-      const text = await readText(file);
+      const { text, pdf } = await readText(file, opts);
+      if (pdf) documents.push({ name: file.name, mediaType: "application/pdf", base64: pdf.base64, scanned: pdf.scanned });
       if (!text) {
+        // A scanned PDF with no OCR available (Node, or OCR switched off): Claude can still read
+        // the pages when a key is set, so keep it as a readable source with an honest label.
+        if (pdf?.scanned) {
+          sources.push({ name: file.name, kind: "unknown", recognisedAs: `Scanned PDF · ${pdf.pageCount} page${pdf.pageCount === 1 ? "" : "s"} · no text layer`, sizeBytes: file.size, status: "read", scanned: true, pageCount: pdf.pageCount });
+          continue;
+        }
         sources.push({ name: file.name, kind: "unknown", recognisedAs: "No readable text", sizeBytes: file.size, status: "failed" });
         continue;
       }
       const { kind, recognisedAs } = detectKind(file.name, text);
-      sources.push({ name: file.name, kind, recognisedAs, sizeBytes: file.size, status: "read", text });
-      chunks.push(`===== ${file.name} (${recognisedAs}) =====\n${text}`);
+      const label = pdf?.scanned ? `${recognisedAs} · scanned, read by OCR` : recognisedAs;
+      sources.push({ name: file.name, kind, recognisedAs: label, sizeBytes: file.size, status: "read", text, ...(pdf ? { scanned: pdf.scanned, pageCount: pdf.pageCount, ...(pdf.ocr ? { ocr: pdf.ocr } : {}) } : {}) });
+      chunks.push(`===== ${file.name} (${label}) =====\n${text}`);
     } catch (err) {
       sources.push({ name: file.name, kind: "unknown", recognisedAs: `Could not read: ${(err as Error).message}`, sizeBytes: file.size, status: "failed" });
     }
@@ -88,6 +125,7 @@ export async function parseFiles(files: File[], courseId = "dat4100"): Promise<P
     roster,
     rawText: chunks.join("\n\n"),
     readSeconds: Math.max(1, Math.round((performance.now() - started) / 1000)),
+    documents,
   };
 }
 

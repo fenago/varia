@@ -1,4 +1,5 @@
 import type { RunProgress, UsageTotals } from "@shared/types";
+/* type-scale: applied */
 import { describeProgress, formatElapsed } from "@lib/store/progress";
 import { useElapsed } from "@ui/hooks/useElapsed";
 import { Blueprint } from "./Blueprint";
@@ -52,7 +53,7 @@ export function ProgressBlock({ progress, onCancel, title = "Run in progress", u
     <Blueprint style={{ padding: "18px 20px" }} role="status" aria-live="polite" aria-busy={running}>
       <div className="va-row-flex" style={{ marginBottom: 8, gap: 10, alignItems: "baseline" }}>
         <h6 style={{ margin: 0 }}>{title}</h6>
-        <span className="text-muted" style={{ fontSize: 12, marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>
+        <span className="text-muted" style={{ fontSize: 14, marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>
           {progress.done} / {progress.total}
           {elapsed > 0 || running ? ` · ${formatElapsed(elapsed)} elapsed` : ""}
         </span>
@@ -60,7 +61,7 @@ export function ProgressBlock({ progress, onCancel, title = "Run in progress", u
 
       <div className="va-row-flex" style={{ gap: 10, alignItems: "baseline", marginBottom: 6 }}>
         <div className="va-progress-headline">{text.headline}</div>
-        {running && text.eta ? <span className="text-muted" style={{ fontSize: 12.5 }}>{text.eta}</span> : null}
+        {running && text.eta ? <span className="text-muted" style={{ fontSize: 14 }}>{text.eta}</span> : null}
         {text.terminal ? <Stamp gate={TONE_GATE[text.tone]}>{progress.phase === "partial" ? `${progress.done} of ${progress.total} done` : progress.phase}</Stamp> : null}
       </div>
 
@@ -153,12 +154,12 @@ export function StepProgressBlock({ step, onRetry, title }: StepProgressBlockPro
       {title ? (
         <div className="va-row-flex" style={{ marginBottom: 6 }}>
           <h6 style={{ margin: 0 }}>{title}</h6>
-          <span className="text-muted" style={{ fontSize: 12, marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>{formatElapsed(elapsed)} elapsed</span>
+          <span className="text-muted" style={{ fontSize: 14, marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>{formatElapsed(elapsed)} elapsed</span>
         </div>
       ) : null}
       <div className="va-row-flex" style={{ gap: 10, alignItems: "baseline" }}>
         <div className="va-progress-headline">{step.headline}</div>
-        {!title ? <span className="text-muted" style={{ fontSize: 12, marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>{formatElapsed(elapsed)}</span> : null}
+        {!title ? <span className="text-muted" style={{ fontSize: 14, marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>{formatElapsed(elapsed)}</span> : null}
         {step.done ? <Stamp gate="pass">Done</Stamp> : step.error ? <Stamp gate="fail">Failed</Stamp> : null}
       </div>
       <div className="va-progress" aria-hidden="true" style={{ marginTop: 8 }}>

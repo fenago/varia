@@ -352,7 +352,7 @@ await check("sample rows are clickable and load through the local parser", async
   await rows.filter({ hasText: ORG2 }).first().click();
   await page.getByText("Here is what we found").waitFor({ timeout: 15000 });
   const t = await snapshotText("/import-sample");
-  assert(lc(t).includes(lc(`Loaded from the ${ORG2} sample`)), "loaded-from line");
+  assert(lc(t).includes(lc(`${ORG2} · Recorded walkthrough · nothing is spent`)) || lc(t).includes(lc(`Loaded from the ${ORG2} sample`)), "loaded-from line");
   assert(/criteri(on|a)/i.test(t), "criteria list");
 });
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+/* type-scale: applied */
 import type { IssuedCredential } from "@shared/types";
 import { renderBadgePng, renderBadgeSquare, type BadgeOptions } from "@lib/share/badgeImage";
 import { copyText, issueYearMonth, linkedInAddToProfileUrl, linkedInShareUrl, mailtoShare, shareText, xShareUrl } from "@lib/share/social";
@@ -90,7 +91,7 @@ export function ShareCredential({ credential, achievementName, endorsedBy, skill
   return (
     <Blueprint className="va-no-print" style={{ padding: "20px 22px" }}>
       <h6 style={{ margin: "0 0 4px" }}>Share this credential</h6>
-      <p className="text-muted" style={{ margin: "0 0 14px", fontSize: 12.5 }}>
+      <p className="text-muted" style={{ margin: "0 0 14px", fontSize: 14 }}>
         The image carries the proof; the verify link works anywhere.{learnerLabel ? " Shared under your name." : " Your name is not on the image; the credential id and learner id are."}
       </p>
 
@@ -99,7 +100,7 @@ export function ShareCredential({ credential, achievementName, endorsedBy, skill
           {preview ? (
             <img src={preview} alt={`Badge image for ${credential.id}`} style={{ display: "block", width: "100%", height: "auto" }} />
           ) : (
-            <span className="text-muted" style={{ fontSize: 12.5, padding: 16 }}>{error ?? "Drawing the badge image…"}</span>
+            <span className="text-muted" style={{ fontSize: 14, padding: 16 }}>{error ?? "Drawing the badge image…"}</span>
           )}
         </div>
 
@@ -113,7 +114,7 @@ export function ShareCredential({ credential, achievementName, endorsedBy, skill
           <button type="button" className="btn btn-secondary" onClick={() => open(addToProfile)} title="Opens LinkedIn with the certification details prefilled">
             Add to LinkedIn profile
           </button>
-          <span className="text-muted" style={{ fontSize: 11.5, marginTop: -4 }}>LinkedIn will ask you to confirm before it saves.</span>
+          <span className="text-muted" style={{ fontSize: 13, marginTop: -4 }}>LinkedIn will ask you to confirm before it saves.</span>
           <div className="va-btn-row" style={{ gap: 8, flexWrap: "wrap" }}>
             <button type="button" className="btn btn-secondary" onClick={() => open(linkedInShareUrl(verifyUrl))}>Share on LinkedIn</button>
             <button type="button" className="btn btn-secondary" onClick={() => open(xShareUrl(text, verifyUrl))}>Share on X</button>
@@ -132,11 +133,11 @@ export function ShareCredential({ credential, achievementName, endorsedBy, skill
               {copied ? "Copied" : "Copy verify link"}
             </button>
           </div>
-          {error && <span style={{ fontSize: 12.5, color: "#8d4a3c" }}>{error}</span>}
+          {error && <span style={{ fontSize: 14, color: "#8d4a3c" }}>{error}</span>}
         </div>
       </div>
 
-      <p className="text-muted" style={{ margin: "14px 0 0", fontSize: 12.5, maxWidth: "76ch" }}>
+      <p className="text-muted" style={{ margin: "14px 0 0", fontSize: 14, maxWidth: "76ch" }}>
         Rich previews on social platforms need a public page per credential; that lands with the college-hosted record store. Until then the image carries the proof and the verify link works anywhere.
       </p>
     </Blueprint>

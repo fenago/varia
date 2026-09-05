@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+/* type-scale: applied */
 import { Blueprint, BlueprintButton, Dialog, Field, Pill, SegChoice, Info } from "@ui/components";
 import { glossaryTerm } from "@shared/glossary";
 import { useSettings, getProvider } from "@lib/store/settings";
@@ -145,7 +146,7 @@ export default function Settings() {
         <div className="va-row-flex" style={{ marginBottom: 4 }}>
           <h6 style={{ margin: 0 }}>Your Claude key</h6>
           <span style={{ marginLeft: "auto" }}>
-            {live ? <Pill gate="pass">Live mode</Pill> : <Pill gate="watch">Demo mode</Pill>}
+            {live ? <Pill gate="pass">Key set · your own assignments run for real</Pill> : <Pill gate="watch">No key · recorded walkthroughs only</Pill>}
           </span>
         </div>
         <p className="va-muted-125" style={{ margin: "0 0 14px", lineHeight: 1.55 }}>
@@ -153,7 +154,7 @@ export default function Settings() {
             ? "Generation, judging and extraction run against Anthropic with the key below."
             : "Every page works on a seeded course. Paste a key to generate, judge and extract for real."}
         </p>
-        <p style={{ margin: "0 0 14px", fontSize: 13.5, lineHeight: 1.6, maxWidth: "70ch" }}>
+        <p style={{ margin: "0 0 14px", fontSize: 15.5, lineHeight: 1.6, maxWidth: "70ch" }}>
           The key stays in this browser. It is sent only to <span className="va-mono">api.anthropic.com</span>, directly from this page, by the
           official Anthropic SDK — never to any server of ours, because there is none. No key is bundled with the app and none is read from the
           environment.
@@ -178,7 +179,7 @@ export default function Settings() {
           </div>
         </Field>
 
-        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, margin: "10px 0 14px", cursor: "pointer" }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15.5, margin: "10px 0 14px", cursor: "pointer" }}>
           <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
           Remember on this device
           <span className="va-muted-115">— otherwise the key is forgotten when this tab closes</span>
@@ -305,7 +306,7 @@ export default function Settings() {
           </div>
         )}
         {wsError && (
-          <div style={{ marginTop: 8, fontSize: 12.5, color: RED }}>
+          <div style={{ marginTop: 8, fontSize: 14, color: RED }}>
             {wsError}
           </div>
         )}
@@ -335,7 +336,7 @@ export default function Settings() {
           </>
         }
       >
-        <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
+        <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.55 }}>
           The key is removed from this browser and the app returns to demo mode. Your blueprints and runs are kept.
         </p>
       </Dialog>
@@ -365,7 +366,7 @@ export default function Settings() {
           </>
         }
       >
-        <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
+        <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.55 }}>
           This replaces every blueprint, run, grade and audit event with the seeded DAT 4100 course. Export first if you want to keep anything. Your
           key and model choices are not affected.
         </p>
@@ -395,7 +396,7 @@ export default function Settings() {
           </>
         }
       >
-        <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
+        <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.55 }}>
           This replaces the workspace with the recorded sample runs: real blueprints, rosters, versions and integrity reports produced by the
           pipeline. Nothing is invented. {fixturesAreReal() ? "" : "The current recordings are dry runs from the demo provider and are labelled as not real output."} Export first if you want to keep anything.
         </p>

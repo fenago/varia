@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+/* type-scale: applied */
 import { useLocation, useNavigate } from "react-router-dom";
 import { Blueprint, BlueprintButton, CopyField, DataTable, Field, Funnel, Pill, SkillTags, Stamp, StatTile, type Column, type PillGate, type StatColor, Info } from "@ui/components";
 import { Link } from "react-router-dom";
@@ -412,8 +413,8 @@ export default function Employer() {
     <div className="va-page">
       <div>
         <div className="va-row-flex" style={{ alignItems: "baseline", marginBottom: 10 }}>
-          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>From an employer's problem to a hire, in six measurable steps.</p>
-          <Link to="/talent" style={{ marginLeft: "auto", fontSize: 13, color: "var(--color-accent-700)" }}>Open a talent view →</Link>
+          <p style={{ margin: 0, fontSize: 17, lineHeight: 1.5 }}>From an employer's problem to a hire, in six measurable steps.</p>
+          <Link to="/talent" style={{ marginLeft: "auto", fontSize: 15, color: "var(--color-accent-700)" }}>Open a talent view →</Link>
         </div>
         <Funnel
           steps={[
@@ -430,13 +431,13 @@ export default function Employer() {
       <Blueprint style={{ padding: "20px 22px" }}>
         <div className="va-row-flex" style={{ marginBottom: 6 }}>
           <h6 style={{ margin: 0 }}>Challenges</h6>
-          <span className="text-muted" style={{ fontSize: 12 }}>One real problem from an employer becomes a different version for every student.</span>
+          <span className="text-muted" style={{ fontSize: 14 }}>One real problem from an employer becomes a different version for every student.</span>
           <button type="button" className="btn btn-secondary" style={{ marginLeft: "auto" }} onClick={() => setShowChallenge((v) => !v)}>
             {showChallenge ? "Close" : "Contribute a challenge"}
           </button>
         </div>
-        {cNotice && <div style={{ fontSize: 12.5, color: GREEN, margin: "6px 0" }}>{cNotice}</div>}
-        {cError && <div style={{ fontSize: 12.5, color: RED, margin: "6px 0" }}>{cError}</div>}
+        {cNotice && <div style={{ fontSize: 14, color: GREEN, margin: "6px 0" }}>{cNotice}</div>}
+        {cError && <div style={{ fontSize: 14, color: RED, margin: "6px 0" }}>{cError}</div>}
         {showChallenge && (
           <form onSubmit={submitChallenge} style={{ margin: "12px 0 16px", display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 12 }} className="va-split">
             <Field label="Employer partner">
@@ -469,7 +470,7 @@ export default function Employer() {
             </div>
             <div style={{ gridColumn: "1 / -1" }}>
               <div className="va-kicker" style={{ marginBottom: 6 }}>Skills this exercises</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", fontSize: 13.5 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", fontSize: 15.5 }}>
                 {skills.map((sk) => (
                   <label key={sk.key} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                     <input type="checkbox" checked={cSkills.includes(sk.key)} onChange={() => toggleSkill(sk.key)} />
@@ -484,14 +485,14 @@ export default function Employer() {
             </div>
             <div style={{ gridColumn: "1 / -1" }} className="va-btn-row">
               <BlueprintButton type="submit">Contribute challenge</BlueprintButton>
-              <span className="text-muted" style={{ fontSize: 12 }}>Stored in this browser; nothing is sent anywhere.</span>
+              <span className="text-muted" style={{ fontSize: 14 }}>Stored in this browser; nothing is sent anywhere.</span>
             </div>
           </form>
         )}
         <DataTable<EmployerChallenge> columns={challengeColumns} rows={challenges} rowKey={(c) => c.id} empty="No challenges yet. Contribute the first one." />
       </Blueprint>
 
-      <p className="text-muted" style={{ margin: 0, maxWidth: "76ch", fontSize: 13.5, lineHeight: 1.6 }}>
+      <p className="text-muted" style={{ margin: 0, maxWidth: "76ch", fontSize: 15.5, lineHeight: 1.6 }}>
         This page carries the three employer outcomes the AI Assessment Grant requires. Employers validate the blueprint once and every
         student's version inherits it. Partners who accept evidence records for hiring or promotion are counted as adopting the
         portable skill indicator. Each review ends with a five-question satisfaction survey.
@@ -571,7 +572,7 @@ export default function Employer() {
                 <input className="input" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
               </Field>
             </div>
-            {addError ? <div style={{ color: RED, fontSize: 12.5, marginTop: 8 }}>{addError}</div> : null}
+            {addError ? <div style={{ color: RED, fontSize: 14, marginTop: 8 }}>{addError}</div> : null}
             <div className="va-btn-row" style={{ marginTop: 12 }}>
               <BlueprintButton type="submit">Add partner</BlueprintButton>
             </div>
@@ -585,18 +586,18 @@ export default function Employer() {
           <span className="text-muted va-muted-12">Review in this browser, or send a self-contained link that needs no account.</span>
         </div>
         <DataTable columns={blueprintColumns} rows={rows} rowKey={(r) => r.blueprint.id} empty="No blueprints yet. Load an assessment first." />
-        {linkError ? <div style={{ color: RED, fontSize: 12.5, marginTop: 8 }}>{linkError}</div> : null}
+        {linkError ? <div style={{ color: RED, fontSize: 14, marginTop: 8 }}>{linkError}</div> : null}
       </Blueprint>
 
       <div className="va-two">
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 6px" }}>Bring in a result</h6>
-          <p className="text-muted" style={{ margin: "0 0 12px", fontSize: 12.5, lineHeight: 1.5 }}>
+          <p className="text-muted" style={{ margin: "0 0 12px", fontSize: 14, lineHeight: 1.5 }}>
             When a reviewer finishes from a link, they send back a result link or a JSON file. Paste or upload it here.
           </p>
           <textarea
             className="input va-textarea"
-            style={{ minHeight: 84, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 12 }}
+            style={{ minHeight: 84, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 14 }}
             placeholder="Paste the result link here…"
             value={resultText}
             onChange={(e) => setResultText(e.target.value)}
@@ -611,9 +612,9 @@ export default function Employer() {
               <input type="file" accept="application/json,.json" onChange={(e) => void applyFile(e)} style={{ display: "none" }} />
             </label>
           </div>
-          {resultError ? <div style={{ color: RED, fontSize: 12.5, marginTop: 8 }}>{resultError}</div> : null}
+          {resultError ? <div style={{ color: RED, fontSize: 14, marginTop: 8 }}>{resultError}</div> : null}
           {applied ? (
-            <div style={{ color: GREEN, fontSize: 13, marginTop: 8 }}>
+            <div style={{ color: GREEN, fontSize: 15, marginTop: 8 }}>
               Applied: {applied.organisation} {applied.status === "validated" ? "validated" : applied.status === "changes-requested" ? "requested changes to" : "declined"}{" "}
               <strong>{applied.blueprintName}</strong>, reviewed by {applied.reviewerName} on {fmtDate(applied.reviewedAt)}.
             </div>
@@ -623,7 +624,7 @@ export default function Employer() {
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 10px" }}>Validation history</h6>
           {history.length === 0 ? (
-            <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
+            <p className="text-muted" style={{ margin: 0, fontSize: 15 }}>
               No employer reviews recorded yet.
             </p>
           ) : (
@@ -631,7 +632,7 @@ export default function Employer() {
               {history.map((v) => {
                 const mean = satisfactionMean(v);
                 return (
-                  <div key={v.id} style={{ fontSize: 13, lineHeight: 1.5 }}>
+                  <div key={v.id} style={{ fontSize: 15, lineHeight: 1.5 }}>
                     <div className="va-row-flex" style={{ flexWrap: "wrap", gap: 8 }}>
                       <span className="va-heading-15">{v.organisation}</span>
                       <span className="text-muted">· {v.blueprintName}</span>

@@ -1,4 +1,5 @@
 import { Blueprint } from "@ui/components";
+/* type-scale: applied */
 import { PROPERTY_LABELS } from "@shared/thresholds";
 import type { Property } from "@shared/types";
 
@@ -30,7 +31,7 @@ const ORDER: Property[] = ["p1", "p2", "p3", "p4"];
 export default function Notes() {
   return (
     <div className="va-page" style={{ maxWidth: 920, gap: 26 }}>
-      <p style={{ fontSize: 16, lineHeight: 1.6, maxWidth: "70ch", textWrap: "pretty" }}>
+      <p style={{ fontSize: 18, lineHeight: 1.6, maxWidth: "70ch", textWrap: "pretty" }}>
         These mockups turn the VARIA benchmark into a working product: a professor authors one assessment blueprint, the system generates a different-looking task for every student, and nothing is released until the variant set passes the paper's four integrity properties. Oversight roles get the same numbers, aggregated.
       </p>
 
@@ -63,7 +64,7 @@ export default function Notes() {
         </table>
       </Blueprint>
 
-      <p className="text-muted" style={{ fontSize: 13, maxWidth: "70ch" }}>
+      <p className="text-muted" style={{ fontSize: 15, maxWidth: "70ch" }}>
         Since these notes were written, the appeal flow, institution-wide thresholds, employer validation, work-sample records, the student portfolio and the employer talent view have all been built. The two structural steps still ahead are a durable, college-held record store and a college-held signing key with a public verify endpoint; LMS delivery of per-student tasks remains a disabled button.
       </p>
     </div>

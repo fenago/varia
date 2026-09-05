@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+/* type-scale: applied */
 import { Link, useNavigate } from "react-router-dom";
 import { AudienceCard, Blueprint, BlueprintButton, OutcomeStamps, PipelineStrip, SkillTags, Stamp, StatTile } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
@@ -124,7 +125,7 @@ export default function Summary() {
       <Blueprint className="va-dark" style={{ padding: "30px 32px 26px" }}>
         <div className="va-kicker">{EXEC.kicker}</div>
         <h2 style={{ margin: "8px 0 14px", color: "#fff", maxWidth: "26ch", fontSize: 38, lineHeight: 1.05 }}>{EXEC.headline}</h2>
-        <p style={{ margin: "0 0 18px", fontSize: 16, lineHeight: 1.6, color: "#d5e0ea", maxWidth: "78ch", textWrap: "pretty" }}>{EXEC.summary}</p>
+        <p style={{ margin: "0 0 18px", fontSize: 18, lineHeight: 1.6, color: "#d5e0ea", maxWidth: "78ch", textWrap: "pretty" }}>{EXEC.summary}</p>
         <div className="va-btn-row">
           <BlueprintButton onClick={() => document.getElementById("path")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Follow one student's path</BlueprintButton>
           <button type="button" className="btn va-btn-onDark" onClick={() => nav("/for/institutions")}>For institutions</button>
@@ -134,8 +135,8 @@ export default function Summary() {
         <div style={{ marginTop: 22, borderTop: "1px solid rgba(255,255,255,.14)", paddingTop: 16, display: "grid", gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)", gap: 22 }} className="va-split">
           <div>
             <div className="va-kicker" style={{ marginBottom: 6 }}>The North Star</div>
-            <div style={{ fontFamily: "var(--font-heading)", fontSize: 22, lineHeight: 1.2, color: "#fff", maxWidth: "30ch" }}>{EXEC.northStar}</div>
-            <p style={{ margin: "10px 0 0", fontSize: 12.5, lineHeight: 1.5, color: "#8fa8bf", maxWidth: "70ch", fontStyle: "italic" }}>
+            <div style={{ fontFamily: "var(--font-heading)", fontSize: 24, lineHeight: 1.2, color: "#fff", maxWidth: "30ch" }}>{EXEC.northStar}</div>
+            <p style={{ margin: "10px 0 0", fontSize: 14, lineHeight: 1.5, color: "#8fa8bf", maxWidth: "70ch", fontStyle: "italic" }}>
               “{EXEC.cohort}” <span style={{ fontStyle: "normal" }}>· {EXEC.cohortSource}</span>
             </p>
           </div>
@@ -143,8 +144,8 @@ export default function Summary() {
             {GLANCE.map((g) => (
               <div key={g.key} style={{ border: "1px solid rgba(255,255,255,.22)", padding: "10px 12px" }}>
                 <div style={{ fontFamily: "var(--font-heading)", fontSize: 28, lineHeight: 1, color: "#fff" }}>{glance[g.key] ?? g.fallback}</div>
-                <div style={{ fontSize: 12.5, color: "#d5e0ea", marginTop: 4 }}>{g.label}</div>
-                <div style={{ fontSize: 11, color: "#7f95ac" }}>{g.sub}</div>
+                <div style={{ fontSize: 14, color: "#d5e0ea", marginTop: 4 }}>{g.label}</div>
+                <div style={{ fontSize: 12.5, color: "#7f95ac" }}>{g.sub}</div>
               </div>
             ))}
           </div>
@@ -157,8 +158,8 @@ export default function Summary() {
         <div className="va-tiles" style={{ gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 16 }}>
           {SITUATION.items.map((it) => (
             <Blueprint key={it.title} style={{ padding: "18px 20px" }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontSize: 17, lineHeight: 1.2, marginBottom: 8 }}>{it.title}</div>
-              <p className="text-muted" style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>{it.body}</p>
+              <div style={{ fontFamily: "var(--font-heading)", fontSize: 19, lineHeight: 1.2, marginBottom: 8 }}>{it.title}</div>
+              <p className="text-muted" style={{ margin: 0, fontSize: 15.5, lineHeight: 1.55 }}>{it.body}</p>
             </Blueprint>
           ))}
         </div>
@@ -168,18 +169,18 @@ export default function Summary() {
       <div>
         <div className="va-row-flex" style={{ alignItems: "baseline", gap: 12, marginBottom: 12 }}>
           <h6 style={{ margin: 0 }}>{APPROACH.heading}</h6>
-          <span className="text-muted" style={{ fontSize: 12.5 }}>{APPROACH.lede}</span>
+          <span className="text-muted" style={{ fontSize: 14 }}>{APPROACH.lede}</span>
         </div>
         <div className="va-tiles" style={{ gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 16 }}>
           {APPROACH.moves.map((m) => (
             <Blueprint key={m.n} style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
                 <span style={{ fontFamily: "var(--font-heading)", fontSize: 30, color: "var(--color-accent)", lineHeight: 1 }}>{m.n}</span>
-                <span style={{ fontFamily: "var(--font-heading)", fontSize: 22 }}>{m.verb}</span>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: 24 }}>{m.verb}</span>
               </div>
-              <div style={{ fontFamily: "var(--font-heading)", fontSize: 16, lineHeight: 1.2 }}>{m.title}</div>
-              <p className="text-muted" style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55, flex: 1 }}>{m.body}</p>
-              <div style={{ borderTop: "1px solid var(--color-divider)", paddingTop: 8, fontSize: 13, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>{m.why}</div>
+              <div style={{ fontFamily: "var(--font-heading)", fontSize: 18, lineHeight: 1.2 }}>{m.title}</div>
+              <p className="text-muted" style={{ margin: 0, fontSize: 15.5, lineHeight: 1.55, flex: 1 }}>{m.body}</p>
+              <div style={{ borderTop: "1px solid var(--color-divider)", paddingTop: 8, fontSize: 15, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>{m.why}</div>
             </Blueprint>
           ))}
         </div>
@@ -191,9 +192,9 @@ export default function Summary() {
         <div className="va-tiles" style={{ gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 18 }}>
           {COLLEGE_GETS.items.map((it) => (
             <div key={it.title} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontSize: 16, lineHeight: 1.2 }}>{it.title}</div>
-              <p className="text-muted" style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55, flex: 1 }}>{it.body}</p>
-              <Link to={it.to} style={{ fontSize: 12.5, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>{it.link} →</Link>
+              <div style={{ fontFamily: "var(--font-heading)", fontSize: 18, lineHeight: 1.2 }}>{it.title}</div>
+              <p className="text-muted" style={{ margin: 0, fontSize: 15.5, lineHeight: 1.55, flex: 1 }}>{it.body}</p>
+              <Link to={it.to} style={{ fontSize: 14, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>{it.link} →</Link>
             </div>
           ))}
         </div>
@@ -204,7 +205,7 @@ export default function Summary() {
         <div style={{ marginBottom: 14 }}>
           <div className="va-kicker">{AUDIENCE_OVERVIEW.kicker}</div>
           <h3 style={{ margin: "6px 0 8px", maxWidth: "26ch" }}>{AUDIENCE_OVERVIEW.title}</h3>
-          <p style={{ margin: 0, maxWidth: "70ch", fontSize: 15, lineHeight: 1.6, textWrap: "pretty" }}>{AUDIENCE_OVERVIEW.lede}</p>
+          <p style={{ margin: 0, maxWidth: "70ch", fontSize: 17, lineHeight: 1.6, textWrap: "pretty" }}>{AUDIENCE_OVERVIEW.lede}</p>
         </div>
         <PipelineStrip steps={AUDIENCE_OVERVIEW.pipeline} />
         <div className="va-tiles" style={{ gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 16, marginTop: 18 }}>
@@ -218,7 +219,7 @@ export default function Summary() {
       <div id="path">
         <div className="va-row-flex" style={{ alignItems: "baseline", gap: 12, marginBottom: 14 }}>
           <h6 style={{ margin: 0 }}>One student's path, with the real records</h6>
-          <span className="text-muted" style={{ fontSize: 12.5 }}>Every panel is live data from this workspace. Click through; nothing here is a mock-up.</span>
+          <span className="text-muted" style={{ fontSize: 14 }}>Every panel is live data from this workspace. Click through; nothing here is a mock-up.</span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 18 }} className="va-path-grid">
           {PATH_STEPS.map((s, i) => {
@@ -229,12 +230,12 @@ export default function Summary() {
                   <span style={{ fontFamily: "var(--font-heading)", fontSize: 30, color: "var(--color-accent)", lineHeight: 1 }}>{String(i + 1).padStart(2, "0")}</span>
                   <div>
                     <div className="va-kicker">{s.who}</div>
-                    <div style={{ fontFamily: "var(--font-heading)", fontSize: 18, lineHeight: 1.1 }}>{s.title}</div>
+                    <div style={{ fontFamily: "var(--font-heading)", fontSize: 20, lineHeight: 1.1 }}>{s.title}</div>
                   </div>
                 </div>
-                <div className="va-surface-box" style={{ fontSize: 13.5, lineHeight: 1.55, flex: 1 }}>{live?.text ?? s.fallback}</div>
-                <div style={{ fontSize: 12.5, minHeight: 22 }}>{live?.extra}</div>
-                <Link to={s.link} style={{ fontSize: 13, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)", letterSpacing: ".02em" }}>{s.linkLabel} →</Link>
+                <div className="va-surface-box" style={{ fontSize: 15.5, lineHeight: 1.55, flex: 1 }}>{live?.text ?? s.fallback}</div>
+                <div style={{ fontSize: 14, minHeight: 22 }}>{live?.extra}</div>
+                <Link to={s.link} style={{ fontSize: 15, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)", letterSpacing: ".02em" }}>{s.linkLabel} →</Link>
               </Blueprint>
             );
           })}
@@ -247,13 +248,13 @@ export default function Summary() {
           <Blueprint key={b.kicker} className={i === 1 ? "va-dark" : undefined} style={{ padding: "24px 26px", display: "flex", flexDirection: "column", gap: 10 }}>
             <div className="va-kicker">{b.kicker}</div>
             <h3 style={{ margin: 0, maxWidth: "18ch", color: i === 1 ? "#fff" : undefined }}>{b.headline}</h3>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, maxWidth: "58ch", textWrap: "pretty", color: i === 1 ? "#d5e0ea" : undefined, flex: 1 }}>{b.body}</p>
+            <p style={{ margin: 0, fontSize: 17, lineHeight: 1.6, maxWidth: "58ch", textWrap: "pretty", color: i === 1 ? "#d5e0ea" : undefined, flex: 1 }}>{b.body}</p>
             {funnel && i === 1 ? (
-              <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 12.5, color: "#b7c6d6", borderTop: "1px solid rgba(255,255,255,.14)", paddingTop: 10 }}>
-                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 18 }}>{funnel.challenges}</b> challenges from local employers</span>
-                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 18 }}>{funnel.completed}</b> students did the work</span>
-                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 18 }}>{funnel.endorsed}</b> endorsed</span>
-                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 18 }}>{funnel.interviewed}</b> interviewed</span>
+              <div style={{ display: "flex", gap: 18, flexWrap: "wrap", fontSize: 14, color: "#b7c6d6", borderTop: "1px solid rgba(255,255,255,.14)", paddingTop: 10 }}>
+                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 20 }}>{funnel.challenges}</b> challenges from local employers</span>
+                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 20 }}>{funnel.completed}</b> students did the work</span>
+                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 20 }}>{funnel.endorsed}</b> endorsed</span>
+                <span><b style={{ color: "#fff", fontFamily: "var(--font-heading)", fontSize: 20 }}>{funnel.interviewed}</b> interviewed</span>
               </div>
             ) : null}
             <div>
@@ -267,21 +268,21 @@ export default function Summary() {
       <div>
         <div className="va-row-flex" style={{ alignItems: "baseline", gap: 12, marginBottom: 14 }}>
           <h6 style={{ margin: 0 }}>What changes, for each of the four people in the room</h6>
-          <span className="text-muted" style={{ fontSize: 12.5 }}>In the cohort's own framing: from what assessment is now, to what it becomes.</span>
+          <span className="text-muted" style={{ fontSize: 14 }}>In the cohort's own framing: from what assessment is now, to what it becomes.</span>
         </div>
         <div className="va-tiles" style={{ gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 16 }}>
           {SHIFTS.map((col) => (
             <Blueprint key={col.audience} style={{ padding: "18px 18px 16px", display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontSize: 20 }}>{col.label}</div>
+              <div style={{ fontFamily: "var(--font-heading)", fontSize: 22 }}>{col.label}</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
                 {col.shifts.map((sh) => (
-                  <div key={sh.from} style={{ fontSize: 13, lineHeight: 1.4 }}>
+                  <div key={sh.from} style={{ fontSize: 15, lineHeight: 1.4 }}>
                     <div className="text-muted" style={{ textDecoration: "line-through", textDecorationColor: "color-mix(in srgb, var(--color-text) 35%, transparent)" }}>{sh.from}</div>
-                    <div style={{ fontFamily: "var(--font-heading)", fontSize: 15 }}>{sh.to}</div>
+                    <div style={{ fontFamily: "var(--font-heading)", fontSize: 17 }}>{sh.to}</div>
                   </div>
                 ))}
               </div>
-              <Link to={col.to} style={{ fontSize: 13, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>For {col.label.toLowerCase()} →</Link>
+              <Link to={col.to} style={{ fontSize: 15, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>For {col.label.toLowerCase()} →</Link>
             </Blueprint>
           ))}
         </div>
@@ -296,7 +297,7 @@ export default function Summary() {
               <StatTile key={s.label} kicker={s.label} value={s.value} />
             ))}
           </div>
-          <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, maxWidth: "76ch", textWrap: "pretty", flex: 1 }}>{EVIDENCE.body}</p>
+          <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, maxWidth: "76ch", textWrap: "pretty", flex: 1 }}>{EVIDENCE.body}</p>
           <div className="va-btn-row">
             <button type="button" className="btn btn-secondary" onClick={() => nav(EVIDENCE.link.to)}>{EVIDENCE.link.label}</button>
             <button type="button" className="btn btn-secondary" onClick={() => nav("/start")}>How to run it</button>
@@ -304,7 +305,7 @@ export default function Summary() {
         </Blueprint>
         <Blueprint style={{ padding: "22px 24px" }}>
           <H6>{LIMITS.heading}</H6>
-          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.6, display: "flex", flexDirection: "column", gap: 8 }}>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 15.5, lineHeight: 1.6, display: "flex", flexDirection: "column", gap: 8 }}>
             {LIMITS.items.map((l) => (
               <li key={l}>{l}</li>
             ))}
@@ -320,15 +321,15 @@ export default function Summary() {
         <div className="va-tiles" style={{ gridTemplateColumns: "repeat(3, minmax(0,1fr))", gap: 18 }}>
           {NEXT_STEPS.steps.map((s, i) => (
             <div key={s.title} style={{ display: "flex", flexDirection: "column", gap: 6, borderLeft: "2px solid var(--color-accent-400)", paddingLeft: 14 }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontSize: 18, color: "#fff" }}>
+              <div style={{ fontFamily: "var(--font-heading)", fontSize: 20, color: "#fff" }}>
                 {i + 1}. {s.title}
               </div>
-              <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55, color: "#d5e0ea", flex: 1 }}>{s.body}</p>
-              <Link to={s.to} style={{ fontSize: 13, color: "var(--color-accent-400)", fontFamily: "var(--font-heading)" }}>{s.link} →</Link>
+              <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.55, color: "#d5e0ea", flex: 1 }}>{s.body}</p>
+              <Link to={s.to} style={{ fontSize: 15, color: "var(--color-accent-400)", fontFamily: "var(--font-heading)" }}>{s.link} →</Link>
             </div>
           ))}
         </div>
-        <p style={{ margin: "18px 0 0", fontSize: 12.5, lineHeight: 1.5, color: "#8fa8bf", borderTop: "1px solid rgba(255,255,255,.14)", paddingTop: 12 }}>{NEXT_STEPS.grant}</p>
+        <p style={{ margin: "18px 0 0", fontSize: 14, lineHeight: 1.5, color: "#8fa8bf", borderTop: "1px solid rgba(255,255,255,.14)", paddingTop: 12 }}>{NEXT_STEPS.grant}</p>
       </Blueprint>
     </div>
   );

@@ -27,10 +27,18 @@ export function buildExtractPrompt(input: ExtractInput): { system: string; user:
       ? input.files.map((f) => `- ${f.name} (${f.kind}, ${f.recognisedAs}, ${f.status})`).join("\n")
       : "- (pasted text)";
 
+  const docs = input.documents ?? [];
+  const docNote = docs.length
+    ? [
+        ``,
+        `${docs.length} PDF${docs.length === 1 ? " is" : "s are"} attached as document${docs.length === 1 ? "" : "s"}: ${docs.map((d) => `${d.name}${d.scanned ? " (a scan: read the pages; any OCR text below is only a hint and may contain errors)" : ""}`).join("; ")}. Read the pages themselves for layout, tables and rubric grids; the text below is the extracted text of the same files plus any non-PDF files.`,
+      ]
+    : [];
   const user = [
     `Course: ${input.course.code} · ${input.course.term} · ${input.course.title}`,
     `Files supplied:`,
     fileList,
+    ...docNote,
     ``,
     `Extract the assessment blueprint from the material below.`,
     ``,

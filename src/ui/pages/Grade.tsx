@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+/* type-scale: applied */
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Blueprint, BlueprintButton, Dialog, EmptyState, Pill, SegScale, StepProgressBlock, type StepProgress } from "@ui/components";
 import { Info } from "@ui/components/Info";
@@ -214,7 +215,7 @@ function GradeView({ variantId }: { variantId: string }) {
             The task this student received <Info term="version" />
           </div>
           {paragraphs(variant.text).map((p, i) => (
-            <p key={i} style={{ margin: "0 0 10px", fontSize: 14, lineHeight: 1.6 }}>
+            <p key={i} style={{ margin: "0 0 10px", fontSize: 16, lineHeight: 1.6 }}>
               {p}
             </p>
           ))}
@@ -224,13 +225,13 @@ function GradeView({ variantId }: { variantId: string }) {
           What the student handed in <Info term="submission" />
         </div>
         {submission?.origin === "ai-sample" && (
-          <div className="va-surface-box" style={{ marginBottom: 10, fontSize: 13, borderLeft: "2px solid #8a6d2f" }}>
+          <div className="va-surface-box" style={{ marginBottom: 10, fontSize: 15, borderLeft: "2px solid #8a6d2f" }}>
             <strong>This is an AI-written sample, not a student's work.</strong> <Info term="ai-sample" /> A model wrote it at the {submission.sampleTier} tier so the demo has something to grade. The grade shown is a suggestion until you save one.
           </div>
         )}
         {submission?.text ? (
           <>
-            <div className={showFull ? undefined : "va-clip"} style={{ fontSize: 14, lineHeight: 1.65, maxHeight: showFull ? undefined : 300 }}>
+            <div className={showFull ? undefined : "va-clip"} style={{ fontSize: 16, lineHeight: 1.65, maxHeight: showFull ? undefined : 300 }}>
               {paragraphs(submission.text).map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
@@ -241,7 +242,7 @@ function GradeView({ variantId }: { variantId: string }) {
             </button>
           </>
         ) : (
-          <p className="text-muted" style={{ margin: 0, fontSize: 14 }}>
+          <p className="text-muted" style={{ margin: 0, fontSize: 16 }}>
             Nothing handed in yet. Import files on the previous step, or paste the student's text below.
           </p>
         )}
@@ -263,7 +264,7 @@ function GradeView({ variantId }: { variantId: string }) {
       </Blueprint>
 
       <div className="va-sticky">
-        <Blueprint style={{ padding: "18px 20px" }}>
+        <Blueprint style={{ padding: "18px 20px" }} data-walk="rubric">
           <div className="va-row-flex" style={{ gap: 8, marginBottom: 4 }}>
             <h6 style={{ margin: 0 }}>Score with the rubric</h6>
             <Info term="rubric" />
@@ -272,10 +273,10 @@ function GradeView({ variantId }: { variantId: string }) {
             </span>
           </div>
           <div className="va-stack" style={{ gap: 16, marginTop: 12 }}>
-            {rubric.length === 0 && <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>This run's blueprint has no rubric.</p>}
+            {rubric.length === 0 && <p className="text-muted" style={{ margin: 0, fontSize: 15 }}>This run's blueprint has no rubric.</p>}
             {rubric.map((c) => (
               <div key={c.id}>
-                <div className="va-row-flex" style={{ fontSize: 13.5, marginBottom: 6, gap: 8 }}>
+                <div className="va-row-flex" style={{ fontSize: 15.5, marginBottom: 6, gap: 8 }}>
                   <span>{c.name}</span>
                   {preScore && preScore.scores[c.id] !== undefined && (
                     <span className="va-pill va-watch" title={preScore.rationale[c.id] ?? ""} style={{ marginLeft: "auto", cursor: "help" }}>
@@ -319,7 +320,7 @@ function GradeView({ variantId }: { variantId: string }) {
                   <div style={{ marginTop: 4 }}>{preScore.summary}</div>
                 </div>
               )}
-              {suggestError && !suggestStep && <div style={{ marginTop: 6, fontSize: 12.5, color: RED }}>{suggestError}</div>}
+              {suggestError && !suggestStep && <div style={{ marginTop: 6, fontSize: 14, color: RED }}>{suggestError}</div>}
             </div>
           )}
           <BlueprintButton block style={{ marginTop: 16 }} disabled={!canGrade || !allScored} onClick={save}>
@@ -340,7 +341,7 @@ function GradeView({ variantId }: { variantId: string }) {
             </div>
           )}
           {error && (
-            <div style={{ marginTop: 8, fontSize: 12.5, color: RED }}>
+            <div style={{ marginTop: 8, fontSize: 14, color: RED }}>
               {error}
             </div>
           )}
@@ -358,7 +359,7 @@ function GradeView({ variantId }: { variantId: string }) {
             {showSolution ? "Hide the model answer" : "Open the model answer"}
           </button>
           {showSolution && (
-            <div className="va-surface-box" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6 }}>
+            <div className="va-surface-box" style={{ marginTop: 12, fontSize: 15, lineHeight: 1.6 }}>
               {paragraphs(variant.adaptedSolution).map((p, i) => (
                 <p key={i} style={{ margin: "0 0 8px" }}>
                   {p}
@@ -411,7 +412,7 @@ function GradeView({ variantId }: { variantId: string }) {
                 </button>
               )}
               {evidenceError && (
-                <div style={{ color: "#8d4a3c", fontSize: 12, marginTop: 6 }}>{evidenceError}</div>
+                <div style={{ color: "#8d4a3c", fontSize: 14, marginTop: 6 }}>{evidenceError}</div>
               )}
             </div>
           )}
@@ -422,7 +423,7 @@ function GradeView({ variantId }: { variantId: string }) {
                 <Pill gate="fail">Appeal</Pill>
                 <span className="va-muted-115">opened {formatShort(appeal.openedAt)}</span>
               </div>
-              <div style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 8 }}>“{appeal.note}”</div>
+              <div style={{ fontSize: 15, lineHeight: 1.5, marginBottom: 8 }}>“{appeal.note}”</div>
               <button
                 type="button"
                 className="btn btn-secondary"
@@ -479,7 +480,7 @@ function GradeView({ variantId }: { variantId: string }) {
           </>
         }
       >
-        <p className="text-muted" style={{ margin: "0 0 10px", fontSize: 13 }}>
+        <p className="text-muted" style={{ margin: "0 0 10px", fontSize: 15 }}>
           {appealDialog === "open"
             ? `Records that ${student?.name ?? "this student"} received ${variant.id}, an over-threshold version, and opens an appeal on the audit trail.`
             : `Your resolution is recorded on the audit trail with this version's reading ease (${variant.metrics.fleschEase.toFixed(1)}) against the set mean${ease ? ` (${ease.mean.toFixed(1)})` : ""}.`}

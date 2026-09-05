@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+/* type-scale: applied */
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Blueprint, CopyField, EmptyState, OutcomeStamps, SkillTags, Stamp } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
@@ -107,7 +108,7 @@ function WorkSampleCard({ item, learnerId }: { item: PortfolioItem; learnerId: s
 
       <div className="va-worksample-body">
         <div className="va-row-flex" style={{ gap: 14, flexWrap: "wrap", alignItems: "baseline" }}>
-          <span style={{ fontFamily: "var(--font-heading)", fontSize: 22, lineHeight: 1 }}>
+          <span style={{ fontFamily: "var(--font-heading)", fontSize: 24, lineHeight: 1 }}>
             {view.grade ? `${view.grade.total} / ${view.grade.maxTotal}` : "—"}
           </span>
           <span className="va-muted-12">rubric result · {view.blueprint.rubric.length} criteria</span>
@@ -138,7 +139,7 @@ function WorkSampleCard({ item, learnerId }: { item: PortfolioItem; learnerId: s
       </div>
 
       <div className="va-worksample-actions">
-        <label style={{ display: "inline-flex", gap: 8, alignItems: "center", fontSize: 13, cursor: "pointer" }}>
+        <label style={{ display: "inline-flex", gap: 8, alignItems: "center", fontSize: 15, cursor: "pointer" }}>
           <input type="checkbox" checked={!!sample?.submissionIncluded} disabled={saving} onChange={(e) => toggleSubmission(e.target.checked)} />
           <span>{saving ? "Saving…" : "Include my submission"}</span>
         </label>
@@ -253,7 +254,7 @@ function WorkSampleCard({ item, learnerId }: { item: PortfolioItem; learnerId: s
       )}
 
       {activeShares.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 15 }}>
           {activeShares.map((s) => (
             <div key={s.id} style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
               <Stamp gate="pass">Shared</Stamp>
@@ -267,7 +268,7 @@ function WorkSampleCard({ item, learnerId }: { item: PortfolioItem; learnerId: s
         </div>
       )}
 
-      {error && <div style={{ color: "#8d4a3c", fontSize: 12.5 }}>{error}</div>}
+      {error && <div style={{ color: "#8d4a3c", fontSize: 14 }}>{error}</div>}
     </Blueprint>
   );
 }
@@ -310,7 +311,7 @@ export default function Portfolio() {
             learner id <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>{learnerId}</span>
           </span>
         </div>
-        <div style={{ fontSize: 15, marginTop: 6 }}>
+        <div style={{ fontSize: 17, marginTop: 6 }}>
           {course.code} · {course.term} · {course.title}
         </div>
         <div style={{ marginTop: 12 }}>
@@ -333,7 +334,7 @@ export default function Portfolio() {
         <div className="va-muted-12" style={{ marginTop: 12 }}>
           {items.length} verified {items.length === 1 ? "record" : "records"} · {endorsedCount} endorsed · {outcomeCount} {outcomeCount === 1 ? "outcome" : "outcomes"} logged
         </div>
-        <p className="text-muted" style={{ margin: "12px 0 0", fontSize: 13, maxWidth: "72ch", lineHeight: 1.55 }}>
+        <p className="text-muted" style={{ margin: "12px 0 0", fontSize: 15, maxWidth: "72ch", lineHeight: 1.55 }}>
           Every graded task becomes a work sample here, signed by your institution. You decide which employers see which samples and whether your
           submission travels with them. In a real deployment the student signs in; this page stands in for that.
         </p>

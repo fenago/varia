@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+/* type-scale: applied */
 import { Blueprint, Corners } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { RESEARCH_INTRO, RESEARCH_SECTIONS } from "@shared/research";
@@ -27,7 +28,7 @@ export default function Research() {
       <Blueprint className="va-dark" style={{ padding: "26px 28px" }}>
         <div className="va-kicker">{RESEARCH_INTRO.kicker}</div>
         <h3 style={{ margin: "6px 0 10px", color: "#fff", maxWidth: "30ch" }}>{RESEARCH_INTRO.title}</h3>
-        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: "#d5e0ea", maxWidth: "70ch" }}>{RESEARCH_INTRO.lede}</p>
+        <p style={{ margin: 0, fontSize: 17, lineHeight: 1.6, color: "#d5e0ea", maxWidth: "70ch" }}>{RESEARCH_INTRO.lede}</p>
         <div className="va-btn-row" style={{ marginTop: 18 }}>
           <a className="btn btn-primary blueprint" href={PAPER.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
             <Corners />
@@ -40,7 +41,7 @@ export default function Research() {
 
       <Blueprint style={{ padding: "16px 20px" }}>
         <div className="va-kicker" style={{ marginBottom: 8 }}>Contents</div>
-        <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: "4px 24px", fontSize: 13.5 }}>
+        <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: "4px 24px", fontSize: 15.5 }}>
           {top.map((s) => (
             <li key={s.id}>
               <a href={`#${s.id}`} style={{ color: "var(--color-accent-700)", textDecoration: "none" }}>{s.title}</a>
@@ -57,13 +58,13 @@ export default function Research() {
           </Blueprint>
         ) : (
           <Blueprint key={s.id} id={s.id} style={{ padding: "18px 22px", marginLeft: 22, background: "var(--color-surface)", scrollMarginTop: 20 }}>
-            <div style={{ fontFamily: "var(--font-heading)", fontSize: 17, marginBottom: 10 }}>{s.title}</div>
+            <div style={{ fontFamily: "var(--font-heading)", fontSize: 19, marginBottom: 10 }}>{s.title}</div>
             <Paras paras={s.paras} />
           </Blueprint>
         ),
       )}
 
-      <p className="text-muted" style={{ fontSize: 12.5, margin: 0 }}>
+      <p className="text-muted" style={{ fontSize: 14, margin: 0 }}>
         Written by Dr. Ernesto Lee, Miami Dade College. The paper itself: {PAPER.title}, {PAPER.venue}, {PAPER.year}.
       </p>
     </div>
@@ -72,7 +73,7 @@ export default function Research() {
 
 function Paras({ paras }: { paras: string[][] }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: 14.5, lineHeight: 1.65, maxWidth: "76ch" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: 16, lineHeight: 1.65, maxWidth: "76ch" }}>
       {paras.map((p, i) =>
         p.length === 1 ? (
           <p key={i} style={{ margin: 0, textWrap: "pretty" }}>

@@ -203,7 +203,7 @@ export function fixtureWorkspace(ids?: string[], seededAt = new Date().toISOStri
       };
       challenges.push(challenge);
     }
-    const bp: Blueprint = { ...f.blueprint, courseId: course.id, challengeIds: challenge ? [challenge.id] : [] };
+    const bp: Blueprint = { ...f.blueprint, courseId: course.id, challengeIds: challenge ? [challenge.id] : [], sampleId: f.sampleId, recordedRunAvailable: true };
     blueprints.push(bp);
 
     const real = f.recordedWith === "live";
@@ -306,4 +306,36 @@ export function fixtureWorkspace(ids?: string[], seededAt = new Date().toISOStri
 /** The no-key default: every recorded run, released, with labelled sample submissions. */
 export function defaultWorkspace(seededAt?: string): Workspace {
   return fixtureWorkspace(undefined, seededAt);
+}
+
+
+/**
+ * The recorded sample submissions of a fixture, re-keyed onto a run that replayed it.
+ * Variants are matched by text (a replay keeps the recorded text verbatim), so this works
+ * whatever ids the replayed run assigned. Returns [] when nothing matches.
+ */
+export function recordedSubmissionsForRun(run: Run, bp: Blueprint): Submission[] {
+  const sampleId = run.recordedFrom?.sampleId ?? bp.sampleId ?? null;
+  const f = sampleId ? getFixture(sampleId) : fixtureForBlueprint(bp.id, bp.name);
+  if (!f || !f.sampleSubmissions?.length) return [];
+  const out: Submission[] = [];
+  for (const ss of f.sampleSubmissions) {
+    const recorded = f.run.variants.find((x) => x.id === ss.variantId);
+    if (!recorded) continue;
+    const v = run.variants.find((x) => x.text === recorded.text && x.studentId);
+    if (!v || !v.studentId) continue;
+    out.push({
+      id: `sub-${run.id}-${v.id}`,
+      runId: run.id,
+      variantId: v.id,
+      studentId: v.studentId,
+      text: ss.text,
+      submittedAt: ss.recordedAt,
+      grade: suggestedGrade(bp, ss.preScore, ss.recordedAt, ss.model),
+      origin: "ai-sample",
+      sampleTier: ss.tier,
+      preScore: { ...ss.preScore, at: ss.recordedAt, model: ss.model },
+    });
+  }
+  return out;
 }

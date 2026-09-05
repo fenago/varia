@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+/* type-scale: applied */
 import { useNavigate } from "react-router-dom";
 import { Blueprint, BlueprintButton, CopyField, DataTable, EmptyState, Pill, SegChoice, StatTile, type Column } from "@ui/components";
 import { Info } from "@ui/components/Info";
@@ -292,7 +293,7 @@ export default function Roster() {
             Two ways, pick either. <strong>Copy all student links</strong> gives you one private link per student to paste into your LMS or an email; each link opens only that student's task. <strong>Download all as Word documents</strong> gives you one file per student to hand out however you like. Nothing is stored on a server.
           </p>
           <div className="va-btn-row" style={{ flexWrap: "wrap" }}>
-            <BlueprintButton onClick={copyAllLinks} disabled={busy !== null}>{busy === "links" ? "Preparing…" : "Copy all student links"}</BlueprintButton>
+            <BlueprintButton onClick={copyAllLinks} disabled={busy !== null} data-walk="student-links">{busy === "links" ? "Preparing…" : "Copy all student links"}</BlueprintButton>
             <button type="button" className="btn btn-secondary" disabled={busy !== null} onClick={() => downloadVersions("docx")}>
               {busy === "docx" ? "Packaging…" : "Download all as Word documents"}
             </button>
@@ -303,7 +304,7 @@ export default function Roster() {
           <div className="va-muted-12" style={{ marginTop: 10 }}>One student at a time: click a name below to copy just their link.</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
             {rows.slice(0, showAll ? rows.length : 12).map((r) => (
-              <button key={r.variant.id} type="button" className="btn btn-ghost" style={{ padding: "2px 8px", fontSize: 12.5 }} onClick={() => copyLink(r.variant.id)}>
+              <button key={r.variant.id} type="button" className="btn btn-ghost" style={{ padding: "2px 8px", fontSize: 14 }} onClick={() => copyLink(r.variant.id)}>
                 {r.student?.name ?? r.variant.id} · {r.variant.id}
               </button>
             ))}
@@ -352,7 +353,7 @@ export default function Roster() {
                     const chosen = preview.overrides[r.fileName] ?? r.variantId ?? "";
                     return (
                       <tr key={r.fileName}>
-                        <td style={{ fontSize: 12.5 }}>{r.fileName}</td>
+                        <td style={{ fontSize: 14 }}>{r.fileName}</td>
                         <td>
                           <select
                             className="input"
@@ -429,7 +430,7 @@ export default function Roster() {
       </Blueprint>
 
       {(notice || error) && (
-        <div style={{ fontSize: 12.5, color: error ? "#8d4a3c" : undefined }} className={error ? undefined : "text-muted"}>
+        <div style={{ fontSize: 14, color: error ? "#8d4a3c" : undefined }} className={error ? undefined : "text-muted"}>
           {error ?? notice}
         </div>
       )}

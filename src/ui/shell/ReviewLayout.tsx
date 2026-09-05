@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { PAGES, pageKeyForPath } from "../router";
 import { usePageTitleOverride } from "./PageTitleContext";
+import { Walkthrough } from "@ui/components/Walkthrough";
 
 /**
  * Employer-facing chrome for /review and /evidence. No instructor rail, no
@@ -57,6 +58,7 @@ export function ReviewLayout() {
           <h4>{title}</h4>
         </div>
         <Outlet />
+        <Walkthrough />
       </main>
 
       <footer className="va-review-foot va-no-print">

@@ -1,3 +1,4 @@
+/* type-scale: applied */
 /* VARIA app layer — sits on top of tokens.css (the verbatim Industry design
    system). The va-* helper classes are ported from the mockup's <helmet>
    block with the same names so pages can copy mockup markup directly. */
@@ -51,7 +52,7 @@ body { background: var(--color-bg); color: var(--color-text); font-family: var(-
   line-height: 1;
 }
 .va-rail-sub {
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #7f95ac;
@@ -62,8 +63,8 @@ body { background: var(--color-bg); color: var(--color-text); font-family: var(-
   padding: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
-.va-rail-foot-k { font-size: 11px; color: #7f95ac; }
-.va-rail-foot-name { font-size: 13px; color: #fff; margin-top: 2px; }
+.va-rail-foot-k { font-size: 12.5px; color: #7f95ac; }
+.va-rail-foot-name { font-size: 15px; color: #fff; margin-top: 2px; }
 
 .va-nav {
   display: block;
@@ -74,7 +75,7 @@ body { background: var(--color-bg); color: var(--color-text); font-family: var(-
   border-left: 2px solid transparent;
   color: #b7c6d6;
   font-family: var(--font-body);
-  font-size: 13.5px;
+  font-size: 15px;
   line-height: 1.3;
   padding: 8px 14px 8px 16px;
   cursor: pointer;
@@ -89,7 +90,7 @@ body { background: var(--color-bg); color: var(--color-text); font-family: var(-
 .va-nav:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: -2px; }
 .va-railhd {
   font-family: var(--font-heading);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #6d8299;
@@ -109,7 +110,7 @@ body { background: var(--color-bg); color: var(--color-text); font-family: var(-
 .va-header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .va-header h4 { margin: 1px 0 0; }
 .va-crumb {
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--color-text) 50%, transparent);
@@ -122,7 +123,7 @@ a.tag { text-decoration: none; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   font-family: var(--font-heading);
@@ -145,13 +146,13 @@ a.tag { text-decoration: none; }
 
 /* ── Recurring inline styles from the mockup ───────────────────────────── */
 .va-kicker {
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--color-text) 55%, transparent);
 }
 .va-kicker-11 {
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--color-text) 55%, transparent);
@@ -159,19 +160,19 @@ a.tag { text-decoration: none; }
 .va-stat-number { font-family: var(--font-heading); font-size: 34px; line-height: 1.1; }
 .va-big-number { font-family: var(--font-heading); font-size: 76px; line-height: 1; color: var(--color-accent-700); }
 .va-step-number { font-family: var(--font-heading); font-size: 30px; color: var(--color-accent); line-height: 1; }
-.va-muted-12 { font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
-.va-muted-125 { font-size: 12.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
-.va-muted-115 { font-size: 11.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
-.va-muted-11 { font-size: 11px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
-.va-heading-15 { font-family: var(--font-heading); font-size: 15px; }
-.va-heading-16 { font-family: var(--font-heading); font-size: 16px; }
-.va-heading-19 { font-family: var(--font-heading); font-size: 19px; }
-.va-heading-22 { font-family: var(--font-heading); font-size: 22px; }
+.va-muted-12 { font-size: 14px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.va-muted-125 { font-size: 14px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.va-muted-115 { font-size: 13px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.va-muted-11 { font-size: 12.5px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.va-heading-15 { font-family: var(--font-heading); font-size: 17px; }
+.va-heading-16 { font-family: var(--font-heading); font-size: 18px; }
+.va-heading-19 { font-family: var(--font-heading); font-size: 21px; }
+.va-heading-22 { font-family: var(--font-heading); font-size: 24px; }
 .va-surface-box {
   background: var(--color-surface);
   border: 1px solid var(--color-divider);
   padding: 16px 18px;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.6;
 }
 .va-surface-box p:last-child { margin-bottom: 0; }
@@ -188,12 +189,12 @@ a.tag { text-decoration: none; }
   border-left: 2px solid var(--color-accent);
   padding: 9px 14px;
   background: var(--color-accent-100);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.55;
 }
 .va-stack { display: flex; flex-direction: column; }
 .va-row-flex { display: flex; align-items: baseline; gap: 10px; }
-.va-check { display: flex; gap: 8px; font-size: 13.5px; }
+.va-check { display: flex; gap: 8px; font-size: 15.5px; }
 .va-check-ok { color: #3d6b4d; }
 .va-check-warn { color: #8a6d2f; }
 .va-check-bad { color: #8d4a3c; }
@@ -221,7 +222,7 @@ a.tag { text-decoration: none; }
 .va-checkbar-fill.is-fail { background: #8d4a3c; }
 .va-checkbar-fill.is-advisory { background: repeating-linear-gradient(90deg, var(--color-accent-400) 0 6px, transparent 6px 10px); }
 .va-checkbar-tick { position: absolute; top: -4px; bottom: -4px; width: 1px; background: var(--color-text); }
-.va-check-note { font-size: 11.5px; margin-top: 4px; }
+.va-check-note { font-size: 13px; margin-top: 4px; }
 .va-check-note.is-fail { color: #8d4a3c; }
 
 /* ── Progress ──────────────────────────────────────────────────────────── */
@@ -298,7 +299,7 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 }
 .va-review-context {
   margin-left: auto;
-  font-size: 12.5px;
+  font-size: 14px;
   color: #d5e0ea;
   text-align: right;
   min-width: 0;
@@ -318,7 +319,7 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 .va-review-foot {
   border-top: 1px solid var(--color-divider);
   padding: 14px 32px 22px;
-  font-size: 11.5px;
+  font-size: 13px;
   color: color-mix(in srgb, var(--color-text) 55%, transparent);
   text-align: center;
 }
@@ -329,7 +330,7 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
   align-items: center;
   gap: 6px;
   font-family: var(--font-heading);
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: .12em;
   text-transform: uppercase;
   padding: 3px 8px;
@@ -348,12 +349,12 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
   border-bottom: 1px solid var(--color-divider);
 }
 .va-likert:last-child { border-bottom: 0; }
-.va-likert-label { font-size: 13.5px; line-height: 1.5; }
+.va-likert-label { font-size: 15.5px; line-height: 1.5; }
 .va-likert-scale { display: flex; flex-direction: column; gap: 4px; }
 .va-likert-ends {
   display: flex;
   justify-content: space-between;
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: .08em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--color-text) 50%, transparent);
@@ -380,7 +381,7 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 .va-chip-add .input { flex: 1; }
 
 .va-copyfield { display: flex; gap: 8px; align-items: center; }
-.va-copyfield .input { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.va-copyfield .input { flex: 1; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; }
 
 /* ── Print (evidence records) ──────────────────────────────────────────── */
 .va-print-header { display: none; }
@@ -414,7 +415,7 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 .va-bar-mode {
   flex: none;
   font-family: var(--font-heading);
-  font-size: 10.5px;
+  font-size: 12px;
   letter-spacing: .12em;
   text-transform: uppercase;
   color: #d5e0ea;
@@ -492,7 +493,7 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 }
 .va-pipeline-index {
   font-family: var(--font-heading);
-  font-size: 11px;
+  font-size: 12.5px;
   letter-spacing: .1em;
   color: var(--color-accent-700);
   margin-bottom: 6px;
@@ -514,10 +515,10 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
   line-height: 1.2;
   text-wrap: balance;
 }
-.va-audience-quote { font-style: italic; font-size: 13px; line-height: 1.5; margin: 2px 0 6px; }
+.va-audience-quote { font-style: italic; font-size: 15px; line-height: 1.5; margin: 2px 0 6px; }
 .va-audience-more {
   margin-top: auto;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--color-accent-700);
   text-decoration: none;
 }
@@ -532,12 +533,12 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 }
 .va-worksample-title { font-family: var(--font-heading); font-size: 17px; }
 .va-worksample-head .va-tags { margin-left: auto; }
-.va-worksample-body { font-size: 13.5px; line-height: 1.55; }
+.va-worksample-body { font-size: 15.5px; line-height: 1.55; }
 .va-worksample-meta {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-  font-size: 12.5px;
+  font-size: 14px;
   color: color-mix(in srgb, var(--color-text) 65%, transparent);
 }
 .va-worksample-actions {
@@ -554,19 +555,19 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 @media (max-width: 720px) { .va-path-grid { grid-template-columns: minmax(0, 1fr) !important; } }
 
 /* Wave 6b — progress you can see */
-.va-progress-headline { font-family: var(--font-heading); font-size: 17px; line-height: 1.15; }
+.va-progress-headline { font-family: var(--font-heading); font-size: 19px; line-height: 1.15; }
 .va-progress-fill.is-running { background-image: linear-gradient(90deg, var(--color-accent) 0 60%, var(--color-accent-400) 60% 100%); background-size: 40px 100%; animation: va-progress-slide 1.2s linear infinite; }
 .va-progress-fill.is-fail { background: #8d4a3c; }
 @keyframes va-progress-slide { from { background-position: 0 0; } to { background-position: 40px 0; } }
 @media (prefers-reduced-motion: reduce) { .va-progress-fill.is-running { animation: none; background-image: none; } .va-progress-fill { transition: none; } }
-.va-progress-now { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 10px; margin: 8px 0 0; font-size: 12.5px; }
-.va-progress-now dt { font-family: var(--font-heading); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); align-self: baseline; }
+.va-progress-now { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 10px; margin: 8px 0 0; font-size: 14px; }
+.va-progress-now dt { font-family: var(--font-heading); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 55%, transparent); align-self: baseline; }
 .va-progress-now dd { margin: 0; color: var(--color-text); overflow-wrap: anywhere; }
-.va-progress-warnings { margin: 8px 0 0; padding-left: 16px; font-size: 12.5px; color: #8a6d2f; display: flex; flex-direction: column; gap: 3px; }
-.va-progress-fatal { margin-top: 8px; font-size: 13px; color: #8d4a3c; border-left: 2px solid #8d4a3c; padding: 4px 10px; }
-.va-progress-compact { display: flex; align-items: center; gap: 10px; font-size: 12.5px; min-width: 0; }
-.va-progress-compact-head { font-family: var(--font-heading); font-size: 13.5px; white-space: nowrap; }
-.va-progress-strip { display: flex; align-items: center; gap: 12px; padding: 8px 32px; border-bottom: 1px solid var(--color-divider); background: var(--color-accent-100); font-size: 12.5px; text-decoration: none; color: var(--color-text); }
+.va-progress-warnings { margin: 8px 0 0; padding-left: 16px; font-size: 14px; color: #8a6d2f; display: flex; flex-direction: column; gap: 3px; }
+.va-progress-fatal { margin-top: 8px; font-size: 15px; color: #8d4a3c; border-left: 2px solid #8d4a3c; padding: 4px 10px; }
+.va-progress-compact { display: flex; align-items: center; gap: 10px; font-size: 14px; min-width: 0; }
+.va-progress-compact-head { font-family: var(--font-heading); font-size: 15.5px; white-space: nowrap; }
+.va-progress-strip { display: flex; align-items: center; gap: 12px; padding: 8px 32px; border-bottom: 1px solid var(--color-divider); background: var(--color-accent-100); font-size: 14px; text-decoration: none; color: var(--color-text); }
 .va-progress-strip:hover { background: var(--color-accent-200); }
 .va-progress-strip .va-progress { flex: 1; max-width: 320px; }
 .va-progress-strip .va-strip-link { margin-left: auto; font-family: var(--font-heading); color: var(--color-accent-700); white-space: nowrap; }
@@ -578,22 +579,22 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 .va-info-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .va-term { padding: 0; border: 0; background: transparent; font: inherit; color: inherit; cursor: help; border-bottom: 1px dotted color-mix(in srgb, var(--color-text) 55%, transparent); }
 .va-term:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-.va-info-pop { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 320px; max-width: min(320px, 90vw); background: var(--color-bg); border: 1px solid var(--color-divider); box-shadow: var(--shadow-md); padding: 12px 14px; font-family: var(--font-body); font-size: 13px; line-height: 1.5; color: var(--color-text); text-align: left; font-weight: 400; text-transform: none; letter-spacing: 0; text-decoration: none; }
+.va-info-pop { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 320px; max-width: min(320px, 90vw); background: var(--color-bg); border: 1px solid var(--color-divider); box-shadow: var(--shadow-md); padding: 12px 14px; font-family: var(--font-body); font-size: 15px; line-height: 1.5; color: var(--color-text); text-align: left; font-weight: 400; text-transform: none; letter-spacing: 0; text-decoration: none; }
 .va-info-pop.is-end { left: auto; right: 0; }
 .va-info-pop-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
-.va-info-pop-term { font-family: var(--font-heading); font-size: 16px; }
-.va-info-pop-close { margin-left: auto; border: 0; background: transparent; font-size: 18px; line-height: 1; cursor: pointer; color: var(--color-neutral-600); }
+.va-info-pop-term { font-family: var(--font-heading); font-size: 18px; }
+.va-info-pop-close { margin-left: auto; border: 0; background: transparent; font-size: 20px; line-height: 1; cursor: pointer; color: var(--color-neutral-600); }
 .va-info-pop-plain { margin: 0 0 8px; }
 .va-info-pop-more { margin: 0 0 8px; color: var(--color-neutral-700); }
-.va-info-pop-paper { font-size: 12px; color: var(--color-neutral-600); margin-bottom: 8px; }
-.va-info-pop-link { display: inline-block; margin-right: 12px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 12.5px; color: var(--color-accent-700); cursor: pointer; text-decoration: none; font-family: var(--font-heading); }
+.va-info-pop-paper { font-size: 14px; color: var(--color-neutral-600); margin-bottom: 8px; }
+.va-info-pop-link { display: inline-block; margin-right: 12px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 14px; color: var(--color-accent-700); cursor: pointer; text-decoration: none; font-family: var(--font-heading); }
 .va-stepintro { background: var(--color-accent-100); }
 .va-stepintro-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
 .va-stepintro-title { font-family: var(--font-heading); font-size: 20px; line-height: 1.15; margin-top: 4px; }
 .va-stepintro-hide { margin-left: auto; }
-.va-stepintro-lines { display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.55; max-width: 80ch; }
+.va-stepintro-lines { display: flex; flex-direction: column; gap: 6px; font-size: 16px; line-height: 1.55; max-width: 80ch; }
 .va-stepintro-lines p { margin: 0; }
-.va-stepintro-learn { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; font-size: 12.5px; }
+.va-stepintro-learn { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; font-size: 14px; }
 .va-stepintro-learn-item { display: inline-flex; align-items: center; }
 .va-stepintro-hidden { display: flex; align-items: center; gap: 12px; }
 .va-stepintro-show { cursor: pointer; background: transparent; }
@@ -603,16 +604,16 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 .va-verdict.is-fail { background: color-mix(in srgb, #8d4a3c 7%, transparent); }
 .va-verdict-top { margin-bottom: 8px; }
 .va-verdict-headline { font-family: var(--font-heading); font-size: 26px; line-height: 1.1; max-width: 30ch; }
-.va-verdict-body { font-size: 14.5px; line-height: 1.6; margin-top: 8px; max-width: 72ch; }
-.va-nav-glyph { display: inline-block; width: 14px; margin-right: 6px; font-size: 11px; color: #8fa8bf; }
+.va-verdict-body { font-size: 16px; line-height: 1.6; margin-top: 8px; max-width: 72ch; }
+.va-nav-glyph { display: inline-block; width: 14px; margin-right: 6px; font-size: 14px; color: #8fa8bf; }
 .va-nav-glyph.is-done { color: #7fb891; }
 .va-nav-glyph.is-current { color: #fff; }
-.va-nav-summary { display: block; padding: 0 14px 8px 36px; font-size: 11px; line-height: 1.4; color: #7f95ac; }
+.va-nav-summary { display: block; padding: 0 14px 8px 36px; font-size: 14px; line-height: 1.4; color: #7f95ac; }
 .va-glossary-group { margin-bottom: 26px; }
 .va-glossary-entry { padding: 12px 0; border-top: 1px solid var(--color-divider); scroll-margin-top: 20px; }
 .va-glossary-entry:target { background: var(--color-accent-100); }
-.va-glossary-term { font-family: var(--font-heading); font-size: 17px; }
-.va-glossary-paper { font-size: 12px; color: var(--color-neutral-600); margin-top: 4px; }
+.va-glossary-term { font-family: var(--font-heading); font-size: 19px; }
+.va-glossary-paper { font-size: 14px; color: var(--color-neutral-600); margin-top: 4px; }
 
 /* ---------------------------------------------------------------------------
    Responsive layout (phone 360px → desktop 1440px). Breakpoints:
@@ -659,7 +660,7 @@ h2, h3 { text-wrap: balance; }
     margin-left: auto; display: inline-flex; align-items: center; gap: 8px;
     min-height: 44px; min-width: 44px; padding: 0 12px;
     background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.35); border-radius: 0;
-    font-family: var(--font-heading); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+    font-family: var(--font-heading); font-size: 15px; letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
   }
   .va-mobilebar-menu:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: 2px; }
   .va-rail {
@@ -731,3 +732,20 @@ h2, h3 { text-wrap: balance; }
   .va-nav { padding-top: 12px; padding-bottom: 12px; }
   .seg-opt { padding-top: 10px; padding-bottom: 10px; }
 }
+
+/* Walkthrough (guided demo) */
+.va-walk { position: fixed; right: 20px; bottom: 20px; width: 360px; max-width: calc(100vw - 32px); background: var(--color-bg); border-color: var(--color-accent); box-shadow: var(--shadow-lg); padding: 16px 18px 16px; z-index: 60; }
+.va-walk-left { right: auto; left: 20px; }
+.va-walk-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.va-walk-exit { padding: 2px 8px; }
+.va-walk-bar { height: 4px; background: var(--color-neutral-200); border: 1px solid var(--color-divider); margin-bottom: 10px; }
+.va-walk-bar i { display: block; height: 100%; background: var(--color-accent); }
+.va-walk-title { font-family: var(--font-heading); font-size: 19px; line-height: 1.15; margin-bottom: 8px; }
+.va-walk-p { margin: 0 0 8px; font-size: 15.5px; line-height: 1.5; }
+.va-walk-p b { font-family: var(--font-heading); font-weight: 600; }
+.va-walk-note { color: color-mix(in srgb, var(--color-text) 55%, transparent); font-style: italic; }
+.va-walk-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.va-walk-target { outline: 3px solid var(--color-accent) !important; outline-offset: 4px; animation: va-walk-pulse 1.6s ease-in-out infinite; position: relative; z-index: 5; }
+@keyframes va-walk-pulse { 0%, 100% { outline-color: var(--color-accent); } 50% { outline-color: var(--color-accent-300); } }
+@media (prefers-reduced-motion: reduce) { .va-walk-target { animation: none; } }
+@media (max-width: 720px) { .va-walk, .va-walk-left { left: 0; right: 0; bottom: 0; width: auto; max-width: none; border-left: 0; border-right: 0; padding-bottom: max(16px, env(safe-area-inset-bottom)); } .va-walk-title { font-size: 17px; } }

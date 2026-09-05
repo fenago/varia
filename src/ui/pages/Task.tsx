@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+/* type-scale: applied */
 import { useParams } from "react-router-dom";
 import { Blueprint, EmptyState } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
@@ -71,9 +72,9 @@ export default function Task() {
           {pkg.course.code} · {pkg.course.term} · {pkg.course.title}
         </div>
         <h3 style={{ margin: "6px 0 6px", maxWidth: "34ch" }}>
-          {pkg.blueprintName} <span className="text-muted" style={{ fontSize: 16, fontFamily: "var(--font-body)" }}>({pkg.maxPoints} points)</span>
+          {pkg.blueprintName} <span className="text-muted" style={{ fontSize: 18, fontFamily: "var(--font-body)" }}>({pkg.maxPoints} points)</span>
         </h3>
-        <div className="va-row-flex" style={{ gap: 10, flexWrap: "wrap", fontSize: 13 }}>
+        <div className="va-row-flex" style={{ gap: 10, flexWrap: "wrap", fontSize: 15 }}>
           {pkg.studentLabel ? <span>Prepared for {pkg.studentLabel}</span> : null}
           <span className="tag tag-accent">{pkg.variantId}</span>
           <span className="text-muted">Due: {pkg.dueLabel}</span>
@@ -86,7 +87,7 @@ export default function Task() {
 
       <Blueprint className="va-print-block" style={{ padding: "22px 24px" }}>
         <h6 style={{ margin: "0 0 10px" }}>Your task</h6>
-        <div style={{ fontSize: 15, lineHeight: 1.65, maxWidth: "76ch" }}>
+        <div style={{ fontSize: 17, lineHeight: 1.65, maxWidth: "76ch" }}>
           {paragraphs(pkg.text).map((p, i) => (
             <p key={i} style={{ margin: "0 0 10px", textWrap: "pretty" }}>{p}</p>
           ))}
@@ -96,7 +97,7 @@ export default function Task() {
       <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)", gap: 20, alignItems: "start" }}>
         <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 10px" }}>What you must produce</h6>
-          <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, textWrap: "pretty" }}>{pkg.deliverable}</p>
+          <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, textWrap: "pretty" }}>{pkg.deliverable}</p>
         </Blueprint>
         <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 10px" }}>How it is graded</h6>
@@ -114,13 +115,13 @@ export default function Task() {
               </tr>
             </tbody>
           </table>
-          <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 12.5, lineHeight: 1.5 }}>
+          <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 14, lineHeight: 1.5 }}>
             Every student in your section is graded on these same criteria. Your version of the scenario is yours alone.
           </p>
         </Blueprint>
       </div>
 
-      <p className="text-muted" style={{ margin: 0, fontSize: 12.5 }}>
+      <p className="text-muted" style={{ margin: 0, fontSize: 14 }}>
         Instructor: {pkg.instructorName}, {pkg.course.institution}. This page stores nothing; it shows the version carried in your link.
       </p>
     </div>

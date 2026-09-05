@@ -1,4 +1,5 @@
 import type { Check, Gate } from "@shared/types";
+/* type-scale: applied */
 import { Pill } from "./Pill";
 
 const PILL_TEXT: Record<Gate, string> = {
@@ -24,7 +25,7 @@ export function CheckBar({ check, pillText }: CheckBarProps) {
     <div>
       <div className="va-row-flex" style={{ marginBottom: 5 }}>
         <span className="va-heading-16">{check.label}</span>
-        <span className="va-help text-muted" style={{ fontSize: 11.5 }} title={check.detail}>
+        <span className="va-help text-muted" style={{ fontSize: 13 }} title={check.detail}>
           {check.metricLabel}
         </span>
         <Pill gate={check.gate} style={{ marginLeft: "auto" }}>

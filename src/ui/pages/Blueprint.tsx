@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+/* type-scale: applied */
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Blueprint as Frame, BlueprintButton, EmptyState, Field, Info, StepIntro } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
@@ -182,7 +183,7 @@ export default function BlueprintPage() {
 
       {/* Readiness as sentences, always visible */}
       <Frame style={{ padding: "14px 18px", background: readiness.ready ? "var(--color-accent-100)" : "var(--color-surface)" }}>
-        <div className="va-stack" style={{ gap: 6, fontSize: 13.5 }}>
+        <div className="va-stack" style={{ gap: 6, fontSize: 15.5 }}>
           {sentences.map((s, i) => (
             <div key={i} className="va-check">
               <span className={s.ok ? "va-check-ok" : "va-check-warn"}>{s.ok ? "✓" : "!"}</span>
@@ -202,7 +203,7 @@ export default function BlueprintPage() {
               <div className="va-heading-15" style={{ marginBottom: 4 }}>
                 The skill every student must show <Info term="construct" />
               </div>
-              <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, maxWidth: "76ch" }}>{bp.construct || <span className="text-muted">Not written yet.</span>}</p>
+              <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, maxWidth: "76ch" }}>{bp.construct || <span className="text-muted">Not written yet.</span>}</p>
             </div>
 
             <div>
@@ -237,7 +238,7 @@ export default function BlueprintPage() {
               </div>
               {bp.canonicalSolution.trim() ? (
                 <>
-                  <div className="va-surface-box va-clip" style={{ maxHeight: answerOpen ? "none" : 120, fontSize: 13.5, whiteSpace: "pre-wrap" }}>
+                  <div className="va-surface-box va-clip" style={{ maxHeight: answerOpen ? "none" : 120, fontSize: 15.5, whiteSpace: "pre-wrap" }}>
                     {bp.canonicalSolution}
                     {!answerOpen && <div className="va-fade" />}
                   </div>
@@ -249,7 +250,7 @@ export default function BlueprintPage() {
                   </div>
                 </>
               ) : (
-                <div className="va-surface-box" style={{ fontSize: 13.5 }}>
+                <div className="va-surface-box" style={{ fontSize: 15.5 }}>
                   <span style={{ color: AMBER }}>No model answer yet.</span> Every version gets its own adapted copy of your answer; that is how we check the rubric still fits.
                   <div className="va-btn-row" style={{ marginTop: 10 }}>
                     <button type="button" className="btn btn-secondary" onClick={draftSolution} disabled={busy !== null}>
@@ -269,7 +270,7 @@ export default function BlueprintPage() {
                   What will vary between students <Info term="surface-dimension" />
                 </div>
                 {varies.length ? (
-                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.6 }}>
+                  <ul style={{ margin: 0, paddingLeft: 18, fontSize: 15.5, lineHeight: 1.6 }}>
                     {varies.map((d) => (
                       <li key={d.key}>
                         {d.label}
@@ -278,12 +279,12 @@ export default function BlueprintPage() {
                     ))}
                   </ul>
                 ) : (
-                  <p style={{ margin: 0, fontSize: 13.5, color: RED }}>Nothing is set to vary, so every version would read the same. Turn something on under Edit.</p>
+                  <p style={{ margin: 0, fontSize: 15.5, color: RED }}>Nothing is set to vary, so every version would read the same. Turn something on under Edit.</p>
                 )}
               </div>
               <div>
                 <div className="va-heading-15" style={{ marginBottom: 4 }}>What stays the same</div>
-                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13.5, lineHeight: 1.6 }}>
+                <ul style={{ margin: 0, paddingLeft: 18, fontSize: 15.5, lineHeight: 1.6 }}>
                   <li>The skill and the rubric</li>
                   {fixed.map((d) => (
                     <li key={d.key}>{d.label}</li>
@@ -294,7 +295,7 @@ export default function BlueprintPage() {
           </div>
 
           <div className="va-btn-row" style={{ marginTop: 20 }}>
-            <BlueprintButton onClick={() => navigate("/generate")} disabled={!readiness.ready}>
+            <BlueprintButton onClick={() => navigate("/generate")} disabled={!readiness.ready} data-walk="continue-check">
               Continue to making the versions
             </BlueprintButton>
             <button type="button" className="btn btn-secondary" onClick={() => setEditing(true)}>
@@ -303,7 +304,7 @@ export default function BlueprintPage() {
             {!readiness.ready && <span className="va-muted-12">Fix the items above first.</span>}
           </div>
           {error && (
-            <div style={{ color: RED, fontSize: 13, marginTop: 10 }} role="alert">
+            <div style={{ color: RED, fontSize: 15, marginTop: 10 }} role="alert">
               {error}
             </div>
           )}
@@ -332,7 +333,7 @@ export default function BlueprintPage() {
               <h6 style={{ margin: 0 }}>
                 Rubric <Info term="rubric" />
               </h6>
-              <span className="text-muted" style={{ fontSize: 12 }}>{bp.rubric.length} criteria · each scored 0 to 3 · grades every version unchanged</span>
+              <span className="text-muted" style={{ fontSize: 14 }}>{bp.rubric.length} criteria · each scored 0 to 3 · grades every version unchanged</span>
               <button type="button" className="btn btn-ghost" style={{ marginLeft: "auto" }} onClick={() => ws.addCriterion(bp.id)}>
                 + Add a criterion
               </button>
@@ -423,14 +424,14 @@ export default function BlueprintPage() {
             </h6>
             <p className="card-body" style={{ margin: "0 0 12px" }}>Your expert answer. Every version gets its own adapted copy, which is how we check the rubric still fits.</p>
             {solutionOpen ? (
-              <textarea className="input va-textarea" style={{ minHeight: 260, width: "100%", fontSize: 13.5, lineHeight: 1.6 }} value={solution} onChange={(e) => setSolution(e.target.value)} onBlur={commitSolution} />
+              <textarea className="input va-textarea" style={{ minHeight: 260, width: "100%", fontSize: 15.5, lineHeight: 1.6 }} value={solution} onChange={(e) => setSolution(e.target.value)} onBlur={commitSolution} />
             ) : bp.canonicalSolution.trim() ? (
-              <div className="va-surface-box va-clip" style={{ maxHeight: 150, fontSize: 13.5, whiteSpace: "pre-wrap" }}>
+              <div className="va-surface-box va-clip" style={{ maxHeight: 150, fontSize: 15.5, whiteSpace: "pre-wrap" }}>
                 {bp.canonicalSolution}
                 <div className="va-fade" />
               </div>
             ) : (
-              <div className="va-surface-box text-muted" style={{ fontSize: 13.5 }}>No model answer yet. Write one, upload it, or let us draft one from your rubric.</div>
+              <div className="va-surface-box text-muted" style={{ fontSize: 15.5 }}>No model answer yet. Write one, upload it, or let us draft one from your rubric.</div>
             )}
             <div className="va-btn-row" style={{ marginTop: 12 }}>
               <button
@@ -452,7 +453,7 @@ export default function BlueprintPage() {
               <span className="va-muted-12">{words ? `${words} words · ${bp.canonicalSolutionSource}` : ""}</span>
             </div>
             {error && (
-              <div style={{ color: RED, fontSize: 13, marginTop: 10 }} role="alert">
+              <div style={{ color: RED, fontSize: 15, marginTop: 10 }} role="alert">
                 {error}
               </div>
             )}
@@ -507,7 +508,7 @@ export default function BlueprintPage() {
       {library.length > 1 && (
         <details className="blueprint" style={{ padding: "12px 18px" }}>
           <summary className="va-kicker" style={{ cursor: "pointer" }}>Other assignments in this workspace ({library.length - 1})</summary>
-          <div className="va-stack" style={{ gap: 10, fontSize: 13.5, marginTop: 10 }}>
+          <div className="va-stack" style={{ gap: 10, fontSize: 15.5, marginTop: 10 }}>
             {library.map((entry) => (
               <button
                 key={entry.blueprint.id}
@@ -520,7 +521,7 @@ export default function BlueprintPage() {
                   {entry.blueprint.name.split(" — ")[0]}
                   {entry.active ? <span className="va-muted-12"> · this one</span> : null}
                 </div>
-                <div className="text-muted" style={{ fontSize: 11.5 }}>{entry.sub}</div>
+                <div className="text-muted" style={{ fontSize: 13 }}>{entry.sub}</div>
               </button>
             ))}
           </div>

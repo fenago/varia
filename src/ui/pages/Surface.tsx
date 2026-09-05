@@ -1,4 +1,5 @@
 import { glossaryTerm } from "@shared/glossary";
+/* type-scale: applied */
 import { useMemo } from "react";
 import { Blueprint, Info } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
@@ -51,7 +52,7 @@ export default function Surface() {
 
   return (
     <div className="va-page">
-      <p style={{ maxWidth: "70ch", fontSize: 15, lineHeight: 1.6, textWrap: "pretty", margin: 0 }}>
+      <p style={{ maxWidth: "70ch", fontSize: 17, lineHeight: 1.6, textWrap: "pretty", margin: 0 }}>
         Every strategy trades surface diversity against construct equivalence. The choice is also an employer conversation: dimension-preserving generation draws hardest on the scenario bank employer partners supply, so more surface separation means more employer scenarios. Pick where this course should sit; the numbers are from the
         VARIA pilot, {PILOT_META.variants} variants across {PILOT_META.cells} condition cells.
       </p>
@@ -177,7 +178,7 @@ export default function Surface() {
         <div className="va-stack" style={{ gap: 18 }}>
           <Blueprint style={{ padding: "18px 20px" }}>
             <h6 style={{ margin: "0 0 12px" }}>Recommended by course type</h6>
-            <div className="va-stack" style={{ gap: 14, fontSize: 13.5, lineHeight: 1.5 }}>
+            <div className="va-stack" style={{ gap: 14, fontSize: 15.5, lineHeight: 1.5 }}>
               {RECOMMENDED_BY_COURSE_TYPE.map((r) => (
                 <div key={r.title}>
                   <div className="va-heading-15">{r.title}</div>

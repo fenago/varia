@@ -1,15 +1,17 @@
 import { useEffect, useState, type ReactNode } from "react";
+/* type-scale: applied */
 import { Link, useNavigate } from "react-router-dom";
 import { Blueprint, BlueprintButton, Field, FileDrop, Info, Pill, StepIntro, StepProgressBlock, type StepProgress } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
-import { getSettings, getProvider } from "@lib/store/settings";
+import { getSettings, getProvider, useSettings } from "@lib/store/settings";
 import { extractionSummary } from "@lib/store/selectors";
 import { parseFiles, parsePastedText } from "@lib/ingest";
 import { loadSample } from "@lib/store/samples";
 import { guardDraft } from "@lib/llm/extractGuard";
 import { SAMPLES } from "@shared/samples";
-import { LlmError } from "@lib/llm";
-import type { BlueprintDraft, Criterion, SourceFile } from "@shared/types";
+import { LlmError, estimateRunCost } from "@lib/llm";
+import type { BlueprintDraft, Criterion, ExtractInput, SourceFile } from "@shared/types";
+import { INGEST_GUIDANCE } from "@shared/ingest-guidance";
 
 type Phase = "idle" | "reading" | "extracting" | "ready" | "error";
 type Choice = "sample" | "upload";
@@ -50,6 +52,8 @@ function CollapsedChoice({ title, hint, onOpen }: { title: string; hint: string;
 export default function Import() {
   const navigate = useNavigate();
   const ws = useWorkspace();
+  const settingsState = useSettings();
+  const keySet = settingsState.mode === "live";
   const draft = ws.pendingDraft;
   const rosterCount = ws.roster.students.length;
 
@@ -116,9 +120,9 @@ export default function Import() {
     setPhase("error");
   }
 
-  async function extract(files: SourceFile[], rawText: string, secs: number | undefined) {
+  async function extract(files: SourceFile[], rawText: string, secs: number | undefined, documents?: ExtractInput["documents"]) {
     setPhase("extracting");
-    setRetry(() => () => extract(files, rawText, secs));
+    setRetry(() => () => extract(files, rawText, secs, documents));
     const provider = getProvider();
     const live = provider.mode === "live";
     beginStep(
@@ -129,7 +133,7 @@ export default function Import() {
       70,
     );
     try {
-      const out = await provider.extractBlueprint({ files, rawText, course: ws.course });
+      const out = await provider.extractBlueprint({ files, rawText, course: ws.course, documents });
       const guarded = guardDraft(out, files);
       if (guarded.repairs.length) beginStep("repairing", `Filling in ${guarded.repairs.length} thing${guarded.repairs.length === 1 ? "" : "s"} from your files`, guarded.repairs.join("; "), undefined, 90);
       const merged: BlueprintDraft = {
@@ -156,11 +160,15 @@ export default function Import() {
     setStep(null);
     beginStep("reading", `Reading ${files.length} file${files.length === 1 ? "" : "s"}`, "Your files are read in this browser. Nothing is uploaded anywhere.", undefined, 25);
     try {
-      const parsed = await parseFiles(files, ws.course.id);
+      const parsed = await parseFiles(files, ws.course.id, {
+        onPhase: (ph, msg, detail) => {
+          if (ph === "ocr") beginStep("ocr", msg, "Scanned pages are read in your browser. Nothing is uploaded anywhere.", undefined, detail?.page && detail?.pages ? Math.round(25 + (detail.page / detail.pages) * 40) : 30);
+        },
+      });
       if (parsed.roster) ws.setRoster(parsed.roster);
       setSources(parsed.sources);
       setReadSeconds(parsed.readSeconds);
-      await extract(parsed.sources, parsed.rawText, parsed.readSeconds);
+      await extract(parsed.sources, parsed.rawText, parsed.readSeconds, parsed.documents);
     } catch (e) {
       showError(e);
     }
@@ -191,8 +199,13 @@ export default function Import() {
       setSources(result.parsed.sources);
       setReadSeconds(result.parsed.readSeconds);
       ws.setPendingDraft({ ...result.draft, challengeIds: [result.challenge.id] });
-      const by = result.extractedBy === "claude" ? "Claude" : result.extractedBy === "recorded" ? `a recorded ${result.extractionModel} extraction` : "the local parser";
-      setSampleNote(`Loaded from the ${result.sample.organisation} sample · extracted by ${by}`);
+      setSampleNote(
+        result.extractedBy === "recorded"
+          ? `${result.sample.organisation} · Recorded walkthrough · nothing is spent`
+          : result.extractedBy === "claude"
+            ? `Loaded from the ${result.sample.organisation} sample · read with Claude using your key`
+            : `Loaded from the ${result.sample.organisation} sample · read by the local parser`,
+      );
       setRepairNote(result.repairs.length ? `Filled in from the sample files: ${result.repairs.join("; ")}.` : "");
       finishStep(`${result.sample.organisation} loaded`, `${result.draft.rubric.length} criteria · ${result.roster.students.length} students.`);
       setPhase("ready");
@@ -311,16 +324,20 @@ export default function Import() {
                   >
                     <span className="va-kicker" style={{ justifySelf: "start", color: "var(--color-accent-700)" }}>{sm.industry}</span>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontFamily: "var(--font-heading)", fontSize: 15, lineHeight: 1.2 }}>
+                      <div style={{ fontFamily: "var(--font-heading)", fontSize: 17, lineHeight: 1.2 }}>
                         {sm.organisation} · {sm.title}
                       </div>
-                      <div className="text-muted" style={{ fontSize: 12.5, lineHeight: 1.45 }}>{sm.summary}</div>
-                      <div className="text-muted" style={{ fontSize: 11.5 }}>{sm.course.code} · {sm.course.title}</div>
+                      <div className="text-muted" style={{ fontSize: 14, lineHeight: 1.45 }}>{sm.summary}</div>
+                      <div className="text-muted" style={{ fontSize: 13, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                        <span>{sm.course.code} · {sm.course.title}</span>
+                        <Pill gate="pass">Recorded walkthrough · free</Pill>
+                      </div>
                     </div>
                     <button
                       type="button"
                       className="btn btn-secondary"
                       disabled={busy}
+                      data-walk={sm.id === "ml-lending-fairness-audit" ? "pick-sample" : undefined}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSample(sm.id);
@@ -339,9 +356,12 @@ export default function Import() {
           {choice === "upload" ? (
             <Blueprint style={{ padding: "18px 20px" }}>
               <div style={{ marginBottom: 12 }}>
-                <h6 style={{ margin: "0 0 4px" }}>Upload my own</h6>
+                <h6 style={{ margin: "0 0 4px" }} data-walk="upload-own">Upload my own</h6>
                 <p className="va-muted-125" style={{ margin: 0 }}>
                   Word, PDF or plain text. Add the rubric and your model answer if they are separate files, and a class list (CSV) if you have one. Everything is read in this browser and nothing is uploaded anywhere.
+                </p>
+                <p className="va-muted-125" style={{ margin: "6px 0 0" }}>
+                  {keySet ? `Uses your key · about $${estimateRunCost(3, settingsState.judgeSamples).usd.toFixed(2)} for 3 versions` : <>Add your key in <Link to="/settings">Settings</Link> to run your own assignment; the samples above are free.</>}
                 </p>
               </div>
               <FileDrop
@@ -355,7 +375,12 @@ export default function Import() {
                   </button>
                 }
               />
-              <div className="va-muted-12" style={{ marginTop: 8 }}>Canvas import is not available yet.</div>
+              <div className="va-muted-12" style={{ marginTop: 10, lineHeight: 1.55, maxWidth: "76ch" }}>
+                <div>{INGEST_GUIDANCE.what}</div>
+                <div style={{ marginTop: 4 }}>{INGEST_GUIDANCE.formats} {INGEST_GUIDANCE.scans}</div>
+                <div style={{ marginTop: 4 }}>{INGEST_GUIDANCE.brief}</div>
+                <div style={{ marginTop: 4 }}>Canvas import is not available yet.</div>
+              </div>
               {pasteOpen && (
                 <div style={{ marginTop: 14 }}>
                   <Field label="Paste the assignment text">
@@ -379,7 +404,7 @@ export default function Import() {
               )}
             </Blueprint>
           ) : (
-            <CollapsedChoice title="Upload my own" hint="Word, PDF or plain text, read in your browser." onOpen={() => setChoice("upload")} />
+            <div data-walk="upload-own" style={{ display: "block" }}><CollapsedChoice title="Upload my own" hint="Word, PDF or plain text, read in your browser." onOpen={() => setChoice("upload")} /></div>
           )}
         </>
       )}
@@ -393,7 +418,7 @@ export default function Import() {
       )}
 
       {error && (
-        <div style={{ color: RED, fontSize: 13 }} role="alert">
+        <div style={{ color: RED, fontSize: 15 }} role="alert">
           {error}
         </div>
       )}
@@ -416,7 +441,7 @@ export default function Import() {
               <div className="va-heading-15" style={{ marginBottom: 4 }}>
                 The skill it measures <Info term="construct" />
               </div>
-              <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, maxWidth: "76ch" }}>{draft.construct}</p>
+              <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, maxWidth: "76ch" }}>{draft.construct}</p>
             </div>
 
             <div>
@@ -427,18 +452,18 @@ export default function Import() {
                 {draft.rubric.map((c) => {
                   const st = anchorsStatus(c);
                   return (
-                    <li key={c.id} style={{ display: "grid", gridTemplateColumns: "18px minmax(0,1fr) auto", gap: 10, alignItems: "baseline", fontSize: 14 }}>
+                    <li key={c.id} style={{ display: "grid", gridTemplateColumns: "18px minmax(0,1fr) auto", gap: 10, alignItems: "baseline", fontSize: 16 }}>
                       <span style={{ color: st.color, fontFamily: "var(--font-heading)" }}>{st.ok ? "✓" : "!"}</span>
                       <span>
                         {c.name} <span className="text-muted">· {c.points} points</span>
                       </span>
-                      <span style={{ color: st.color, fontSize: 12.5 }}>{st.text}</span>
+                      <span style={{ color: st.color, fontSize: 14 }}>{st.text}</span>
                     </li>
                   );
                 })}
               </ul>
               {missing.length > 0 && editingAnchors === null && (
-                <div style={{ marginTop: 10, padding: "12px 14px", background: "var(--color-surface)", border: "1px solid var(--color-divider)", fontSize: 13.5, lineHeight: 1.55 }}>
+                <div style={{ marginTop: 10, padding: "12px 14px", background: "var(--color-surface)", border: "1px solid var(--color-divider)", fontSize: 15.5, lineHeight: 1.55 }}>
                   <strong>{missing.length === 1 ? "One criterion" : `${missing.length} criteria`} {missing.length === 1 ? "has" : "have"} no level descriptions.</strong>{" "}
                   Level descriptions say what a 0, 1, 2 and 3 look like <Info term="anchors" />. We can draft them for you to read, or you can write them.
                   <div className="va-btn-row" style={{ marginTop: 10 }}>
@@ -487,7 +512,7 @@ export default function Import() {
                 <div className="va-heading-15" style={{ marginBottom: 4 }}>
                   Your model answer <Info term="model-answer" />
                 </div>
-                <p style={{ margin: 0, fontSize: 13.5 }}>
+                <p style={{ margin: 0, fontSize: 15.5 }}>
                   {solutionWords ? (
                     <span style={{ color: GREEN }}>✓ Found · {solutionWords} words{draft.canonicalSolutionSource === "drafted" ? ", drafted for you to check" : ""}</span>
                   ) : (
@@ -520,7 +545,7 @@ export default function Import() {
                     </button>
                   )}
                 </div>
-                <p className="text-muted" style={{ margin: "6px 0 0", fontSize: 12.5 }}>
+                <p className="text-muted" style={{ margin: "6px 0 0", fontSize: 14 }}>
                   {rosterCount ? `Start with a few to see what you get. Your class list has ${rosterCount} students; you can make one for each later.` : "No class list yet; you can add one later."}
                 </p>
               </div>
@@ -528,7 +553,7 @@ export default function Import() {
           </div>
 
           <div className="va-btn-row" style={{ marginTop: 20, alignItems: "center" }}>
-            <BlueprintButton onClick={() => continueTo("/blueprint")} disabled={busy}>
+            <BlueprintButton onClick={() => continueTo("/blueprint")} disabled={busy} data-walk="continue-found">
               Looks right, continue
             </BlueprintButton>
             <button type="button" className="btn btn-secondary" onClick={() => continueTo("/blueprint?edit=1")} disabled={busy}>
@@ -574,7 +599,7 @@ export default function Import() {
 
               <div>
                 <div className="va-heading-15" style={{ marginBottom: 6 }}>Checks</div>
-                <div className="va-stack" style={{ gap: 6, fontSize: 13.5 }}>
+                <div className="va-stack" style={{ gap: 6, fontSize: 15.5 }}>
                   {summary.map((it, i) => (
                     <div key={i} className="va-check">
                       <span className={it.warn ? "va-check-warn" : it.ok ? "va-check-ok" : "va-check-bad"}>{it.warn ? "!" : it.ok ? "✓" : "×"}</span>

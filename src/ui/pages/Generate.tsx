@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
+/* type-scale: applied */
 import { Link, useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, EmptyState, Field, Info, ProgressBlock, SegChoice, StepIntro } from "@ui/components";
+import { Blueprint, BlueprintButton, EmptyState, Field, Info, ProgressBlock, SegChoice, StepIntro, Dialog } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
 import { useSettings } from "@lib/store/settings";
 import { activeBlueprint, activeRun } from "@lib/store/selectors";
 import { runCompletion } from "@lib/store/orchestrator";
-import { fixtureForBlueprint } from "@lib/store/fixtures";
+import { fixtureForBlueprint, getFixture } from "@lib/store/fixtures";
+import { sampleById } from "@shared/samples";
 import { estimateRunCost } from "@lib/llm";
 import { PILOT_DP_FLESCH_SIGMA, STRATEGY_LABELS, THREAT_TO_STRATEGY } from "@shared/thresholds";
 import { currentThresholds } from "@lib/store/selectors";
@@ -68,11 +70,16 @@ export default function Generate() {
   const run = activeRun(ws);
 
   const rosterSize = ws.roster.students.length;
-  // Without a key, this replays the recorded run for the blueprint, so N defaults to (and is
-  // capped at) the number of recorded versions; cycling them would only manufacture duplicates.
-  const recorded = settings.mode === "demo" && bp ? fixtureForBlueprint(bp.id, bp.name) : null;
+  // A sample assessment replays its recorded run for free, whatever key is set; only an explicit
+  // "run for real" spends tokens. N is capped at the recorded count on a replay, since cycling
+  // recorded versions would only manufacture duplicates.
+  const recorded = bp ? (bp.sampleId ? getFixture(bp.sampleId) : null) ?? fixtureForBlueprint(bp.id, bp.name) : null;
   const recordedCount = recorded ? recorded.run.variants.filter((v) => v.text && !v.error).length : 0;
-  const nMax = recordedCount > 0 ? recordedCount : 200;
+  const [forReal, setForReal] = useState(false);
+  const source: "recorded" | "live" = recorded && !forReal ? "recorded" : "live";
+  const sampleOrg = bp?.sampleId ? sampleById(bp.sampleId)?.organisation ?? null : null;
+  const nMax = source === "recorded" && recordedCount > 0 ? recordedCount : 200;
+  const [confirmReal, setConfirmReal] = useState(false);
 
   const [worry, setWorry] = useState<Worry>(settings.preset === "formative" ? "copying" : "fairness");
   const [manual, setManual] = useState<Strategy>("zero-shot");
@@ -138,14 +145,15 @@ export default function Generate() {
     });
   }
 
-  async function generate() {
+  async function generate(runSource: "recorded" | "live" = source) {
     setError(null);
     setStarting(true);
     try {
       const runId = await ws.startRun({
+        source: runSource,
         threatProfile: threat,
         strategy,
-        n,
+        n: runSource === "recorded" && recordedCount > 0 ? Math.min(n, recordedCount) : n,
         enabledDimensions: enabledDims,
         generatorModel: settings.generatorModel,
         judgeModel: settings.judgeModel,
@@ -175,8 +183,8 @@ export default function Generate() {
         : `${STRATEGY_LABELS[strategy]}. About $${est.perStudentUsd.toFixed(2)} per student.`;
 
   const facts =
-    settings.mode === "demo"
-      ? `Replaying the recorded run: ${n} versions, made with ${modelLabel(recorded?.models.generator ?? settings.generatorModel)} · no cost · under a minute`
+    source === "recorded"
+      ? `Recorded walkthrough: replaying ${Math.min(n, recordedCount || n)} of the ${recordedCount} versions made with ${modelLabel(recorded?.models.generator ?? settings.generatorModel)} in advance · nothing is spent · under a minute`
       : `Making ${n} version${n === 1 ? "" : "s"}${rosterSize > 0 && n < rosterSize ? ` (the first ${n} of your ${rosterSize} students)` : rosterSize > 0 ? ` (one for each of your ${rosterSize} students)` : ""} with ${modelLabel(settings.generatorModel)} · about $${est.usd.toFixed(2)} · about ${est.minutes} minute${est.minutes === 1 ? "" : "s"}`;
 
   return (
@@ -238,7 +246,7 @@ export default function Generate() {
                     <span className="va-heading-16" style={{ display: "block" }}>
                       {w.title} <Info term={w.term} />
                     </span>
-                    <span className="text-muted" style={{ fontSize: 13 }}>{w.body}</span>
+                    <span className="text-muted" style={{ fontSize: 15 }}>{w.body}</span>
                   </span>
                 </Blueprint>
               );
@@ -249,7 +257,7 @@ export default function Generate() {
               <SegChoice<Strategy> name="strategy" value={manual} onChange={setManual} options={(Object.keys(STRATEGY_LABELS) as Strategy[]).map((s) => ({ value: s, label: STRATEGY_LABELS[s] }))} />
             </div>
           )}
-          <p style={{ margin: "14px 0 0", fontSize: 14, lineHeight: 1.5, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>{consequence}</p>
+          <p style={{ margin: "14px 0 0", fontSize: 16, lineHeight: 1.5, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>{consequence}</p>
 
           <div style={{ marginTop: 18, borderTop: "1px solid var(--color-divider)", paddingTop: 16 }}>
             <div className="va-row-flex" style={{ alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
@@ -275,37 +283,70 @@ export default function Generate() {
                   </button>
                 )}
               </div>
-              <span id="versionCountHint" className="text-muted" style={{ fontSize: 12.5 }}>
-                {recordedCount > 0 ? `Replaying a recorded run: up to ${recordedCount} versions.` : "Start with a few to see what you get; you can make more later. Cost grows with the count."}
+              <span id="versionCountHint" className="text-muted" style={{ fontSize: 14 }}>
+                {source === "recorded" && recordedCount > 0 ? `Recorded walkthrough: up to ${recordedCount} versions, free.` : "Start with a few to see what you get; you can make more later. Cost grows with the count."}
               </span>
             </div>
-            <p style={{ margin: "0 0 12px", fontSize: 14.5 }}>
+            <p style={{ margin: "0 0 12px", fontSize: 16 }}>
               {facts} <Info term="generator" />
             </p>
             <div className="va-btn-row" style={{ alignItems: "center" }}>
-              <BlueprintButton onClick={generate} disabled={starting || enabledDims.length === 0}>
+              <BlueprintButton onClick={() => generate()} disabled={starting || enabledDims.length === 0 || (source === "live" && settings.mode !== "live")} data-walk="make">
                 {starting ? "Starting…" : "Make the versions"}
               </BlueprintButton>
               <button type="button" className="btn btn-ghost" onClick={() => setOptionsOpen((o) => !o)}>
                 {optionsOpen ? "Hide options" : "Show options"}
               </button>
+              {recorded && !forReal && settings.mode === "live" && (
+                <button type="button" className="btn btn-ghost" onClick={() => setConfirmReal(true)}>
+                  Run this sample for real with my key
+                </button>
+              )}
+              {recorded && forReal && (
+                <button type="button" className="btn btn-ghost" onClick={() => setForReal(false)}>
+                  Back to the recorded walkthrough
+                </button>
+              )}
               {actualSoFar(run) && <span className="va-muted-12">{actualSoFar(run)}</span>}
             </div>
+            <Dialog
+              open={confirmReal}
+              title="Run this sample for real?"
+              onClose={() => setConfirmReal(false)}
+              actions={
+                <>
+                  <button type="button" className="btn btn-secondary" onClick={() => setConfirmReal(false)}>Keep the recorded walkthrough</button>
+                  <BlueprintButton onClick={() => { setConfirmReal(false); setForReal(true); void generate("live"); }}>Yes, spend from my key</BlueprintButton>
+                </>
+              }
+            >
+              <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6 }}>
+                This calls Anthropic with your key: {n} version{n === 1 ? "" : "s"} written by {modelLabel(settings.generatorModel)} and checked by {modelLabel(settings.judgeModel)}, about ${est.usd.toFixed(2)} at list prices. The recorded walkthrough stays available afterwards.
+              </p>
+            </Dialog>
             {enabledDims.length === 0 && (
-              <div style={{ color: RED, fontSize: 12.5, marginTop: 8 }}>Nothing is set to vary, so every version would read the same. Turn something on under options.</div>
+              <div style={{ color: RED, fontSize: 14, marginTop: 8 }}>Nothing is set to vary, so every version would read the same. Turn something on under options.</div>
             )}
-            {settings.mode === "demo" && (
+            {source === "recorded" && (
               <div className="va-muted-12" style={{ marginTop: 10, lineHeight: 1.5 }}>
-                No key is set, so this replays a recorded run of {recordedCount || "the"} versions <Info term="recorded-run" />. Add your key in <Link to="/settings">Settings</Link> to make versions for your {rosterSize} students.
+                This is a recorded walkthrough of {sampleOrg ?? "this employer"}'s problem: the versions, checks and student work were made in advance, so nothing is spent <Info term="recorded-run" />.
+                {settings.mode !== "live" && (
+                  <> To make versions for your own assignment, add your key in <Link to="/settings">Settings</Link>.</>
+                )}
               </div>
             )}
-            {settings.mode === "live" && (
+            {source === "live" && settings.mode === "live" && (
               <div className="va-muted-12" style={{ marginTop: 10, lineHeight: 1.5 }}>
-                {modelLabel(settings.generatorModel)} writes the versions and {modelLabel(settings.judgeModel)} checks them. Calls go straight from this browser to Anthropic.
+                {modelLabel(settings.generatorModel)} writes the versions and {modelLabel(settings.judgeModel)} checks them. Calls go straight from this browser to Anthropic and are charged to your key.
+              </div>
+            )}
+            {source === "live" && settings.mode !== "live" && (
+              <div style={{ color: RED, fontSize: 15, marginTop: 10, lineHeight: 1.5 }}>
+                Add your key in <Link to="/settings">Settings</Link> to make versions for your own assignment. The five samples replay their recorded runs without a key.
               </div>
             )}
             {error && (
-              <div style={{ color: RED, fontSize: 13, marginTop: 10 }} role="alert">
+              <div style={{ color: RED, fontSize: 15, marginTop: 10 }} role="alert">
                 {error}
               </div>
             )}
@@ -332,7 +373,7 @@ export default function Generate() {
                   </select>
                   <ModelCaveat id={settings.judgeModel} />
                   {sameModel ? (
-                    <div style={{ color: AMBER, fontSize: 12.5, marginTop: 6, lineHeight: 1.5 }} role="alert">
+                    <div style={{ color: AMBER, fontSize: 14, marginTop: 6, lineHeight: 1.5 }} role="alert">
                       The checker is the same model as the writer. The research flags that as a risk; pick a different one if you can.
                     </div>
                   ) : (
@@ -384,14 +425,14 @@ export default function Generate() {
                 <summary className="va-kicker" style={{ cursor: "pointer" }}>Advanced: the paper's ablations and the app's policies</summary>
                 <p className="card-body" style={{ margin: "10px 0 14px", maxWidth: "66ch" }}>Defaults reproduce the pilot. Change these to reproduce an ablation or to tune the outlier rule. They are saved for this browser and recorded on every run.</p>
                 <div className="va-two" style={{ gap: 14 }}>
-                  <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13.5 }}>
+                  <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 15.5 }}>
                     <input type="checkbox" checked={adv.negativeAnchors} disabled={inFlight} onChange={(e) => settings.setAdvanced({ negativeAnchors: e.target.checked })} />
                     <span>
                       Negative examples in few-shot
                       <span className="va-muted-115" style={{ display: "block" }}>Off reproduces the θ−FS ablation (equivalence −0.02 in the pilot, J unchanged).</span>
                     </span>
                   </label>
-                  <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13.5 }}>
+                  <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 15.5 }}>
                     <input type="checkbox" checked={adv.constructMap} disabled={inFlight} onChange={(e) => settings.setAdvanced({ constructMap: e.target.checked })} />
                     <span>
                       Construct-map step in structured chain-of-thought

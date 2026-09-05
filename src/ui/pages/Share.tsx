@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+/* type-scale: applied */
 import { Link, useParams } from "react-router-dom";
 import { Blueprint, CopyField, EmptyState, Stamp } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
@@ -87,14 +88,14 @@ export default function Share() {
           <div style={{ fontFamily: "var(--font-heading)", fontSize: 30, lineHeight: 1.05 }}>{record.id}</div>
           <Stamp gate={bridge?.signature ? "pass" : "watch"}>{bridge?.signature ? `Signed · ${bridge.signedWithKid}` : "Unsigned until first share"}</Stamp>
         </div>
-        <div style={{ fontSize: 15, marginTop: 8 }}>
+        <div style={{ fontSize: 17, marginTop: 8 }}>
           {view.student.name} · {view.course.code} · {view.course.term}
         </div>
-        <div className="text-muted" style={{ fontSize: 13, marginTop: 4 }}>
+        <div className="text-muted" style={{ fontSize: 15, marginTop: 4 }}>
           {view.blueprint.name} · {view.grade ? `${view.grade.total} / ${view.grade.maxTotal}` : "not graded"} · issued {formatDate(record.issuedAt)} · learner id{" "}
           <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>{bridge?.learnerId}</span>
         </div>
-        <p className="text-muted" style={{ margin: "12px 0 0", fontSize: 13, maxWidth: "72ch" }}>
+        <p className="text-muted" style={{ margin: "12px 0 0", fontSize: 15, maxWidth: "72ch" }}>
           This record is yours. Your instructor issued it, but only you decide who sees it. Sharing creates a consent event on the record; you can revoke it here. In a real deployment the student signs in; this page stands in for that.
         </p>
       </Blueprint>
@@ -102,7 +103,7 @@ export default function Share() {
       <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.2fr) minmax(0,1fr)", gap: 22, alignItems: "start" }}>
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 12px" }}>Share with</h6>
-          <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13.5, cursor: "pointer", marginBottom: 14, paddingBottom: 12, borderBottom: "1px solid var(--color-divider)" }}>
+          <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 15.5, cursor: "pointer", marginBottom: 14, paddingBottom: 12, borderBottom: "1px solid var(--color-divider)" }}>
             <input
               type="checkbox"
               checked={!!bridge?.workSample?.submissionIncluded}
@@ -142,11 +143,11 @@ export default function Share() {
               </label>
               <input className="input" value={note} onChange={(e) => setNote(e.target.value)} />
             </div>
-            <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13.5, cursor: "pointer" }}>
+            <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 15.5, cursor: "pointer" }}>
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 3 }} />
               <span>I choose to share this record with this organisation. It includes my name, my course, the task I received, my rubric scores and the integrity checks on my assessment.</span>
             </label>
-            {error && <div style={{ color: "#8d4a3c", fontSize: 13 }}>{error}</div>}
+            {error && <div style={{ color: "#8d4a3c", fontSize: 15 }}>{error}</div>}
             <div className="va-btn-row">
               <button type="button" className="btn btn-primary" disabled={busy} onClick={share}>
                 {busy ? "Preparing…" : "Share and get a verify link"}
@@ -155,12 +156,12 @@ export default function Share() {
                 Download Open Badges 3.0
               </button>
             </div>
-            <div className="text-muted" style={{ fontSize: 12 }}>Nothing is uploaded. The verify link carries the record itself; the Open Badges file is a W3C Verifiable Credential that wallets and employer systems can import.</div>
+            <div className="text-muted" style={{ fontSize: 14 }}>Nothing is uploaded. The verify link carries the record itself; the Open Badges file is a W3C Verifiable Credential that wallets and employer systems can import.</div>
           </div>
 
           {link && (
             <div style={{ marginTop: 16, borderTop: "1px solid var(--color-divider)", paddingTop: 14 }}>
-              <div style={{ fontSize: 13.5, marginBottom: 8 }}>
+              <div style={{ fontSize: 15.5, marginBottom: 8 }}>
                 Shared with <strong>{sharedWith}</strong>. Send them this link; it opens the verify page in any browser.
               </div>
               <CopyField label="Verify link" value={link} hint="Long on purpose: it carries the record, its content and the issuer's public key." />
@@ -171,16 +172,16 @@ export default function Share() {
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 12px" }}>Who you have shared with</h6>
           {consents.length === 0 ? (
-            <div className="text-muted" style={{ fontSize: 13 }}>No one yet.</div>
+            <div className="text-muted" style={{ fontSize: 15 }}>No one yet.</div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 13.5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 15.5 }}>
               {[...consents].reverse().map((c) => {
                 const stillActive = c.action === "shared" && active.some((a) => a.id === c.id);
                 return (
                   <div key={c.id} style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
                     <Stamp gate={c.action === "shared" ? (stillActive ? "pass" : "advisory") : "fail"}>{c.action === "shared" ? "Shared" : "Revoked"}</Stamp>
                     <span>{c.toOrganisation ?? "—"}</span>
-                    <span className="text-muted" style={{ fontSize: 12.5 }}>
+                    <span className="text-muted" style={{ fontSize: 14 }}>
                       {formatDate(c.at)}
                       {c.note ? ` · ${c.note}` : ""}
                     </span>
@@ -194,10 +195,10 @@ export default function Share() {
               })}
             </div>
           )}
-          <div className="text-muted" style={{ fontSize: 12, marginTop: 14 }}>
+          <div className="text-muted" style={{ fontSize: 14, marginTop: 14 }}>
             Revoking records your decision on the audit trail. It cannot recall a link already sent; a public verify endpoint would honour revocation.
           </div>
-          <div className="text-muted" style={{ fontSize: 12, marginTop: 8 }}>
+          <div className="text-muted" style={{ fontSize: 14, marginTop: 8 }}>
             <Link to={`/evidence/${record.variantId}`}>Full evidence page</Link> · <Link to={`/verify/${record.id}`}>Verify page</Link>
             {bridge?.learnerId ? (
               <>

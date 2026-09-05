@@ -5,6 +5,7 @@ import { describeProgress } from "@lib/store/progress";
 import { useEffect, useRef, useState } from "react";
 import { Menu } from "lucide-react";
 import { Rail } from "./Rail";
+import { Walkthrough } from "@ui/components/Walkthrough";
 import { Header } from "./Header";
 
 const IN_FLIGHT = new Set(["queued", "generating", "judging", "scoring"]);
@@ -103,6 +104,7 @@ export function Layout() {
         <RunStrip />
         <div className="va-content">
           <Outlet />
+          <Walkthrough />
         </div>
       </main>
     </div>

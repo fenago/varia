@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+/* type-scale: applied */
 import { Link, useNavigate } from "react-router-dom";
 import { Blueprint, DataTable, Pill, SegChoice, StatTile, type Column, type PillGate, Info } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
@@ -209,7 +210,7 @@ export default function Console() {
           <div className="va-muted-12" style={{ marginBottom: 10 }}>
             Set against {metricsVersionLabel(currentThresholds(ws).metricsVersion)}. A change of metric definition starts a new threshold version; released sets are never re-scored.
           </div>
-          <div className="va-row-flex" style={{ gap: 10, marginBottom: 12, fontSize: 13.5 }}>
+          <div className="va-row-flex" style={{ gap: 10, marginBottom: 12, fontSize: 15.5 }}>
             <span>Over-threshold release</span>
             <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
               <input
@@ -279,7 +280,7 @@ export default function Console() {
             </tbody>
           </table>
           {error && (
-            <div style={{ marginTop: 8, fontSize: 12.5, color: RED }}>
+            <div style={{ marginTop: 8, fontSize: 14, color: RED }}>
               {error}
             </div>
           )}
@@ -293,7 +294,7 @@ export default function Console() {
 
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 12px" }}>Audit trail</h6>
-          <div className="va-stack" style={{ gap: 13, fontSize: 13, lineHeight: 1.5 }}>
+          <div className="va-stack" style={{ gap: 13, fontSize: 15, lineHeight: 1.5 }}>
             {audit.length === 0 && <span className="text-muted">Nothing recorded yet.</span>}
             {audit.slice(0, 12).map((e) => (
               <div key={e.id}>

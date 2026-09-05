@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+/* type-scale: applied */
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Blueprint, BlueprintButton, ChipEditor, CopyField, Field, FileDrop, LikertRow, Stamp, type PillGate } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
@@ -253,7 +254,7 @@ export default function Review() {
   if (!pkg) {
     return (
       <div className="va-page" style={{ gap: 18 }}>
-        <p style={{ margin: 0, maxWidth: "66ch", fontSize: 15, lineHeight: 1.6 }}>
+        <p style={{ margin: 0, maxWidth: "66ch", fontSize: 17, lineHeight: 1.6 }}>
           An instructor sends you a review link or a package file. Open the link, or drop the file here. Nothing you do on this page is
           uploaded anywhere.
         </p>
@@ -264,7 +265,7 @@ export default function Review() {
           accept=".json,application/json"
           browseLabel="Choose package file"
         />
-        {loadError ? <div style={{ color: RED, fontSize: 13 }}>{loadError}</div> : null}
+        {loadError ? <div style={{ color: RED, fontSize: 15 }}>{loadError}</div> : null}
       </div>
     );
   }
@@ -281,7 +282,7 @@ export default function Review() {
               {STATUS_OPTIONS.find((s) => s.value === done.result.validation.status)?.title}
             </Stamp>
           </div>
-          <p style={{ margin: "0 0 14px", fontSize: 14, lineHeight: 1.6, maxWidth: "70ch" }}>
+          <p style={{ margin: "0 0 14px", fontSize: 16, lineHeight: 1.6, maxWidth: "70ch" }}>
             Send this link or file back to the instructor. Your review is inside it; nothing was uploaded anywhere.
           </p>
           <CopyField label="Result link" value={done.link} hint="Paste it into an email or message to the instructor." />
@@ -304,21 +305,21 @@ export default function Review() {
       <Blueprint className="va-dark" style={{ padding: "22px 24px" }}>
         <div className="va-kicker">{pkg.course.code} · {pkg.course.term} · {pkg.course.instructor.institution}</div>
         <h3 style={{ margin: "6px 0 8px", maxWidth: "34ch" }}>{bp.name}</h3>
-        <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: "#d5e0ea", maxWidth: "70ch" }}>
+        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, color: "#d5e0ea", maxWidth: "70ch" }}>
           Issued by {pkg.issuedBy} on {fmtDate(pkg.issuedAt)}. You are asked whether this assessment reflects real work in your
           organisation and whether its rubric reflects what you hire or promote for. Your edits to the scenario bank become the
           scenarios students receive.
         </p>
       </Blueprint>
 
-      {loadError ? <div style={{ color: RED, fontSize: 13 }}>{loadError}</div> : null}
+      {loadError ? <div style={{ color: RED, fontSize: 15 }}>{loadError}</div> : null}
 
       <Blueprint style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 6px" }}>What this assessment measures</h6>
-        <p className="text-muted" style={{ margin: "0 0 10px", fontSize: 12.5 }}>
+        <p className="text-muted" style={{ margin: "0 0 10px", fontSize: 14 }}>
           This is the one thing held constant across every student's version.
         </p>
-        <div className="va-surface-box" style={{ fontSize: 14, lineHeight: 1.6 }}>
+        <div className="va-surface-box" style={{ fontSize: 16, lineHeight: 1.6 }}>
           {bp.construct}
         </div>
         {bp.constructDimensions.length ? (
@@ -337,7 +338,7 @@ export default function Review() {
 
       <Blueprint style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 6px" }}>The rubric</h6>
-        <p className="text-muted" style={{ margin: "0 0 14px", fontSize: 12.5 }}>
+        <p className="text-muted" style={{ margin: "0 0 14px", fontSize: 14 }}>
           {bp.rubric.length} criteria, each scored 0–3. The same rubric grades every version. Say where it does or does not match what
           you look for.
         </p>
@@ -351,7 +352,7 @@ export default function Review() {
                 </span>
               </div>
               {c.anchors ? (
-                <ol start={0} style={{ margin: "8px 0 0", paddingLeft: 22, fontSize: 13, lineHeight: 1.5, color: "var(--color-neutral-700)" }}>
+                <ol start={0} style={{ margin: "8px 0 0", paddingLeft: 22, fontSize: 15, lineHeight: 1.5, color: "var(--color-neutral-700)" }}>
                   {c.anchors.map((a, i) => (
                     <li key={i} value={i}>
                       {a}
@@ -378,7 +379,7 @@ export default function Review() {
 
       <Blueprint style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 6px" }}>The scenario bank</h6>
-        <p className="text-muted" style={{ margin: "0 0 14px", fontSize: 12.5, maxWidth: "70ch" }}>
+        <p className="text-muted" style={{ margin: "0 0 14px", fontSize: 14, maxWidth: "70ch" }}>
           Every student gets a different combination of these. Add the settings, roles and situations your organisation actually
           faces, and remove any that do not ring true.
         </p>
@@ -406,7 +407,7 @@ export default function Review() {
 
       <Blueprint style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 6px" }}>Sample versions</h6>
-        <p className="text-muted" style={{ margin: "0 0 14px", fontSize: 12.5 }}>
+        <p className="text-muted" style={{ margin: "0 0 14px", fontSize: 14 }}>
           {pkg.sampleVariants.length
             ? `${pkg.sampleVariants.length} of the versions students receive. Would you accept any of these as a work sample?`
             : "No versions have been generated for this assessment yet, so there are no samples to show. The construct, rubric and scenario bank above are what every version will be built from."}
@@ -422,12 +423,12 @@ export default function Review() {
                   </span>
                 ))}
               </div>
-              <div style={{ fontSize: 13.5, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{v.text}</div>
+              <div style={{ fontSize: 15.5, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{v.text}</div>
               <button type="button" className="btn btn-ghost" style={{ marginTop: 8 }} onClick={() => setOpenAnswers((o) => ({ ...o, [v.id]: !o[v.id] }))}>
                 {openAnswers[v.id] ? "Hide the model answer" : "Show the model answer for this version"}
               </button>
               {openAnswers[v.id] ? (
-                <div className="va-surface-box" style={{ marginTop: 8, fontSize: 13, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>
+                <div className="va-surface-box" style={{ marginTop: 8, fontSize: 15, lineHeight: 1.55, whiteSpace: "pre-wrap" }}>
                   {v.adaptedSolution}
                 </div>
               ) : null}
@@ -439,7 +440,7 @@ export default function Review() {
       {checks.length ? (
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 6px" }}>Integrity of the version set</h6>
-          <p className="text-muted" style={{ margin: "0 0 12px", fontSize: 12.5, maxWidth: "70ch" }}>
+          <p className="text-muted" style={{ margin: "0 0 12px", fontSize: 14, maxWidth: "70ch" }}>
             Before release, the set is checked so that no two students can share answers and every student is measured on the same
             skill at the same difficulty.
           </p>
@@ -470,7 +471,7 @@ export default function Review() {
           </Field>
         </div>
         {reviewerEmail.trim() && isConsumerMailbox(reviewerEmail) ? (
-          <div style={{ color: "#8a6d2f", fontSize: 12.5, marginTop: -4, marginBottom: 8 }}>
+          <div style={{ color: "#8a6d2f", fontSize: 14, marginTop: -4, marginBottom: 8 }}>
             Use your work address at {organisation.trim() || "your organisation"} so this validation has a real signer.
           </div>
         ) : null}
@@ -486,15 +487,15 @@ export default function Review() {
                 <span className="dot" />
               </span>
               <span>
-                <span style={{ fontFamily: "var(--font-heading)", fontSize: 16, display: "block" }}>{o.title}</span>
-                <span className="text-muted" style={{ fontSize: 13 }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: 18, display: "block" }}>{o.title}</span>
+                <span className="text-muted" style={{ fontSize: 15 }}>
                   {o.description}
                 </span>
               </span>
             </Blueprint>
           ))}
         </div>
-        <label style={{ display: "flex", gap: 10, alignItems: "flex-start", marginTop: 14, fontSize: 14, cursor: "pointer" }}>
+        <label style={{ display: "flex", gap: 10, alignItems: "flex-start", marginTop: 14, fontSize: 16, cursor: "pointer" }}>
           <input type="checkbox" checked={attested} onChange={(e) => setAttested(e.target.checked)} style={{ marginTop: 3 }} />
           <span>
             This rubric reflects what we hire or promote for.
@@ -505,7 +506,7 @@ export default function Review() {
 
       <Blueprint style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 6px" }}>Five quick questions</h6>
-        <p className="text-muted" style={{ margin: "0 0 10px", fontSize: 12.5 }}>
+        <p className="text-muted" style={{ margin: "0 0 10px", fontSize: 14 }}>
           Optional, but it is how the programme measures employer satisfaction. 1 is disagree, 5 is agree.
         </p>
         {SATISFACTION_QUESTIONS.map((q) => (
@@ -522,7 +523,7 @@ export default function Review() {
       </Blueprint>
 
       <div className="va-stack" style={{ gap: 8 }}>
-        {formError ? <div style={{ color: RED, fontSize: 13 }}>{formError}</div> : null}
+        {formError ? <div style={{ color: RED, fontSize: 15 }}>{formError}</div> : null}
         <div className="va-btn-row">
           <BlueprintButton type="submit" disabled={submitting}>
             {origin === "workspace" ? "Record this review" : "Finish review"}

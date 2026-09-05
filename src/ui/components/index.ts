@@ -45,3 +45,4 @@ export { StepIntro, STEP_COUNT } from "./StepIntro";
 export type { StepIntroProps } from "./StepIntro";
 export { Verdict } from "./Verdict";
 export type { VerdictProps, VerdictAction } from "./Verdict";
+export { Walkthrough, WalkthroughButton } from "./Walkthrough";

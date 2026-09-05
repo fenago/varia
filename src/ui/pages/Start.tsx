@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { AudienceCard, Blueprint, BlueprintButton, Pill } from "@ui/components";
+/* type-scale: applied */
+import { AudienceCard, Blueprint, BlueprintButton, Pill, WalkthroughButton } from "@ui/components";
 import { AUDIENCES } from "@shared/audiences";
 import { useWorkspace } from "@lib/store/workspace";
 import { activeRun, studentById } from "@lib/store/selectors";
@@ -62,12 +63,13 @@ export default function Start() {
   return (
     <div className="va-page va-page-narrow" style={{ gap: 30 }}>
       <Blueprint className="va-dark" style={{ padding: "26px 28px" }}>
-        <div className="va-kicker" style={{ letterSpacing: ".14em", fontSize: 10.5 }}>For faculty</div>
+        <div className="va-kicker" style={{ letterSpacing: ".14em", fontSize: 12 }}>For faculty</div>
         <h3 style={{ margin: "6px 0 10px", maxWidth: "26ch" }}>Upload the assignment you already give. Get a different version for every student.</h3>
-        <p style={{ margin: 0, maxWidth: "66ch", fontSize: 15, lineHeight: 1.6 }}>
+        <p style={{ margin: 0, maxWidth: "66ch", fontSize: 17, lineHeight: 1.6 }}>
           You do not write new prompts and you do not learn new terminology. VARIA reads your existing assignment, produces one version per student that looks different but measures the same skill, and refuses to release the set if the versions drift apart. Your rubric never changes.
         </p>
         <div className="va-btn-row" style={{ marginTop: 18 }}>
+          <WalkthroughButton onDark />
           <BlueprintButton onClick={() => navigate("/import")}>Start — load a file</BlueprintButton>
           <button type="button" className="btn va-btn-onDark" onClick={() => navigate("/report")}>See a finished report</button>
         </div>
@@ -91,7 +93,7 @@ export default function Start() {
               <div className="va-step-number">{s.n}</div>
               <div className="va-heading-16" style={{ margin: "6px 0 5px" }}>{s.title}</div>
               <p className="card-body" style={{ margin: 0 }}>{s.body}</p>
-              <div className="text-muted" style={{ fontSize: 11, marginTop: 8 }}>{s.time}</div>
+              <div className="text-muted" style={{ fontSize: 12.5, marginTop: 8 }}>{s.time}</div>
             </Blueprint>
           ))}
         </div>
@@ -100,31 +102,31 @@ export default function Start() {
       <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 24, alignItems: "start" }}>
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 4px" }}>What you upload</h6>
-          <p className="text-muted" style={{ fontSize: 12.5, margin: "0 0 14px" }}>An actual file from your course. Nothing needs reformatting.</p>
+          <p className="text-muted" style={{ fontSize: 14, margin: "0 0 14px" }}>An actual file from your course. Nothing needs reformatting.</p>
           <div className="va-surface-box">
-            <div className="text-muted" style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 8 }}>DAT4100_Assignment3.docx</div>
+            <div className="text-muted" style={{ fontSize: 12.5, letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 8 }}>DAT4100_Assignment3.docx</div>
             <p style={{ margin: "0 0 8px" }}><strong>Assignment 3 — Model Card Audit (12 points)</strong></p>
             <p style={{ margin: "0 0 8px" }}>You are auditing a deployed classifier on behalf of a stakeholder. Using the partial model card provided, produce a structured audit that identifies fairness gaps, robustness gaps, and documentation gaps. Justify every finding against evidence in the card and prioritise your recommendations.</p>
             <p style={{ margin: "0 0 8px" }}><strong>Rubric</strong> — Fairness gaps with evidence (3) · Robustness under subgroup shift (3) · Documentation completeness (3) · Prioritisation quality (3)</p>
             <p style={{ margin: 0 }} className="text-muted">Attached: instructor_model_answer.docx, roster.csv</p>
           </div>
-          <div className="text-muted" style={{ fontSize: 12, marginTop: 12, lineHeight: 1.5 }}>
+          <div className="text-muted" style={{ fontSize: 14, marginTop: 12, lineHeight: 1.5 }}>
             Also accepted: Word, PDF, plain text, or a previous semester's exam. If you have no model answer, the system drafts one for you to correct — it is required, because it is how the rubric check works.
           </div>
         </Blueprint>
 
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 4px" }}>What comes back</h6>
-          <p className="text-muted" style={{ fontSize: 12.5, margin: "0 0 14px" }}>One version per student. Same task underneath, different world on top.</p>
+          <p className="text-muted" style={{ fontSize: 14, margin: "0 0 14px" }}>One version per student. Same task underneath, different world on top.</p>
           <div className="va-stack" style={{ gap: 10 }}>
             {excerpts.map((e) => (
               <div key={e.id} className="va-quote">
-                <div className="text-muted" style={{ fontSize: 11, marginBottom: 3 }}>{e.id} · {e.who}</div>
+                <div className="text-muted" style={{ fontSize: 12.5, marginBottom: 3 }}>{e.id} · {e.who}</div>
                 {e.text}
               </div>
             ))}
           </div>
-          <div className="text-muted" style={{ fontSize: 12, marginTop: 12, lineHeight: 1.5 }}>
+          <div className="text-muted" style={{ fontSize: 14, marginTop: 12, lineHeight: 1.5 }}>
             Every version keeps the same four rubric criteria, the same number of findings to produce, and the same reading level. Only the scenario, the stakeholder and the domain move.
           </div>
         </Blueprint>
@@ -132,7 +134,7 @@ export default function Start() {
 
       <Blueprint style={{ padding: "22px 24px" }}>
         <h6 style={{ margin: "0 0 4px" }}>How to read what comes back</h6>
-        <p className="text-muted" style={{ fontSize: 12.5, margin: "0 0 18px" }}>Four checks. You only need to act on the ones that are not green.</p>
+        <p className="text-muted" style={{ fontSize: 14, margin: "0 0 18px" }}>Four checks. You only need to act on the ones that are not green.</p>
         <table className="table">
           <thead>
             <tr><th style={{ width: "24%" }}>Check</th><th style={{ width: "30%" }}>Reads as</th><th>If it fails</th><th style={{ width: "22%" }}>What you do</th></tr>
@@ -153,7 +155,7 @@ export default function Start() {
       <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 24, alignItems: "start" }}>
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 12px" }}>Analysing the submissions</h6>
-          <div className="va-stack" style={{ gap: 14, fontSize: 13.5, lineHeight: 1.55 }}>
+          <div className="va-stack" style={{ gap: 14, fontSize: 15.5, lineHeight: 1.55 }}>
             {ANALYSING.map((x) => (
               <div key={x.t}><div className="va-heading-15">{x.t}</div><div className="text-muted">{x.b}</div></div>
             ))}
@@ -161,7 +163,7 @@ export default function Start() {
         </Blueprint>
         <Blueprint style={{ padding: "20px 22px" }}>
           <h6 style={{ margin: "0 0 12px" }}>Common questions</h6>
-          <div className="va-stack" style={{ gap: 14, fontSize: 13.5, lineHeight: 1.55 }}>
+          <div className="va-stack" style={{ gap: 14, fontSize: 15.5, lineHeight: 1.55 }}>
             {FAQ.map((x) => (
               <div key={x.t}><div className="va-heading-15">{x.t}</div><div className="text-muted">{x.b}</div></div>
             ))}

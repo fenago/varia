@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+/* type-scale: applied */
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Blueprint, BlueprintButton, CopyField, Dialog, EmptyState, SkillTags, Stamp, ShareCredential } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
@@ -66,18 +67,18 @@ export default function Credential() {
         <Blueprint style={{ padding: "22px 24px" }}>
           <div className="va-kicker">Credential</div>
           <h3 style={{ margin: "6px 0 8px" }}>{view.blueprint.name}</h3>
-          <p style={{ margin: "0 0 12px", fontSize: 14.5, lineHeight: 1.6, maxWidth: "70ch" }}>
+          <p style={{ margin: "0 0 12px", fontSize: 16, lineHeight: 1.6, maxWidth: "70ch" }}>
             A credential is issued only when three things are true: the instructor graded the work, an employer validated the blueprint's rubric, and an employer endorsed this sample as meeting their bar. It is an Open Badges 3.0 credential from {view.course.instructor.institution} with the employer's endorsement attached as its own credential.
           </p>
           {elig.eligible ? (
             <div className="va-btn-row">
               <BlueprintButton onClick={issue} disabled={busy}>{busy ? "Issuing…" : "Issue the credential"}</BlueprintButton>
-              <span className="text-muted" style={{ fontSize: 12.5 }}>Signs with the workspace key and records an audit entry.</span>
+              <span className="text-muted" style={{ fontSize: 14 }}>Signs with the workspace key and records an audit entry.</span>
             </div>
           ) : (
             <>
               <Stamp gate="watch">Not yet eligible</Stamp>
-              <ul style={{ margin: "12px 0 0", paddingLeft: 18, display: "flex", flexDirection: "column", gap: 8, fontSize: 13.5 }}>
+              <ul style={{ margin: "12px 0 0", paddingLeft: 18, display: "flex", flexDirection: "column", gap: 8, fontSize: 15.5 }}>
                 {elig.missing.map((m) => {
                   const f = fixLink(m, record.variantId, view.blueprint.id);
                   return (
@@ -88,13 +89,13 @@ export default function Credential() {
                 })}
               </ul>
               {elig.missing.includes(MISSING.suggested) && (
-                <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 12.5 }}>
+                <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 14 }}>
                   AI-suggested grades never qualify. An instructor must save the grade.
                 </p>
               )}
             </>
           )}
-          {error && <p style={{ margin: "10px 0 0", color: "#8d4a3c", fontSize: 13 }}>{error}</p>}
+          {error && <p style={{ margin: "10px 0 0", color: "#8d4a3c", fontSize: 15 }}>{error}</p>}
         </Blueprint>
       </div>
     );
@@ -116,14 +117,14 @@ export default function Credential() {
         </div>
         <div className="va-kicker" style={{ marginTop: 16 }}>Verified work sample credential</div>
         <h3 style={{ margin: "6px 0 8px", color: "#fff", maxWidth: "34ch" }}>{view.blueprint.name}</h3>
-        <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: "#d5e0ea", maxWidth: "72ch" }}>{view.blueprint.construct}</p>
-        <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, fontSize: 13 }} className="va-split">
+        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, color: "#d5e0ea", maxWidth: "72ch" }}>{view.blueprint.construct}</p>
+        <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, fontSize: 15 }} className="va-split">
           <div><div className="va-kicker">Holder</div><div style={{ color: "#fff", fontFamily: asLearner ? undefined : "ui-monospace, monospace" }}>{holder}</div></div>
           <div><div className="va-kicker">Issued</div><div style={{ color: "#fff" }}>{fmt(cred.issuedAt)} · {cred.issuedBy}</div></div>
           <div><div className="va-kicker">Credential id</div><div style={{ color: "#fff", fontFamily: "ui-monospace, monospace" }}>{cred.id}</div></div>
           <div><div className="va-kicker">Course</div><div style={{ color: "#fff" }}>{view.course.code} · {view.course.term}</div></div>
         </div>
-        {revoked && <p style={{ margin: "12px 0 0", color: "#f2c4b8", fontSize: 13 }}>Revoked {fmt(cred.revokedAt!)}: {cred.revocationReason}</p>}
+        {revoked && <p style={{ margin: "12px 0 0", color: "#f2c4b8", fontSize: 15 }}>Revoked {fmt(cred.revokedAt!)}: {cred.revocationReason}</p>}
       </Blueprint>
 
       <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 20, alignItems: "start" }}>
@@ -153,28 +154,28 @@ export default function Credential() {
           <h6 style={{ margin: "0 0 10px" }}>Employer endorsement{endorsements.length === 1 ? "" : "s"}</h6>
           {endorsements.map((e) => (
             <div key={e.id} style={{ borderTop: "1px solid var(--color-divider)", padding: "10px 0" }}>
-              <div style={{ fontFamily: "var(--font-heading)", fontSize: 16 }}>{e.organisation}</div>
-              <div className="text-muted" style={{ fontSize: 12.5 }}>{e.reviewerName}{e.reviewerEmail ? ` · ${e.reviewerEmail}` : ""} · {fmt(e.at)} · {e.score} / 5 · meets their bar</div>
-              <p style={{ margin: "6px 0 0", fontSize: 13.5, lineHeight: 1.55 }}>{e.comment}</p>
+              <div style={{ fontFamily: "var(--font-heading)", fontSize: 18 }}>{e.organisation}</div>
+              <div className="text-muted" style={{ fontSize: 14 }}>{e.reviewerName}{e.reviewerEmail ? ` · ${e.reviewerEmail}` : ""} · {fmt(e.at)} · {e.score} / 5 · meets their bar</div>
+              <p style={{ margin: "6px 0 0", fontSize: 15.5, lineHeight: 1.55 }}>{e.comment}</p>
             </div>
           ))}
           <div style={{ marginTop: 10 }}>
             <div className="va-kicker" style={{ marginBottom: 6 }}>Validated by</div>
-            <div style={{ fontSize: 13 }}>{view.validations.filter((v) => v.status === "validated").map((v) => `${v.organisation} (${v.reviewerName}, ${v.reviewerRole})`).join("; ") || "—"}</div>
+            <div style={{ fontSize: 15 }}>{view.validations.filter((v) => v.status === "validated").map((v) => `${v.organisation} (${v.reviewerName}, ${v.reviewerRole})`).join("; ") || "—"}</div>
           </div>
         </Blueprint>
       </div>
 
       <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 8px" }}>How to verify</h6>
-        <p style={{ margin: "0 0 10px", fontSize: 13.5, lineHeight: 1.6, maxWidth: "76ch" }}>
+        <p style={{ margin: "0 0 10px", fontSize: 15.5, lineHeight: 1.6, maxWidth: "76ch" }}>
           This is an Open Badges 3.0 credential (a W3C Verifiable Credential) issued by {cred.issuedBy}, with one EndorsementCredential per employer endorsement. The achievement is signed with key {cred.signedWithKid}; the underlying evidence record verifies at the link below. {ach.proof?.description ?? ""}
         </p>
         <CopyField label="Verify link" value={typeof location !== "undefined" ? `${location.origin}/verify/${record.id}` : `/verify/${record.id}`} />
         <div style={{ marginTop: 8 }}>
           <CopyField label="Credential link" value={link} />
         </div>
-        <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 12.5 }}>
+        <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 14 }}>
           Wallet import (Credly, Badgr, an Open Badges 3.0 wallet) needs the college's issuer profile published at {String(ach.id ?? "").split("/credential/")[0] || "the issuer id"}. Until then, the downloaded bundle verifies against the key embedded in the workspace.
         </p>
       </Blueprint>
@@ -183,7 +184,7 @@ export default function Credential() {
         {revoked ? (
           <Blueprint className="va-no-print" style={{ padding: "16px 20px" }}>
             <h6 style={{ margin: "0 0 6px" }}>Share this credential</h6>
-            <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>This credential was revoked, so sharing is switched off. The verify page states the revocation and its reason.</p>
+            <p className="text-muted" style={{ margin: 0, fontSize: 15 }}>This credential was revoked, so sharing is switched off. The verify page states the revocation and its reason.</p>
           </Blueprint>
         ) : (
           <ShareCredential
@@ -230,7 +231,7 @@ export default function Credential() {
           </>
         }
       >
-        <p style={{ margin: "0 0 8px", fontSize: 13.5 }}>Revocation is recorded in this workspace and shown on the verify page. The reason is required.</p>
+        <p style={{ margin: "0 0 8px", fontSize: 15.5 }}>Revocation is recorded in this workspace and shown on the verify page. The reason is required.</p>
         <input className="input" placeholder="Reason" value={reason} onChange={(e) => setReason(e.target.value)} />
       </Dialog>
     </div>

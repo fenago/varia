@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
+/* type-scale: applied */
 import { useNavigate } from "react-router-dom";
 import { Blueprint, BlueprintButton, Dialog, EmptyState, Pill, ProgressBlock, Stamp } from "@ui/components";
 import { Info, Term } from "@ui/components/Info";
@@ -122,7 +123,7 @@ function CheckRow({ check, p }: { check: Check; p: Property }) {
       </div>
       <div>
         <div className="va-row-flex" style={{ gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-          <span style={{ fontFamily: "var(--font-heading)", fontSize: 16 }}>{check.label}</span>
+          <span style={{ fontFamily: "var(--font-heading)", fontSize: 18 }}>{check.label}</span>
           <Info term={plain.term} />
           <Term term={p === "p1" ? "cosine" : p === "p2" ? "equivalence" : p === "p3" ? "rubric-stability" : "sigma-flesch"} className="va-muted-115">
             {check.metricLabel}
@@ -130,7 +131,7 @@ function CheckRow({ check, p }: { check: Check; p: Property }) {
         </div>
         <div className="va-muted-125" style={{ marginTop: 3, lineHeight: 1.5 }}>{plain.meaning}</div>
         {gate !== "pass" && check.note && (
-          <div style={{ marginTop: 4, fontSize: 12.5, lineHeight: 1.5, color: gate === "fail" ? RED : undefined }} className={gate === "fail" ? undefined : "text-muted"}>
+          <div style={{ marginTop: 4, fontSize: 14, lineHeight: 1.5, color: gate === "fail" ? RED : undefined }} className={gate === "fail" ? undefined : "text-muted"}>
             {check.note}
           </div>
         )}
@@ -339,7 +340,7 @@ export default function Report() {
     <div className="va-page">
       {intro}
 
-      {verdict}
+      <div data-walk="release">{verdict}</div>
 
       {!inFlight && !released && !report.releasable && fixIsJargon && (
         <div className="va-muted-125" style={{ marginTop: -8 }}>
@@ -351,7 +352,7 @@ export default function Report() {
         </div>
       )}
       {run.status === "partial" && !inFlight && (
-        <div style={{ fontSize: 12.5, color: RED }}>
+        <div style={{ fontSize: 14, color: RED }}>
           {run.n - runCompletion(run).generated} of {run.n} versions are missing and left out of the checks.
           {runCompletion(run).resumable ? (
             <button type="button" className="btn btn-secondary" style={{ marginLeft: 10 }} onClick={() => void ws.resumeRun(run.id).catch(() => {})}>
@@ -360,7 +361,7 @@ export default function Report() {
           ) : null}
         </div>
       )}
-      {error && <div style={{ color: RED, fontSize: 13 }} role="alert">{error}</div>}
+      {error && <div style={{ color: RED, fontSize: 15 }} role="alert">{error}</div>}
 
       <Blueprint style={{ padding: "20px 22px" }}>
         <div className="va-row-flex" style={{ gap: 10, alignItems: "baseline", marginBottom: 4 }}>
@@ -401,8 +402,8 @@ export default function Report() {
 
             <div>
               <div className="va-row-flex" style={{ gap: 12, marginBottom: 6 }}>
-                <span style={{ fontFamily: "var(--font-heading)", fontSize: 15 }}>Every version, on all four checks</span>
-                <span className="text-muted" style={{ fontSize: 12 }}>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: 17 }}>Every version, on all four checks</span>
+                <span className="text-muted" style={{ fontSize: 14 }}>
                   {scorable} versions{outliers.length ? ` · the ${numberWord(outliers.length)} named version${outliers.length === 1 ? " is" : "s are"} drawn solid` : " · none named"}
                 </span>
                 <div className="va-btn-row" style={{ marginLeft: "auto", gap: 8 }}>
@@ -437,7 +438,7 @@ export default function Report() {
 
             <div style={{ overflowX: "auto" }}>
               <div className="va-row-flex" style={{ gap: 8, marginBottom: 6 }}>
-                <span style={{ fontFamily: "var(--font-heading)", fontSize: 15 }}>Each version's numbers</span>
+                <span style={{ fontFamily: "var(--font-heading)", fontSize: 17 }}>Each version's numbers</span>
                 <span className="va-muted-12">Reading ease <Info term="flesch" />, vocabulary variety, solution steps, same-skill score <Info term="equivalence" />, and why the judge scored it that way.</span>
               </div>
               <table className="table">
@@ -465,7 +466,7 @@ export default function Report() {
                       </tr>
                       {openWhy === v.id && (
                         <tr>
-                          <td colSpan={8} style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+                          <td colSpan={8} style={{ fontSize: 14, lineHeight: 1.5 }}>
                             {v.metrics.judgeSamples.map((s, i) => (
                               <div key={i} style={{ marginBottom: 6 }}>
                                 <span className="va-kicker">Judge sample {i + 1}</span> {Object.entries(s.dimensionScores).map(([d, n]) => `${d}: ${n}`).join(" · ")}

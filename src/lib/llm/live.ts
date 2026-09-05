@@ -404,9 +404,20 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
     async extractBlueprint(input: ExtractInput): Promise<BlueprintDraft> {
       const started = Date.now();
       const { system, user } = buildExtractPrompt(input);
+      // PDFs go in as document blocks so the model reads the pages themselves (layout, tables,
+      // scans). The extracted/OCR text follows as a hint and as the source for non-PDF files.
+      const docs = (input.documents ?? []).filter((d) => d.mediaType === "application/pdf" && d.base64.length > 0).slice(0, 8);
+      const content: Anthropic.Beta.Messages.BetaContentBlockParam[] = [
+        ...docs.map((d) => ({
+          type: "document" as const,
+          source: { type: "base64" as const, media_type: "application/pdf" as const, data: d.base64 },
+          title: d.name,
+        })),
+        { type: "text" as const, text: user },
+      ];
       const wire = await callStream(
         "extract",
-        { model: generatorModel, max_tokens: MAX_TOKENS_LONG, system, messages: [{ role: "user", content: user }] },
+        { model: generatorModel, max_tokens: MAX_TOKENS_LONG, system, messages: [{ role: "user", content }] },
         betaZodOutputFormat(BlueprintDraftSchema),
         input.signal,
         input.onUsage,

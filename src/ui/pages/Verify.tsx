@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+/* type-scale: applied */
 import { Link, useParams } from "react-router-dom";
 import { Blueprint, EmptyState, Stamp } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
@@ -111,10 +112,10 @@ export default function Verify() {
         <div>
           <div className="va-kicker">Evidence record</div>
           <div style={{ fontFamily: "var(--font-heading)", fontSize: 30, lineHeight: 1.05, marginTop: 4 }}>{record.id}</div>
-          <div className="text-muted" style={{ fontSize: 13, marginTop: 6 }}>
+          <div className="text-muted" style={{ fontSize: 15, marginTop: 6 }}>
             Issued {formatDate(record.issuedAt)} by {summary.issuedBy}
           </div>
-          <div className="text-muted" style={{ fontSize: 12.5, marginTop: 4 }}>
+          <div className="text-muted" style={{ fontSize: 14, marginTop: 4 }}>
             {source === "bundle"
               ? "Loaded from the share link. The record, its content and the issuer's public key were supplied by the link itself, which is weaker than a public verify endpoint."
               : "Loaded from this browser's workspace. A public verify endpoint would fetch the record and the institution's published key instead."}
@@ -132,7 +133,7 @@ export default function Verify() {
           ) : (
             <Stamp gate="fail">Signature invalid</Stamp>
           )}
-          <div className="text-muted" style={{ fontSize: 12, marginTop: 8 }}>
+          <div className="text-muted" style={{ fontSize: 14, marginTop: 8 }}>
             {outcome?.sigOk === null ? "Unsigned · hash only" : outcome?.sigOk ? `Signed · ${bridge?.signedWithKid}` : publicJwk ? "Signature did not verify" : "Signed, but no public key available to check"}
           </div>
         </div>
@@ -147,7 +148,7 @@ export default function Verify() {
                 <td className="va-heading-15" style={{ width: "34%" }}>Learner</td>
                 <td>
                   <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>{bridge?.learnerId ?? "—"}</span>
-                  <div className="text-muted" style={{ fontSize: 12 }}>Stable identifier. The name is not part of verification.</div>
+                  <div className="text-muted" style={{ fontSize: 14 }}>Stable identifier. The name is not part of verification.</div>
                 </td>
               </tr>
               <tr>
@@ -162,7 +163,7 @@ export default function Verify() {
                 <td className="va-heading-15">Assessment</td>
                 <td>
                   {summary.blueprint}
-                  <div className="text-muted" style={{ fontSize: 12.5 }}>{summary.construct}</div>
+                  <div className="text-muted" style={{ fontSize: 14 }}>{summary.construct}</div>
                 </td>
               </tr>
               <tr>
@@ -202,9 +203,9 @@ export default function Verify() {
           {summary.validations.length ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {summary.validations.map((v) => (
-                <div key={`${v.organisation}-${v.reviewedAt}`} style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap", fontSize: 13.5 }}>
+                <div key={`${v.organisation}-${v.reviewedAt}`} style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap", fontSize: 15.5 }}>
                   <Stamp gate="pass">Validated by {v.organisation}</Stamp>
-                  <span className="text-muted" style={{ fontSize: 12.5 }}>
+                  <span className="text-muted" style={{ fontSize: 14 }}>
                     {v.reviewerName}, {v.reviewerRole} · {formatDate(v.reviewedAt)}
                     {v.attested ? " · attested: rubric reflects what we hire for" : ""}
                   </span>
@@ -221,23 +222,23 @@ export default function Verify() {
           {summary.checks.length ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {summary.checks.map((c) => (
-                <div key={c.property} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 13.5 }}>
+                <div key={c.property} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 15.5 }}>
                   <Stamp gate={gateOf(c.gate)}>{c.gate === "pass" ? "Pass" : c.gate === "fail" ? "Over threshold" : "Advisory"}</Stamp>
                   <span>{c.label}</span>
-                  <span className="text-muted" style={{ fontSize: 12, marginLeft: "auto" }}>{c.metricLabel}</span>
+                  <span className="text-muted" style={{ fontSize: 14, marginLeft: "auto" }}>{c.metricLabel}</span>
                 </div>
               ))}
-              {summary.joint !== null && <div className="text-muted" style={{ fontSize: 12.5 }}>Composite J {summary.joint.toFixed(2)}</div>}
+              {summary.joint !== null && <div className="text-muted" style={{ fontSize: 14 }}>Composite J {summary.joint.toFixed(2)}</div>}
             </div>
           ) : (
-            <div className="text-muted" style={{ fontSize: 13 }}>No integrity report attached.</div>
+            <div className="text-muted" style={{ fontSize: 15 }}>No integrity report attached.</div>
           )}
         </Blueprint>
       </div>
 
       <Blueprint style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 8px" }}>Record this verification</h6>
-        <p className="text-muted" style={{ margin: "0 0 12px", fontSize: 13, maxWidth: "70ch" }}>
+        <p className="text-muted" style={{ margin: "0 0 12px", fontSize: 15, maxWidth: "70ch" }}>
           Verifying is the observed form of adoption. Recording it here adds an event to the issuing workspace when you are in it; a public endpoint would record it for the institution. This verify link is the canonical public URL for the record: it is what the badge image, the credential and every share button point at.
         </p>
         <div className="va-btn-row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
@@ -248,15 +249,15 @@ export default function Verify() {
           <button type="button" className="btn btn-primary" disabled={!outcome || !!recorded} onClick={recordVerification}>
             {recorded ? "Recorded" : "Record this verification"}
           </button>
-          {recorded && <span className="text-muted" style={{ fontSize: 12.5 }}>Logged {formatDate(recorded)} on the audit trail.</span>}
+          {recorded && <span className="text-muted" style={{ fontSize: 14 }}>Logged {formatDate(recorded)} on the audit trail.</span>}
         </div>
       </Blueprint>
 
       <Blueprint style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 6px" }}>How this was checked</h6>
-        <div style={{ fontSize: 13, lineHeight: 1.6, maxWidth: "76ch" }}>
+        <div style={{ fontSize: 15, lineHeight: 1.6, maxWidth: "76ch" }}>
           <div>
-            Hash <code style={{ fontSize: 12 }}>{record.hash}</code>
+            Hash <code style={{ fontSize: 14 }}>{record.hash}</code>
           </div>
           <div className="text-muted">
             The canonical content (learner, course, task, criterion scores, integrity checks, validation ids, issue date) was rebuilt and hashed with SHA-256, then compared to the hash the record carries.

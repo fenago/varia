@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+/* type-scale: applied */
 import { useNavigate, useParams } from "react-router-dom";
 import { Blueprint, BlueprintButton, CopyField, Dialog, EmptyState, OutcomeStamps, SkillTags, Stamp } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
@@ -33,7 +34,7 @@ function ValidationStamps({ validations }: { validations: EmployerValidation[] }
     return (
       <div>
         <Stamp gate="watch">Not yet validated by an employer partner</Stamp>
-        <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 13, lineHeight: 1.55, maxWidth: "70ch" }}>
+        <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.55, maxWidth: "70ch" }}>
           Validation happens once at the assessment blueprint. When an employer partner signs off on the rubric and
           scenario bank, every version generated from that blueprint carries their validation, including this one.
         </p>
@@ -50,13 +51,13 @@ function ValidationStamps({ validations }: { validations: EmployerValidation[] }
             </Stamp>
             {v.attested && <Stamp gate="pass">Attested: rubric reflects what we hire for</Stamp>}
           </div>
-          <div style={{ fontSize: 13.5 }}>
+          <div style={{ fontSize: 15.5 }}>
             {v.reviewerName}
             {v.reviewerRole ? <span className="text-muted"> · {v.reviewerRole}</span> : null}
             <span className="text-muted"> · {formatDate(v.reviewedAt)}</span>
           </div>
           {v.constructComment && (
-            <div className="text-muted" style={{ fontSize: 12.5, lineHeight: 1.5, maxWidth: "70ch" }}>
+            <div className="text-muted" style={{ fontSize: 14, lineHeight: 1.5, maxWidth: "70ch" }}>
               “{v.constructComment}”
             </div>
           )}
@@ -146,7 +147,7 @@ export default function Evidence() {
       </div>
 
       {/* Header block */}
-      <Blueprint className="va-print-block" style={{ padding: "22px 24px" }}>
+      <Blueprint className="va-print-block" style={{ padding: "22px 24px" }} data-walk="record">
         <div className="va-row-flex" style={{ gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
           {issued ? <Stamp gate="pass">Evidence record</Stamp> : <Stamp gate="watch">Not yet issued</Stamp>}
           {view.submission?.origin === "ai-sample" && (
@@ -155,19 +156,19 @@ export default function Evidence() {
             </Stamp>
           )}
           {issued && (
-            <span style={{ fontFamily: "var(--font-heading)", fontSize: 20, letterSpacing: ".02em" }}>{record!.id}</span>
+            <span style={{ fontFamily: "var(--font-heading)", fontSize: 22, letterSpacing: ".02em" }}>{record!.id}</span>
           )}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: "10px 24px", fontSize: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: "10px 24px", fontSize: 16 }}>
           <div>
             <div className="va-kicker" style={{ marginBottom: 2 }}>Student</div>
-            <div style={{ fontFamily: "var(--font-heading)", fontSize: 19 }}>{student.name}</div>
+            <div style={{ fontFamily: "var(--font-heading)", fontSize: 21 }}>{student.name}</div>
           </div>
           <div>
             <div className="va-kicker" style={{ marginBottom: 2 }}>Course</div>
             <div>
               {course.code} · {course.term}
-              <div className="text-muted" style={{ fontSize: 12.5 }}>{course.title}</div>
+              <div className="text-muted" style={{ fontSize: 14 }}>{course.title}</div>
             </div>
           </div>
           <div>
@@ -176,7 +177,7 @@ export default function Evidence() {
               {issued ? (
                 <>
                   {formatDate(record!.issuedAt)}
-                  <div className="text-muted" style={{ fontSize: 12.5 }}>{record!.issuedBy}</div>
+                  <div className="text-muted" style={{ fontSize: 14 }}>{record!.issuedBy}</div>
                 </>
               ) : (
                 <span className="text-muted">Not issued yet</span>
@@ -187,7 +188,7 @@ export default function Evidence() {
             <div className="va-kicker" style={{ marginBottom: 2 }}>Institution</div>
             <div>
               {course.instructor.institution}
-              <div className="text-muted" style={{ fontSize: 12.5 }}>
+              <div className="text-muted" style={{ fontSize: 14 }}>
                 {course.instructor.name} · {course.instructor.role}
               </div>
             </div>
@@ -203,7 +204,7 @@ export default function Evidence() {
           </BlueprintButton>
         )}
         {!grade && (
-          <span className="text-muted" style={{ fontSize: 12.5 }}>
+          <span className="text-muted" style={{ fontSize: 14 }}>
             This submission has not been graded, so a record cannot be issued yet.
           </span>
         )}
@@ -260,10 +261,10 @@ export default function Evidence() {
             Revoke
           </button>
         )}
-        {error && <span style={{ color: "#8d4a3c", fontSize: 12.5 }}>{error}</span>}
+        {error && <span style={{ color: "#8d4a3c", fontSize: 14 }}>{error}</span>}
       </div>
       {issued && (
-        <div className="va-no-print" style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap", fontSize: 12.5 }}>
+        <div className="va-no-print" style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap", fontSize: 14 }}>
           <Stamp gate={bridge?.signature ? "pass" : "watch"}>{bridge?.signature ? `Signed · ${bridge.signedWithKid}` : "Unsigned"}</Stamp>
           <span className="text-muted">
             Learner id <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>{bridge?.learnerId ?? "—"}</span>
@@ -280,8 +281,8 @@ export default function Evidence() {
       {/* What was assessed */}
       <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 6px" }}>What was assessed</h6>
-        <div style={{ fontFamily: "var(--font-heading)", fontSize: 17, marginBottom: 6 }}>{blueprint.name}</div>
-        <p style={{ margin: "0 0 10px", fontSize: 14, lineHeight: 1.6, maxWidth: "76ch" }}>{blueprint.construct}</p>
+        <div style={{ fontFamily: "var(--font-heading)", fontSize: 19, marginBottom: 6 }}>{blueprint.name}</div>
+        <p style={{ margin: "0 0 10px", fontSize: 16, lineHeight: 1.6, maxWidth: "76ch" }}>{blueprint.construct}</p>
         {blueprint.constructDimensions?.length > 0 && (
           <div className="va-tags">
             {blueprint.constructDimensions.map((d) => (
@@ -296,7 +297,7 @@ export default function Evidence() {
       {/* Task */}
       <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 10px" }}>The task this student received</h6>
-        <div className="va-surface-box" style={{ fontSize: 14, lineHeight: 1.65 }}>
+        <div className="va-surface-box" style={{ fontSize: 16, lineHeight: 1.65 }}>
           {paragraphs(variant.text).map((p, i) => (
             <p key={i} style={{ margin: "0 0 10px" }}>
               {p}
@@ -319,7 +320,7 @@ export default function Evidence() {
       <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
         <div className="va-row-flex" style={{ marginBottom: 10, alignItems: "baseline", gap: 10 }}>
           <h6 style={{ margin: 0 }}>Rubric and result</h6>
-          <span className="text-muted" style={{ fontSize: 12 }}>
+          <span className="text-muted" style={{ fontSize: 14 }}>
             {blueprint.rubric.length} criteria · 4 levels · the same rubric for every version
           </span>
         </div>
@@ -345,9 +346,9 @@ export default function Evidence() {
                 );
               })}
               <tr>
-                <td style={{ fontFamily: "var(--font-heading)", fontSize: 15 }}>Total</td>
+                <td style={{ fontFamily: "var(--font-heading)", fontSize: 17 }}>Total</td>
                 <td />
-                <td style={{ fontFamily: "var(--font-heading)", fontSize: 15 }}>
+                <td style={{ fontFamily: "var(--font-heading)", fontSize: 17 }}>
                   {total} / {maxTotal}
                 </td>
               </tr>
@@ -356,13 +357,13 @@ export default function Evidence() {
         ) : (
           <div>
             <Stamp gate="watch">Not graded</Stamp>
-            <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 13 }}>
+            <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 15 }}>
               The rubric result appears here once the instructor has scored the submission.
             </p>
           </div>
         )}
         {grade && (
-          <div className="text-muted" style={{ fontSize: 12, marginTop: 8 }}>
+          <div className="text-muted" style={{ fontSize: 14, marginTop: 8 }}>
             Graded {formatDate(grade.gradedAt)} by {grade.by}
           </div>
         )}
@@ -373,13 +374,13 @@ export default function Evidence() {
         <div className="va-row-flex" style={{ marginBottom: 8, alignItems: "baseline", gap: 10 }}>
           <h6 style={{ margin: 0 }}>Skills evidenced</h6>
           {challenge && (
-            <span className="text-muted" style={{ fontSize: 12 }}>
+            <span className="text-muted" style={{ fontSize: 14 }}>
               on {challenge.organisation}'s challenge “{challenge.title}”
             </span>
           )}
         </div>
         {skills.length === 0 ? (
-          <span className="text-muted" style={{ fontSize: 13 }}>No skills tagged on this blueprint's rubric yet.</span>
+          <span className="text-muted" style={{ fontSize: 15 }}>No skills tagged on this blueprint's rubric yet.</span>
         ) : (
           <span className="va-tags">
             {skills.map((s) => (
@@ -393,7 +394,7 @@ export default function Evidence() {
             ))}
           </span>
         )}
-        <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 12.5, lineHeight: 1.5, maxWidth: "70ch" }}>
+        <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 14, lineHeight: 1.5, maxWidth: "70ch" }}>
           Each rubric criterion maps to skills an employer recognises. They travel with the record as Open Badges alignments.
         </p>
       </Blueprint>
@@ -405,7 +406,7 @@ export default function Evidence() {
           {issued && <Stamp gate={sample?.submissionIncluded ? "pass" : "watch"}>{sample?.submissionIncluded ? "Included by the student" : "Withheld"}</Stamp>}
         </div>
         {sample?.submissionIncluded && sample.submissionText ? (
-          <div className="va-surface-box" style={{ fontSize: 13.5, lineHeight: 1.65 }}>
+          <div className="va-surface-box" style={{ fontSize: 15.5, lineHeight: 1.65 }}>
             {paragraphs(sample.submissionText).map((p, i) => (
               <p key={i} style={{ margin: "0 0 10px" }}>
                 {p}
@@ -413,7 +414,7 @@ export default function Evidence() {
             ))}
           </div>
         ) : (
-          <p className="text-muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.55, maxWidth: "70ch" }}>
+          <p className="text-muted" style={{ margin: 0, fontSize: 15, lineHeight: 1.55, maxWidth: "70ch" }}>
             The student has not included their submission. They can choose to from their portfolio or share page; the record's hash then covers it.
           </p>
         )}
@@ -431,7 +432,7 @@ export default function Evidence() {
         {endorsements.length === 0 ? (
           <div>
             <Stamp gate="watch">Not yet endorsed</Stamp>
-            <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 13, lineHeight: 1.55, maxWidth: "70ch" }}>
+            <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.55, maxWidth: "70ch" }}>
               An employer who receives this sample can score it against their own bar from their talent view. That is a stronger signal than the rubric score.
             </p>
           </div>
@@ -442,15 +443,15 @@ export default function Evidence() {
                 <div className="va-row-flex" style={{ gap: 8, flexWrap: "wrap" }}>
                   <Stamp gate="pass">Endorsed by {e.organisation}</Stamp>
                   <Stamp gate={e.meetsBar ? "pass" : "watch"}>{e.meetsBar ? "Meets their hiring bar" : "Below their hiring bar"}</Stamp>
-                  <span style={{ fontFamily: "var(--font-heading)", fontSize: 16 }}>{e.score} / 5</span>
+                  <span style={{ fontFamily: "var(--font-heading)", fontSize: 18 }}>{e.score} / 5</span>
                 </div>
-                <div style={{ fontSize: 13.5 }}>
+                <div style={{ fontSize: 15.5 }}>
                   {e.reviewerName}
                   {e.reviewerEmail ? <span className="text-muted"> · {e.reviewerEmail}</span> : null}
                   <span className="text-muted"> · {formatDate(e.at)}</span>
                 </div>
                 {e.comment && (
-                  <div className="text-muted" style={{ fontSize: 12.5, lineHeight: 1.5, maxWidth: "70ch" }}>
+                  <div className="text-muted" style={{ fontSize: 14, lineHeight: 1.5, maxWidth: "70ch" }}>
                     “{e.comment}”
                   </div>
                 )}
@@ -464,18 +465,18 @@ export default function Evidence() {
       <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 12px" }}>Outcomes</h6>
         {outcomes.length === 0 ? (
-          <p className="text-muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.55, maxWidth: "70ch" }}>
+          <p className="text-muted" style={{ margin: 0, fontSize: 15, lineHeight: 1.55, maxWidth: "70ch" }}>
             Nothing logged yet. Interviews, offers, hires and ramp time are recorded here by the student or the employer, where they happen.
           </p>
         ) : (
           <>
             <OutcomeStamps outcomes={outcomes} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10, fontSize: 13.5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10, fontSize: 15.5 }}>
               {outcomes.map((o) => (
                 <div key={o.id} style={{ display: "flex", gap: 10, alignItems: "baseline", flexWrap: "wrap" }}>
                   <span style={{ fontFamily: "var(--font-heading)", textTransform: "capitalize" }}>{o.kind}</span>
                   <span>{o.organisation}</span>
-                  <span className="text-muted" style={{ fontSize: 12.5 }}>
+                  <span className="text-muted" style={{ fontSize: 14 }}>
                     {formatDate(o.at)} · logged by the {o.by}
                     {o.onboardingHours != null ? ` · ${o.onboardingHours} h to productive` : ""}
                     {o.note ? ` · ${o.note}` : ""}
@@ -490,7 +491,7 @@ export default function Evidence() {
       {/* Integrity */}
       <Blueprint className="va-print-block" style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 6px" }}>Integrity of the assessment set</h6>
-        <p className="text-muted" style={{ margin: "0 0 12px", fontSize: 12.5, lineHeight: 1.5, maxWidth: "70ch" }}>
+        <p className="text-muted" style={{ margin: "0 0 12px", fontSize: 14, lineHeight: 1.5, maxWidth: "70ch" }}>
           This version was one of {run.n} generated from the same blueprint. The set was checked for surface diversity,
           construct equivalence, rubric stability and difficulty parity before release.
         </p>
@@ -499,10 +500,10 @@ export default function Evidence() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {checks.map((c) => (
                 <div key={c.property} className="va-row-flex" style={{ gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                  <span style={{ fontFamily: "var(--font-heading)", fontSize: 15, minWidth: 190 }}>
+                  <span style={{ fontFamily: "var(--font-heading)", fontSize: 17, minWidth: 190 }}>
                     {PROPERTY_LABELS[c.property].label}
                   </span>
-                  <span className="text-muted" style={{ fontSize: 12 }} title={c.detail}>
+                  <span className="text-muted" style={{ fontSize: 14 }} title={c.detail}>
                     {c.metricLabel}
                   </span>
                   <Stamp gate={gateOf(c)} className="" title={c.detail}>
@@ -511,7 +512,7 @@ export default function Evidence() {
                 </div>
               ))}
             </div>
-            <div className="text-muted" style={{ fontSize: 12, marginTop: 10 }}>
+            <div className="text-muted" style={{ fontSize: 14, marginTop: 10 }}>
               Composite J {report.joint.toFixed(2)} · thresholds v{report.thresholdsVersion}
               {run.release ? ` · released ${formatDate(run.release.releasedAt)}` : ""}
               {run.release?.overThreshold ? " · released over threshold with a recorded reason" : ""}
@@ -531,7 +532,7 @@ export default function Evidence() {
           </button>
         </div>
         {showSolution ? (
-          <div className="va-surface-box" style={{ marginTop: 10, fontSize: 13, lineHeight: 1.6 }}>
+          <div className="va-surface-box" style={{ marginTop: 10, fontSize: 15, lineHeight: 1.6 }}>
             {paragraphs(variant.adaptedSolution).map((p, i) => (
               <p key={i} style={{ margin: "0 0 8px" }}>
                 {p}
@@ -539,7 +540,7 @@ export default function Evidence() {
             ))}
           </div>
         ) : (
-          <p className="text-muted" style={{ margin: "6px 0 0", fontSize: 12.5 }}>
+          <p className="text-muted" style={{ margin: "6px 0 0", fontSize: 14 }}>
             The instructor's canonical solution rewritten into this version's scenario. Collapsed by default; not printed unless shown.
           </p>
         )}
@@ -550,15 +551,15 @@ export default function Evidence() {
         <h6 style={{ margin: "0 0 6px" }}>How to verify</h6>
         {issued ? (
           <>
-            <div className="va-surface-box" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 12, wordBreak: "break-all" }}>
+            <div className="va-surface-box" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 14, wordBreak: "break-all" }}>
               {record!.hash}
             </div>
-            <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 12.5, lineHeight: 1.55, maxWidth: "76ch" }}>
+            <p className="text-muted" style={{ margin: "10px 0 0", fontSize: 14, lineHeight: 1.55, maxWidth: "76ch" }}>
               SHA-256 over the student, course, task text, criterion scores, integrity checks, employer validation ids and issue
               date. If any of those change, the hash changes. Recompute it from an exported workspace to confirm this record
               is unaltered.
             </p>
-            <p className="text-muted" style={{ margin: "8px 0 0", fontSize: 12.5, lineHeight: 1.55, maxWidth: "76ch" }}>
+            <p className="text-muted" style={{ margin: "8px 0 0", fontSize: 14, lineHeight: 1.55, maxWidth: "76ch" }}>
               Credential id {bridge?.credentialId ?? "—"} · learner id {bridge?.learnerId ?? "—"} ·{" "}
               {bridge?.signature ? `signed with ${bridge.signedWithKid} (ES256, demo key generated in this browser)` : "not yet signed"}. The Open
               Badges 3.0 export carries the same content as a W3C Verifiable Credential; the verify page recomputes the hash and checks the
@@ -566,7 +567,7 @@ export default function Evidence() {
             </p>
           </>
         ) : (
-          <p className="text-muted" style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55 }}>
+          <p className="text-muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.55 }}>
             A verification hash is computed when the record is issued.
           </p>
         )}
@@ -587,7 +588,7 @@ export default function Evidence() {
           </>
         }
       >
-        <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
+        <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.55 }}>
           The record id and hash will be removed from this workspace and logged on the audit trail. A new record can be issued
           later with a new id.
         </p>

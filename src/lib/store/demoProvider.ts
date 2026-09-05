@@ -39,6 +39,10 @@ function wait(ms: number, signal?: AbortSignal): Promise<void> {
 /** Demo mode makes no API calls, so every output reports zero usage. */
 const ZERO_USAGE = () => ({ inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, calls: 0 });
 
+function fixtureFor(bp: { id: string; name: string; sampleId?: string | null }): FixtureWithSamples | null {
+  return (bp.sampleId ? getFixture(bp.sampleId) : null) ?? fixtureForBlueprint(bp.id, bp.name);
+}
+
 function firstFixture(): FixtureWithSamples | null {
   const info = listFixtures()[0];
   return info ? getFixture(info.sampleId) : null;
@@ -117,7 +121,7 @@ export function createDemoProvider(): LlmProvider {
 
     async generateVariant(input: GenerateVariantInput): Promise<GenerateVariantOutput> {
       await wait(GENERATE_MS, input.signal);
-      const f = fixtureForBlueprint(input.blueprint.id, input.blueprint.name) ?? firstFixture();
+      const f = fixtureFor(input.blueprint) ?? firstFixture();
       if (!f) throw new Error("No recorded sample runs are available to replay. Add a key on Settings to generate for real.");
       const vs = usableVariants(f);
       if (!vs.length) throw new Error("The recorded run has no usable versions.");
@@ -142,7 +146,7 @@ export function createDemoProvider(): LlmProvider {
 
     async judgeVariant(input: JudgeInput): Promise<JudgeSample[]> {
       await wait(JUDGE_MS, input.signal);
-      const f = fixtureForBlueprint(input.blueprint.id, input.blueprint.name) ?? firstFixture();
+      const f = fixtureFor(input.blueprint) ?? firstFixture();
       const v = f?.run.variants.find((x) => x.text === input.variantText);
       const samples = v?.metrics.judgeSamples ?? [];
       if (samples.length) return samples.slice(0, Math.max(1, input.samples));

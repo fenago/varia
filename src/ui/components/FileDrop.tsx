@@ -1,4 +1,5 @@
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
+/* type-scale: applied */
 import { Blueprint, BlueprintButton } from "./Blueprint";
 
 export interface FileDropProps {
@@ -48,7 +49,7 @@ export function FileDrop({
       <div className="va-heading-22" style={{ marginBottom: 6 }}>
         {heading}
       </div>
-      <p className="text-muted" style={{ margin: "0 0 16px", fontSize: 13.5 }}>
+      <p className="text-muted" style={{ margin: "0 0 16px", fontSize: 15.5 }}>
         {text}
       </p>
       <div className="va-drop-actions">
