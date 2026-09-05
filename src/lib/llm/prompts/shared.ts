@@ -1,5 +1,33 @@
 import type { Blueprint, Criterion, SurfaceDimension, ThresholdSet } from "@shared/types";
 
+/**
+ * Wave 6d: every repeated call (generation, judge, pre-score) is built as a
+ * cacheable prefix followed by a per-call tail, so the Anthropic prompt cache
+ * can serve the blueprint, rubric, canonical solution and strategy
+ * instructions from cache on every call after the first.
+ *
+ *  system   — stable for the whole run (no per-call text, no timestamps, no ids)
+ *  stable   — first user block: blueprint / rubric / solution / strategy material,
+ *             byte-identical across every call of one run on one model
+ *  volatile — second user block: the surface tuple, prior-variant summaries,
+ *             the candidate under judgment, the submission
+ *
+ * `cache_control` goes on the `stable` block (see lib/llm/live.ts), which also
+ * caches the tools and system rendered before it. `user` is the two blocks
+ * joined, kept for callers and tests that read the prompt as one string.
+ */
+export interface CacheablePrompt {
+  system: string;
+  stable: string;
+  volatile: string;
+  user: string;
+}
+
+/** `stable` and `volatile` joined the way the model reads them (one blank line between). */
+export function joinPromptBlocks(stable: string, volatile: string): string {
+  return `${stable}\n\n${volatile}`;
+}
+
 /** The four integrity properties, worded as constraints on a single variant. */
 export function propertyConstraints(t: ThresholdSet): string {
   return [

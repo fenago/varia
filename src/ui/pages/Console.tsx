@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { Blueprint, DataTable, Pill, SegChoice, StatTile, type Column, type PillGate } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
 import { auditNewestFirst, consoleRows, consoleStats, currentThresholds, employerStats, outcomeStats, strategyLabel } from "@lib/store/selectors";
-import { THRESHOLD_ATTRIBUTION } from "@lib/store/seed";
 import { metricsVersionLabel } from "@shared/thresholds";
 import { PROPERTY_LABELS } from "@shared/thresholds";
 import type { InstitutionSet, InstitutionSetStatus, Property } from "@shared/types";
@@ -79,15 +78,16 @@ export default function Console() {
     { property: "p4", label: "Difficulty parity (σ Flesch)", key: "p4FleschSigma", display: `≤ ${thresholds.p4FleschSigma.toFixed(1)}` },
   ];
 
-  /** Mockup attribution, unless a later version changed this property — then whoever set that version. */
-  const setByFor = (key: NumericKey | null, property: Property): string => {
-    if (!key) return THRESHOLD_ATTRIBUTION[property];
-    // Versions 1–2 are the seeded institution history; anything later was set from this console.
+  /** Whoever set the version that last changed this property; else the current set's author. */
+  const setByFor = (key: NumericKey | null, _property: Property): string => {
+    const when = (t: { setAt: string }) => new Date(t.setAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" });
     const versions = ws.thresholds;
-    for (let i = versions.length - 1; i > 0; i--) {
-      if (versions[i].version > 2 && versions[i][key] !== versions[i - 1][key]) return versions[i].setBy;
+    if (key) {
+      for (let i = versions.length - 1; i > 0; i--) {
+        if (versions[i][key] !== versions[i - 1][key]) return `${versions[i].setBy}, ${when(versions[i])}`;
+      }
     }
-    return THRESHOLD_ATTRIBUTION[property];
+    return `${thresholds.setBy}, ${when(thresholds)}`;
   };
 
   const beginEdit = (key: NumericKey) => {
@@ -119,10 +119,10 @@ export default function Console() {
   return (
     <div className="va-page" style={{ gap: 22 }}>
       <div className="va-tiles">
-        <StatTile kicker="Variant sets in use" value={stats.inUse} sub={`across ${stats.courses} courses, ${stats.departments} departments`} />
+        <StatTile kicker="Variant sets released" value={stats.inUse} sub={stats.runsOnly ? `${stats.inUse} recorded run${stats.inUse === 1 ? "" : "s"} in this workspace · ${stats.courses} course${stats.courses === 1 ? "" : "s"}` : `across ${stats.courses} courses, ${stats.departments} departments`} />
         <StatTile kicker="Passing all four" value={stats.passingAll} sub={`${stats.passingPct}% of released sets`} color="pass" />
         <StatTile kicker="Released over threshold" value={stats.overThreshold} sub="each with a recorded reason" color="fail" />
-        <StatTile kicker="Unreviewed > 14 days" value={stats.unreviewed} sub="needs a specialist sign-off" color="watch" />
+        <StatTile kicker="Unreviewed > 14 days" value={stats.unreviewed} sub={stats.runsOnly ? "no institution-wide review queue is recorded" : "needs a specialist sign-off"} color="watch" />
       </div>
 
       <div>

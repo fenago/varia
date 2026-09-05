@@ -34,10 +34,21 @@ describe("regenerateOutliers never releases; policy can block over-threshold rel
 
   it("regenerateOutliers leaves the run unreleased even when it stays over threshold", async () => {
     const ws = useWorkspace.getState();
-    const run = ws.runs.find((r) => r.report && !r.report.releasable);
+    // The recorded runs all pass, so make one fail P4 on paper: name two versions as outliers and unrelease it.
+    const run = ws.runs.find((r) => r.report && r.variants.length >= 2);
     expect(run).toBeTruthy();
-    // Simulate a fresh, unreleased copy of the demo run.
-    useWorkspace.setState((s) => ({ runs: s.runs.map((r) => (r.id === run!.id ? { ...r, release: null } : r)) }));
+    const named = run!.variants.slice(0, 2).map((v) => v.id);
+    useWorkspace.setState((s) => ({
+      runs: s.runs.map((r) =>
+        r.id === run!.id
+          ? {
+              ...r,
+              release: null,
+              report: { ...r.report!, releasable: false, outliers: named, checks: { ...r.report!.checks, p4: { ...r.report!.checks.p4, gate: "fail" as const } } },
+            }
+          : r,
+      ),
+    }));
     await useWorkspace.getState().regenerateOutliers(run!.id);
     const after = runById(useWorkspace.getState(), run!.id)!;
     expect(after.release).toBeNull();

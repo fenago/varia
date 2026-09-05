@@ -16,9 +16,7 @@ const STEPS = [
 ];
 
 const FALLBACK_EXCERPTS = [
-  { id: "v-04", who: "Alvarez", text: "A regional bank deployed a loan-default classifier in March. You are auditing for the risk officer, who has the partial card and a complaint from the underwriting team…" },
-  { id: "v-07", who: "Bhatt", text: "Northline Talent Systems deployed a résumé-screening classifier across four offices. You are auditing for the HR director, who has the partial card and a complaint about shortlist composition…" },
-  { id: "v-11", who: "Chen", text: "A hospital network deployed a sepsis-risk classifier in two units. You are auditing for the clinical lead, who has the partial card and a nursing escalation…" },
+  { id: "—", who: "no run loaded", text: "Not yet: load a recorded run or generate one to see three real versions here." },
 ];
 
 const READ_TABLE: { p: Property; pill: { gate: "pass" | "fail" | "advisory"; text: string } }[] = [
@@ -52,13 +50,14 @@ export default function Start() {
   const ws = useWorkspace();
   const run = activeRun(ws);
 
-  const excerpts = FALLBACK_EXCERPTS.map((fb) => {
-    const v = run?.variants.find((x) => x.id === fb.id && x.text && !x.error);
-    if (!v) return fb;
-    const who = surname(studentById(ws, v.studentId)?.name) || fb.who;
-    const t = v.text.trim();
-    return { id: v.id, who, text: t.length > 220 ? t.slice(0, 220).replace(/\s+\S*$/, "") + "…" : t };
-  });
+  const usable = (run?.variants ?? []).filter((x) => x.text && !x.error).slice(0, 3);
+  const excerpts = usable.length
+    ? usable.map((v) => {
+        const who = surname(studentById(ws, v.studentId)?.name) || v.id;
+        const t = v.text.trim();
+        return { id: v.id, who, text: t.length > 220 ? t.slice(0, 220).replace(/\s+\S*$/, "") + "…" : t };
+      })
+    : FALLBACK_EXCERPTS;
 
   return (
     <div className="va-page va-page-narrow" style={{ gap: 30 }}>

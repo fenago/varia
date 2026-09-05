@@ -4,7 +4,6 @@ import { Blueprint, BlueprintButton, CopyField, DataTable, EmptyState, Pill, Seg
 import { useWorkspace } from "@lib/store/workspace";
 import { activeRun, evidenceForVariant, rosterRows, rosterStats, submissionImportPreview, unassignedVariantOptions, type RosterRow, type SubmissionImportRow } from "@lib/store/selectors";
 import { allTaskLinksCsv, buildTaskPackage, buildVersionsZip, downloadBlob, readSubmissionText, taskLink, SUBMISSION_ACCEPT } from "@lib/release";
-import { DEMO_DUE_LABEL, DEMO_RUN_ID } from "@lib/store/seed";
 import type { SubmissionStatus } from "@shared/types";
 
 type Filter = "all" | "submitted" | "graded" | "appeals";
@@ -18,7 +17,14 @@ function readSel(): string | null {
   }
 }
 
-function statusCell(status: SubmissionStatus) {
+function statusCell(status: SubmissionStatus, origin?: "student" | "ai-sample", tier?: string) {
+  if (origin === "ai-sample") {
+    return (
+      <span className="tag tag-outline" title={`AI-written sample at the ${tier ?? ""} tier · grade is the model's suggestion`}>
+        AI sample · {tier ?? "sample"} · suggested grade
+      </span>
+    );
+  }
   switch (status) {
     case "graded":
       return <span className="tag tag-neutral">Graded</span>;
@@ -99,14 +105,14 @@ export default function Roster() {
   });
   const visible = showAll ? filtered : filtered.slice(0, 8);
 
-  const dueLabel = run.id === DEMO_RUN_ID ? DEMO_DUE_LABEL : "no due date set";
+  const dueLabel = "no due date set";
 
   const columns: Column<RosterRow>[] = [
     { key: "student", header: "Student", render: (r) => r.student?.name ?? <span className="text-muted">Unassigned</span> },
     { key: "version", header: "Version", render: (r) => r.variant.id },
     { key: "ds", header: "Domain / stakeholder", render: (r) => r.domainStakeholder },
     { key: "ease", header: "Reading ease", render: (r) => r.readingEase.toFixed(1) },
-    { key: "status", header: "Status", render: (r) => statusCell(r.status) },
+    { key: "status", header: "Status", render: (r) => statusCell(r.status, r.submission?.origin, r.submission?.sampleTier) },
     { key: "score", header: "Score", render: (r) => r.scoreLabel },
     {
       key: "evidence",

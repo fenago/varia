@@ -1,5 +1,5 @@
 import type { Blueprint } from "@shared/types";
-import { formatConstructDimensions } from "./shared";
+import { formatConstructDimensions, joinPromptBlocks, type CacheablePrompt } from "./shared";
 
 /**
  * P2 judge (paper §3.4): five-point Likert per construct-map dimension, five
@@ -18,11 +18,15 @@ Score each construct dimension from 1 to 5:
 
 Judge construct, not surface. A different domain, stakeholder, scenario or vocabulary is expected and is not a reason to lower a score. Missing or altered deliverables, missing rubric criteria, or a task that can be answered without the competency are reasons to lower a score. Give exactly two sentences of rationale: one on what is preserved, one on what, if anything, drifted.`;
 
+/**
+ * `stable` (construct, dimensions, criteria, original task) is identical for
+ * every judge call of a run; only the candidate is per call. See shared.ts.
+ */
 export function buildJudgePrompt(
   blueprint: Pick<Blueprint, "construct" | "constructDimensions" | "rubric" | "taskPrompt">,
   variantText: string,
-): { system: string; user: string } {
-  const user = [
+): CacheablePrompt {
+  const stable = [
     `CONSTRUCT:`,
     blueprint.construct,
     ``,
@@ -36,7 +40,8 @@ export function buildJudgePrompt(
     `<original_task>`,
     blueprint.taskPrompt,
     `</original_task>`,
-    ``,
+  ].join("\n");
+  const volatile = [
     `CANDIDATE VERSION:`,
     `<candidate_task>`,
     variantText,
@@ -45,5 +50,5 @@ export function buildJudgePrompt(
     `Score every construct dimension 1–5 and give the two-sentence rationale.`,
   ].join("\n");
 
-  return { system: JUDGE_SYSTEM, user };
+  return { system: JUDGE_SYSTEM, stable, volatile, user: joinPromptBlocks(stable, volatile) };
 }

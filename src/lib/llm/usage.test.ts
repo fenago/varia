@@ -4,13 +4,13 @@ import { DEFAULT_THRESHOLDS } from "@shared/thresholds";
 import { costOf } from "@shared/models";
 import { createDemoProvider } from "@lib/store/demoProvider";
 import { runGeneration } from "@lib/store/orchestrator";
-import { buildDemoBlueprintB1 } from "@lib/store/seed";
+import { lendingBlueprint } from "@lib/store/testWorkspace";
 import { addUsage, emptyUsage, usageOf } from "./live";
 
 function makeRun(n: number, mode: Run["mode"]): Run {
   return {
     id: "run-usage",
-    blueprintId: "bp-b1-model-card-audit",
+    blueprintId: "bp-ml-lending-fairness-audit",
     blueprintName: "Model card audit",
     courseId: "dat4100",
     strategy: "zero-shot",
@@ -104,7 +104,7 @@ describe("orchestrator usage accumulation", () => {
     let sawUsageWhileGenerating = false;
     const run = await runGeneration({
       run: makeRun(n, "live"),
-      blueprint: buildDemoBlueprintB1(),
+      blueprint: lendingBlueprint(),
       provider: stubLiveProvider(),
       thresholds: DEFAULT_THRESHOLDS,
       signal: new AbortController().signal,
@@ -133,7 +133,7 @@ describe("orchestrator usage accumulation", () => {
   it("demo runs report no usage", async () => {
     const run = await runGeneration({
       run: makeRun(2, "demo"),
-      blueprint: buildDemoBlueprintB1(),
+      blueprint: lendingBlueprint(),
       provider: createDemoProvider(),
       thresholds: DEFAULT_THRESHOLDS,
       signal: new AbortController().signal,

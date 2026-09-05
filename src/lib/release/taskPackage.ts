@@ -1,6 +1,5 @@
 import type { Workspace } from "@shared/types";
 import { encodePackage } from "@lib/share";
-import { DEMO_DUE_LABEL, DEMO_RUN_ID } from "@lib/store/seed";
 
 /**
  * What a student receives. Deliberately narrow: no adapted solution, no metrics,
@@ -23,8 +22,8 @@ export interface TaskPackage {
   issuedAt: string;
 }
 
-export function dueLabelFor(ws: Workspace, runId: string): string {
-  return runId === DEMO_RUN_ID ? DEMO_DUE_LABEL : "no due date set";
+export function dueLabelFor(_ws: Workspace, _runId: string): string {
+  return "no due date set";
 }
 
 export function buildTaskPackage(ws: Workspace, variantId: string, runId?: string | null): TaskPackage | null {

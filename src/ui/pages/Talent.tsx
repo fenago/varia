@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { Blueprint, EmptyState, Funnel, OutcomeStamps, SegScale, SkillTags, Stamp } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
-import { challengesForPartner, employerFunnel, partnerById, talentRows, type TalentRow } from "@lib/store/selectors";
+import { challengesForPartner, credentialEligibility, credentialForRecord, employerFunnel, partnerById, talentRows, type TalentRow } from "@lib/store/selectors";
 import type { EmployerPartner, OutcomeKind } from "@shared/types";
 
 function formatDate(iso: string): string {
@@ -178,6 +178,21 @@ function CandidateCard({ row, partner }: { row: TalentRow; partner: EmployerPart
         <Link className="btn btn-secondary" to={`/verify/${record.id}`} style={{ textDecoration: "none" }}>
           Verify
         </Link>
+        {(() => {
+          const ws = useWorkspace.getState();
+          const cred = credentialForRecord(ws, record.id);
+          if (cred && !cred.revokedAt)
+            return (
+              <Link className="btn btn-ghost" to={`/credential/${record.id}`} style={{ textDecoration: "none" }}>
+                Credential {cred.id}
+              </Link>
+            );
+          return credentialEligibility(ws, record.id).eligible ? (
+            <Link className="btn btn-ghost" to={`/credential/${record.id}`} style={{ textDecoration: "none" }}>
+              Issue credential
+            </Link>
+          ) : null;
+        })()}
         <Link className="btn btn-ghost" to={`/evidence/${record.variantId}`} style={{ textDecoration: "none" }}>
           Open record
         </Link>

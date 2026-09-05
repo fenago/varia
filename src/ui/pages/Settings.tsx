@@ -278,7 +278,7 @@ export default function Settings() {
             onChange={(e) => void importWorkspace(e.target.files?.[0])}
           />
           <button type="button" className="btn btn-ghost" onClick={() => setConfirm("reset")}>
-            Reset to demo data
+            Reset to the recorded runs
           </button>
           <button type="button" className="btn btn-secondary" onClick={() => setConfirm("fixtures")} disabled={fixtures.length === 0}>
             Load recorded sample runs
@@ -329,7 +329,7 @@ export default function Settings() {
 
       <Dialog
         open={confirm === "reset"}
-        title="Reset to demo data?"
+        title="Reset to the recorded runs?"
         onClose={() => setConfirm(null)}
         actions={
           <>

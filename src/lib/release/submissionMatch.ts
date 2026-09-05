@@ -49,7 +49,8 @@ export function matchSubmissionFiles(fileNames: string[], roster: Roster, run: R
     const m = s.match(/\bv[-_]?(\d{2})\b/);
     if (m) {
       const vid = `v-${m[1]}`;
-      const v = run.variants.find((x) => x.id === vid);
+      // Recorded runs prefix their ids per sample ("len-v-04"), so match on the suffix too.
+      const v = run.variants.find((x) => x.id === vid || x.id.endsWith(`-${vid}`));
       if (v) return { fileName, studentId: v.studentId, variantId: v.id, reason: "variant" };
     }
 

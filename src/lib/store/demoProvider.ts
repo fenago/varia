@@ -1,7 +1,9 @@
 /**
- * Demo-mode LLM provider: no key, no network. Replays the seeded variant set
- * with short delays so the Generate page shows real progress, and returns
- * easier-reading rewrites when an outlier is regenerated.
+ * No-key provider: no network. Replays RECORDED runs (real outputs of the real
+ * pipeline, see src/lib/store/fixtures) with short delays so the pages show
+ * real progress. Nothing here invents a metric: replayed texts are re-scored
+ * by the orchestrator with the same metric code as a live run, and judge
+ * samples are the recorded ones for that text.
  */
 
 import type {
@@ -12,19 +14,16 @@ import type {
   GenerateVariantOutput,
   JudgeInput,
   JudgeSample,
-  LlmProvider, PreScoreInput, PreScoreOutput, LevelScore } from "@shared/types";
-import { variantId } from "./ids";
-import { buildDemoBlueprintB1, buildDemoDraft, demoJudgeSamples, demoMetricsForScenario } from "./seed";
-import {
-  SEED_ALTERNATES,
-  SEED_SCENARIOS,
-  seedAdaptedSolution,
-  seedSurfaceAssignment,
-  seedVariantText,
-} from "./seedVariants";
+  LevelScore,
+  LlmProvider,
+  PreScoreInput,
+  PreScoreOutput,
+  Variant,
+} from "@shared/types";
+import { fixtureForBlueprint, getFixture, listFixtures, type FixtureWithSamples } from "./fixtures";
 
 const GENERATE_MS = 350;
-const JUDGE_MS = 150;
+const JUDGE_MS = 120;
 
 function wait(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -37,19 +36,28 @@ function wait(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-/** Metrics for an easier-reading regenerated version (reading ease ≈ 53–54, the set mean). */
-function regeneratedMetrics(index: number) {
-  const base = demoMetricsForScenario(index);
-  const ease = 53.2 + ((index * 7) % 5) * 0.3;
-  return { ...base, fleschEase: ease, solutionFleschEase: ease - 0.8, judgeSamples: demoJudgeSamples(0), equivalence: null };
-}
-
 /** Demo mode makes no API calls, so every output reports zero usage. */
 const ZERO_USAGE = () => ({ inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, calls: 0 });
 
-export function createDemoProvider(): LlmProvider {
-  const seedTexts = SEED_SCENARIOS.map(seedVariantText);
+function firstFixture(): FixtureWithSamples | null {
+  const info = listFixtures()[0];
+  return info ? getFixture(info.sampleId) : null;
+}
 
+/** Pick the recording that matches the raw text (by organisation name), else the first. */
+function fixtureForText(rawText: string): FixtureWithSamples | null {
+  const lower = rawText.toLowerCase();
+  for (const info of listFixtures()) {
+    if (info.organisation && lower.includes(info.organisation.toLowerCase())) return getFixture(info.sampleId);
+  }
+  return firstFixture();
+}
+
+function usableVariants(f: FixtureWithSamples): Variant[] {
+  return f.run.variants.filter((v) => v.text && !v.error);
+}
+
+export function createDemoProvider(): LlmProvider {
   return {
     mode: "demo",
 
@@ -58,21 +66,25 @@ export function createDemoProvider(): LlmProvider {
     },
 
     async extractBlueprint(input): Promise<BlueprintDraft> {
-      await wait(1200, input.signal);
-      const draft = buildDemoDraft();
-      if (input.files.length) {
-        draft.source = {
+      await wait(900, input.signal);
+      const f = fixtureForText(input.rawText);
+      if (!f) throw new Error("No recorded sample runs are available to replay. Add a key on Settings to extract for real.");
+      const { id: _id, courseId: _c, createdAt: _a, updatedAt: _u, ...draft } = f.blueprint;
+      return {
+        ...draft,
+        source: {
           ...draft.source,
-          files: input.files.map((f) => ({ ...f, text: undefined })),
+          files: input.files.length ? input.files.map((x) => ({ ...x, text: undefined })) : draft.source.files,
           extractedAt: new Date().toISOString(),
           readSeconds: Math.max(3, Math.round(input.rawText.length / 4000)),
-        };
-      }
-      return draft;
+        },
+        fewShotAnchors: null,
+        lastUsed: null,
+      };
     },
 
     async draftAnchors(criterion: Criterion): Promise<[string, string, string, string]> {
-      await wait(600);
+      await wait(500);
       const n = criterion.name.toLowerCase();
       return [
         `No evidence of ${n}, or claims made without reference to the materials.`,
@@ -82,99 +94,100 @@ export function createDemoProvider(): LlmProvider {
       ];
     },
 
-    async draftCanonicalSolution(): Promise<string> {
-      await wait(900);
-      return buildDemoBlueprintB1().canonicalSolution;
+    async draftCanonicalSolution(bp): Promise<string> {
+      await wait(700);
+      const f = fixtureForBlueprint(null, "construct" in bp ? undefined : undefined) ?? firstFixture();
+      return f?.blueprint.canonicalSolution ?? "";
     },
 
-    async generateFewShotAnchors(_blueprint: Blueprint) {
-      await wait(700);
+    async generateFewShotAnchors(blueprint: Blueprint) {
+      await wait(600);
+      const f = fixtureForBlueprint(blueprint.id, blueprint.name) ?? firstFixture();
+      const vs = f ? usableVariants(f) : [];
       return {
-        positive: [seedTexts[3], seedTexts[6]],
+        positive: vs.slice(0, 2).map((v) => v.text),
         negative: [
           // paraphrastic near-copy of the original prompt
-          "You are auditing a deployed classifier for a stakeholder. Using the partial model card provided, produce a structured audit identifying fairness, robustness and documentation gaps. Justify each finding against the card and prioritise your recommendations.",
+          blueprint.taskPrompt.slice(0, 600),
           // construct drift: asks for something the rubric does not grade
-          "A regional bank deployed a loan-default classifier in March. Write a short essay on the history of credit scoring and explain why machine learning is now used in lending. Conclude with your personal opinion about whether banks should use AI.",
+          `${blueprint.name}: write a short reflective essay on why this topic matters to you and conclude with your personal opinion.`,
         ],
       };
     },
 
     async generateVariant(input: GenerateVariantInput): Promise<GenerateVariantOutput> {
       await wait(GENERATE_MS, input.signal);
-      const idx = ((input.index % SEED_SCENARIOS.length) + SEED_SCENARIOS.length) % SEED_SCENARIOS.length;
-      const scenario = SEED_SCENARIOS[idx];
-      const seedText = seedTexts[idx];
-      const isRegeneration = input.index >= SEED_SCENARIOS.length || input.priorVariantTexts.includes(seedText);
-      if (isRegeneration) {
-        const alt = SEED_ALTERNATES[variantId(idx)];
-        const m = regeneratedMetrics(idx);
-        if (alt) {
-          return {
-            usage: ZERO_USAGE(),
-            text: alt.text,
-            adaptedSolution: alt.adaptedSolution,
-            surfaceAssignment: { ...seedSurfaceAssignment(scenario), jargon: "plain" },
-            scaffold: { demo: true, regenerated: true, demoMetrics: m },
-          };
-        }
-        return {
-          usage: ZERO_USAGE(),
-          text: seedText.replace(/^/, "Revised version. ").replace(/technical|methodological/g, "plain"),
-          adaptedSolution: seedAdaptedSolution(scenario),
-          surfaceAssignment: { ...seedSurfaceAssignment(scenario), jargon: "plain" },
-          scaffold: { demo: true, regenerated: true, demoMetrics: m },
-        };
+      const f = fixtureForBlueprint(input.blueprint.id, input.blueprint.name) ?? firstFixture();
+      if (!f) throw new Error("No recorded sample runs are available to replay. Add a key on Settings to generate for real.");
+      const vs = usableVariants(f);
+      if (!vs.length) throw new Error("The recorded run has no usable versions.");
+      // Replay by index; a regeneration (index beyond the set, or a text already used) takes
+      // the next unused recorded version if there is one, else repeats with an honest note.
+      const used = new Set(input.priorVariantTexts);
+      let v = vs[input.index % vs.length];
+      let note: string | null = null;
+      if (input.index >= vs.length || used.has(v.text)) {
+        const unused = vs.find((x) => !used.has(x.text));
+        if (unused) v = unused;
+        else note = "No unused recorded version remains; this repeats a recorded one. Add a key to regenerate for real.";
       }
-      const m = demoMetricsForScenario(idx);
       return {
         usage: ZERO_USAGE(),
-        text: seedText,
-        adaptedSolution: seedAdaptedSolution(scenario),
-        surfaceAssignment: seedSurfaceAssignment(scenario),
-        scaffold:
-          input.strategy === "structured-cot"
-            ? {
-                demo: true,
-                constructMap: "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
-                surfacePlan: `Domain ${scenario.domain}; stakeholder ${scenario.role}; organisation ${scenario.org}; register ${scenario.jargon}.`,
-                selfCheck: { p1: true, p2: true, p3: true, p4: true, notes: "Reading level held to the original task." },
-                demoMetrics: { ...m, judgeSamples: [], equivalence: null },
-              }
-            : { demo: true, demoMetrics: { ...m, judgeSamples: [], equivalence: null } },
+        text: v.text,
+        adaptedSolution: v.adaptedSolution,
+        surfaceAssignment: v.surfaceAssignment,
+        scaffold: { replayedFrom: { sampleId: f.sampleId, variantId: v.id, recordedAt: f.recordedAt, generator: f.models.generator }, note },
       };
     },
 
     async judgeVariant(input: JudgeInput): Promise<JudgeSample[]> {
       await wait(JUDGE_MS, input.signal);
-      const idx = seedTexts.indexOf(input.variantText);
-      const dims = input.blueprint.constructDimensions?.length ? input.blueprint.constructDimensions : undefined;
-      if (idx >= 0) return demoJudgeSamples(idx, dims).slice(0, Math.max(1, input.samples));
-      // regenerated or unknown text: strong, uniform equivalence
-      return demoJudgeSamples(0, dims).slice(0, Math.max(1, input.samples));
+      const f = fixtureForBlueprint(input.blueprint.id, input.blueprint.name) ?? firstFixture();
+      const v = f?.run.variants.find((x) => x.text === input.variantText);
+      const samples = v?.metrics.judgeSamples ?? [];
+      if (samples.length) return samples.slice(0, Math.max(1, input.samples));
+      // Unknown text (e.g. a user-edited blueprint): score every dimension at the recorded
+      // set's median so the replay is neither flattering nor invented per-dimension.
+      const dims = input.blueprint.constructDimensions ?? [];
+      const all = f ? usableVariants(f).flatMap((x) => x.metrics.judgeSamples) : [];
+      const med = all.length ? [...all.flatMap((s) => Object.values(s.dimensionScores))].sort((a, b) => a - b)[Math.floor(all.length / 2)] ?? 4 : 4;
+      return Array.from({ length: Math.max(1, input.samples) }, () => ({
+        dimensionScores: Object.fromEntries(dims.map((d) => [d, med])),
+        rationale: "Replay: no recorded judgement exists for this text, so it carries the recorded set's median score. Add a key to judge for real.",
+      }));
     },
 
     async preScoreSubmission(input: PreScoreInput): Promise<PreScoreOutput> {
       await wait(400, input.signal);
-      const words = input.submissionText.split(/\s+/).filter(Boolean).length;
+      // If this exact submission was recorded with a real pre-score, return it.
+      for (const info of listFixtures()) {
+        const f = getFixture(info.sampleId);
+        const hit = f?.sampleSubmissions?.find((s) => s.text === input.submissionText);
+        if (hit) return hit.preScore;
+      }
+      // Otherwise a transparent heuristic, labelled as such: level by how many of the
+      // criterion's anchor keywords appear in the submission. Not a judgement of quality.
+      const text = input.submissionText.toLowerCase();
       const scores: Record<string, LevelScore> = {};
       const rationale: Record<string, string> = {};
-      input.blueprint.rubric.forEach((c, i) => {
-        const mentions = c.name
-          .toLowerCase()
-          .split(/[^a-z]+/)
-          .filter((w) => w.length > 4)
-          .some((w) => input.submissionText.toLowerCase().includes(w));
-        const lv = (words < 60 ? 1 : mentions ? (i % 2 === 0 ? 3 : 2) : 2) as LevelScore;
+      for (const c of input.blueprint.rubric) {
+        const kws = new Set(
+          [c.name, ...(c.anchors ?? [])]
+            .join(" ")
+            .toLowerCase()
+            .split(/[^a-z]+/)
+            .filter((w) => w.length > 5),
+        );
+        const hits = [...kws].filter((w) => text.includes(w)).length;
+        const ratio = kws.size ? hits / kws.size : 0;
+        const lv = (ratio > 0.45 ? 3 : ratio > 0.3 ? 2 : ratio > 0.12 ? 1 : 0) as LevelScore;
         scores[c.id] = lv;
-        rationale[c.id] = mentions
-          ? `The submission addresses ${c.name.toLowerCase()} directly and cites evidence from its scenario.`
-          : `The submission touches ${c.name.toLowerCase()} only in passing; the model answer expects a named finding here.`;
-      });
+        rationale[c.id] = `Keyword-overlap heuristic (no key): ${hits} of ${kws.size} rubric terms for "${c.name}" appear in the submission.`;
+      }
       return {
         scores,
         rationale,
-        summary: "Strongest on the first criterion, where the finding is specific and cited. Worth a second look on prioritisation, where the recommendation is asserted rather than argued. (Demo suggestion; add a key for a real one.)",
+        summary: "No-key suggestion from a keyword-overlap heuristic, not a reading of the work. Add a key on Settings for a real pre-score.",
       };
     },
   };

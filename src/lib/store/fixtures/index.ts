@@ -2,17 +2,83 @@
  * Recorded sample runs. Each JSON file here is the output of
  * `npm run record -- <sampleId>` (the real pipeline with a real key) or of a
  * dry run (`--dry-run`, demo provider, NOT real output — labelled as such).
- * `fixtureWorkspace()` turns them into a Workspace with nothing invented.
+ *
+ * `defaultWorkspace()` is what the app shows with no key: nothing invented.
+ * Every blueprint, run, variant, metric, roster, partner, challenge and skill
+ * comes from a recording or a sample manifest. Runs whose report passes every
+ * gate are released at load; over-threshold recordings stay unreleased with
+ * their real reports. AI-written sample submissions (recorded
+ * with `--submissions`) are labelled as such everywhere they appear.
  */
-import type { AuditEvent, Blueprint, EmployerChallenge, EmployerPartner, Run, SkillTag, Student, Workspace } from "@shared/types";
+import type {
+  AuditEvent,
+  Blueprint,
+  Course,
+  EmployerChallenge,
+  EmployerPartner,
+  Grade,
+  LevelScore,
+  PreScoreOutput,
+  Run,
+  SkillTag,
+  Student,
+  Submission,
+  Workspace,
+} from "@shared/types";
 import { sampleById } from "@shared/samples";
 import { DEFAULT_THRESHOLDS } from "@shared/thresholds";
 import type { SampleFixture } from "@lib/record/recordSample";
 
-const modules = import.meta.glob("./*.json", { eager: true }) as Record<string, { default: SampleFixture } | SampleFixture>;
+export const FIXTURE_INSTRUCTOR = { name: "Dr. E. Lee", institution: "Miami Dade College", role: "Instructor" } as const;
 
-function unwrap(m: { default: SampleFixture } | SampleFixture): SampleFixture {
-  return "default" in m && (m as { default: SampleFixture }).default?.version ? (m as { default: SampleFixture }).default : (m as SampleFixture);
+/** Sample submissions recorded with `npm run record -- --submissions 3`. */
+export interface SampleSubmission {
+  variantId: string;
+  tier: "strong" | "adequate" | "weak";
+  text: string;
+  preScore: PreScoreOutput;
+  model: string;
+  recordedAt: string;
+}
+
+export type FixtureWithSamples = SampleFixture & { sampleSubmissions?: SampleSubmission[] };
+
+const modules = import.meta.glob("./*.json", { eager: true }) as Record<string, { default: FixtureWithSamples } | FixtureWithSamples>;
+
+function unwrap(m: { default: FixtureWithSamples } | FixtureWithSamples): FixtureWithSamples {
+  return "default" in m && (m as { default: FixtureWithSamples }).default?.version
+    ? (m as { default: FixtureWithSamples }).default
+    : (m as FixtureWithSamples);
+}
+
+/** The flagship recording is listed first so it is the active blueprint and run by default. */
+const FLAGSHIP = "ml-lending-fairness-audit";
+
+/**
+ * Every recording numbers its versions v-01…; when several runs share a workspace the ids
+ * must not collide (lookups by version id would hit the wrong run). Each sample gets a short
+ * code that prefixes its version ids at load: "v-04" → "len-v-04".
+ */
+const SHORT: Record<string, string> = {
+  "ml-lending-fairness-audit": "len",
+  "data-mining-churn": "chn",
+  "marketing-web-analytics-attribution": "mkt",
+  "ai-in-business-vendor-case": "biz",
+  "nlp-support-ticket-triage": "nlp",
+};
+export function sampleCode(sampleId: string): string {
+  return SHORT[sampleId] ?? sampleId.replace(/[^a-z]/g, "").slice(0, 3);
+}
+export function fixtureVariantId(sampleId: string, id: string): string {
+  const code = sampleCode(sampleId);
+  return id.startsWith(`${code}-`) ? id : `${code}-${id}`;
+}
+
+function allFixtures(): FixtureWithSamples[] {
+  return Object.values(modules)
+    .map(unwrap)
+    .filter((f) => f && f.version === 1)
+    .sort((a, b) => (a.sampleId === FLAGSHIP ? -1 : b.sampleId === FLAGSHIP ? 1 : a.sampleId.localeCompare(b.sampleId)));
 }
 
 export interface FixtureInfo {
@@ -25,61 +91,85 @@ export interface FixtureInfo {
   variants: number;
   joint: number | null;
   costUsd: number | null;
+  sampleSubmissions: number;
 }
 
 export function listFixtures(): FixtureInfo[] {
-  return Object.values(modules)
-    .map(unwrap)
-    .filter((f) => f && f.version === 1)
-    .map((f) => {
-      const s = sampleById(f.sampleId);
-      return {
-        sampleId: f.sampleId,
-        organisation: s?.organisation ?? f.sampleId,
-        title: s?.title ?? f.blueprint.name,
-        recordedAt: f.recordedAt,
-        recordedWith: f.recordedWith,
-        models: f.models,
-        variants: f.run.variants.length,
-        joint: f.run.report?.joint ?? null,
-        costUsd: f.run.usage?.costUsd ?? null,
-      };
-    })
-    .sort((a, b) => a.sampleId.localeCompare(b.sampleId));
+  return allFixtures().map((f) => {
+    const s = sampleById(f.sampleId);
+    return {
+      sampleId: f.sampleId,
+      organisation: s?.organisation ?? f.sampleId,
+      title: s?.title ?? f.blueprint.name,
+      recordedAt: f.recordedAt,
+      recordedWith: f.recordedWith,
+      models: f.models,
+      variants: f.run.variants.length,
+      joint: f.run.report?.joint ?? null,
+      costUsd: f.run.usage?.costUsd ?? null,
+      sampleSubmissions: f.sampleSubmissions?.length ?? 0,
+    };
+  });
 }
 
-export function getFixture(sampleId: string): SampleFixture | null {
-  const f = Object.values(modules).map(unwrap).find((x) => x.sampleId === sampleId);
-  return f ?? null;
+export function getFixture(sampleId: string): FixtureWithSamples | null {
+  return allFixtures().find((x) => x.sampleId === sampleId) ?? null;
+}
+
+/** The fixture whose blueprint id matches, for demo-mode replay. */
+export function fixtureForBlueprint(blueprintId: string | null | undefined, blueprintName?: string): FixtureWithSamples | null {
+  const all = allFixtures();
+  if (!all.length) return null;
+  return (
+    all.find((f) => f.blueprint.id === blueprintId) ??
+    (blueprintName ? all.find((f) => f.blueprint.name.toLowerCase() === blueprintName.toLowerCase()) : undefined) ??
+    null
+  );
 }
 
 /** True when every loaded fixture came from real Claude calls. */
 export function fixturesAreReal(ids?: string[]): boolean {
-  const all = Object.values(modules).map(unwrap).filter((f) => !ids || ids.includes(f.sampleId));
+  const all = allFixtures().filter((f) => !ids || ids.includes(f.sampleId));
   return all.length > 0 && all.every((f) => f.recordedWith === "live");
 }
 
+export function courseForSample(sampleId: string, courseId: string): Course {
+  const s = sampleById(sampleId);
+  return {
+    id: courseId,
+    code: s?.course.code ?? "",
+    term: "Fall 2026",
+    title: s?.course.title ?? "",
+    instructor: { ...FIXTURE_INSTRUCTOR },
+  };
+}
+
+function suggestedGrade(bp: Blueprint, pre: PreScoreOutput, at: string, model: string): Grade {
+  const scores: Record<string, LevelScore> = {};
+  let total = 0;
+  let maxTotal = 0;
+  for (const c of bp.rubric) {
+    const lv = (pre.scores[c.id] ?? 0) as LevelScore;
+    scores[c.id] = lv;
+    total += Math.round((lv / 3) * c.points);
+    maxTotal += c.points;
+  }
+  return { scores, total, maxTotal, gradedAt: at, by: `${model} (suggestion)`, basis: "suggested" };
+}
+
 /**
- * Build a workspace from recorded fixtures. Course: the first fixture's course.
+ * Build a workspace from recorded fixtures. Course: the first fixture's.
  * Blueprints, runs, rosters, partners, challenges and skills come from the
- * recordings and the sample manifests. No institution rows, no invented audit.
+ * recordings and the sample manifests. Runs are released at load. Sample
+ * submissions become labelled Submission rows with suggested grades. No
+ * institution rows, no invented audit, no validations/endorsements/outcomes.
  */
 export function fixtureWorkspace(ids?: string[], seededAt = new Date().toISOString()): Workspace {
-  const fixtures = Object.values(modules)
-    .map(unwrap)
-    .filter((f) => f.version === 1 && (!ids || ids.includes(f.sampleId)))
-    .sort((a, b) => a.sampleId.localeCompare(b.sampleId));
+  const fixtures = allFixtures().filter((f) => !ids || ids.includes(f.sampleId));
   if (!fixtures.length) throw new Error("No recorded sample runs are available.");
 
   const first = fixtures[0];
-  const firstSample = sampleById(first.sampleId);
-  const course = {
-    id: first.blueprint.courseId,
-    code: firstSample?.course.code ?? "CAP 4767",
-    term: "Fall 2026",
-    title: firstSample?.course.title ?? "Data Mining",
-    instructor: { name: "Dr. E. Lee", institution: "Miami Dade College", role: "Instructor" },
-  };
+  const course = courseForSample(first.sampleId, first.blueprint.courseId);
 
   const students = new Map<string, Student>();
   const partners: EmployerPartner[] = [];
@@ -87,6 +177,7 @@ export function fixtureWorkspace(ids?: string[], seededAt = new Date().toISOStri
   const skills = new Map<string, SkillTag>();
   const blueprints: Blueprint[] = [];
   const runs: Run[] = [];
+  const submissions: Submission[] = [];
   const audit: AuditEvent[] = [];
 
   for (const f of fixtures) {
@@ -114,16 +205,72 @@ export function fixtureWorkspace(ids?: string[], seededAt = new Date().toISOStri
     }
     const bp: Blueprint = { ...f.blueprint, courseId: course.id, challengeIds: challenge ? [challenge.id] : [] };
     blueprints.push(bp);
-    const run: Run = { ...f.run, courseId: course.id, blueprintId: bp.id };
+
+    const real = f.recordedWith === "live";
+    const releasable = Boolean(f.run.report?.releasable);
+    const failing = f.run.report ? (Object.values(f.run.report.checks).filter((c) => c.gate === "fail").map((c) => c.property)) : [];
+    const releasedAt = f.run.finishedAt ?? f.recordedAt;
+    const vid = (id: string) => fixtureVariantId(f.sampleId, id);
+    const run: Run = {
+      ...f.run,
+      courseId: course.id,
+      blueprintId: bp.id,
+      variants: f.run.variants.map((v) => ({ ...v, id: vid(v.id), status: v.status === "draft" ? "released" : v.status })),
+      report: f.run.report ? { ...f.run.report, outliers: f.run.report.outliers.map(vid) } : f.run.report,
+      // Only a run whose report passes every gate is released at load. An over-threshold recording
+      // stays unreleased with its real report, so the Report page shows the honest state and the real
+      // actions (regenerate outliers, loosen jargon, release with a reason).
+      release:
+        f.run.report && releasable && (f.run.status === "complete" || f.run.status === "partial")
+          ? { runId: f.run.id, releasedAt, by: course.instructor.name, overThreshold: false, failingChecks: [], regenerated: [] }
+          : null,
+    };
     runs.push(run);
+
     audit.push({
-      id: `audit-${f.sampleId}`,
+      id: `audit-${f.sampleId}-recorded`,
       at: f.recordedAt,
-      actor: f.recordedWith === "live" ? "system" : "dry run",
+      actor: real ? "system" : "dry run",
       kind: "run",
-      text: `${f.recordedWith === "live" ? "Recorded" : "Dry-run recorded (not real output)"}: ${run.n} versions of "${bp.name}" (${run.strategy}, ${f.models.generator} / ${f.models.judge})${run.report ? `, J ${run.report.joint.toFixed(2)}` : ""}`,
+      text: `${real ? "Recorded" : "Dry-run recorded (not real output)"}: ${run.n} versions of "${bp.name}" (${run.strategy}, ${f.models.generator} / ${f.models.judge})${run.report ? `, J ${run.report.joint.toFixed(2)}` : ""}`,
       runId: run.id,
     });
+    if (run.release) {
+      audit.push({
+        id: `audit-${f.sampleId}-released`,
+        at: releasedAt,
+        actor: course.instructor.name,
+        kind: "release",
+        text: `Released from the recorded run of ${releasedAt.slice(0, 10)}: "${bp.name}", ${run.variants.length} versions`,
+        runId: run.id,
+      });
+    } else if (f.run.report && failing.length) {
+      audit.push({
+        id: `audit-${f.sampleId}-held`,
+        at: releasedAt,
+        actor: "system",
+        kind: "run",
+        text: `Not released: "${bp.name}" is over threshold on ${failing.join(", ")} (${f.run.report.checks.p1.metricLabel}); regenerate, loosen the jargon register, or release with a reason`,
+        runId: run.id,
+      });
+    }
+
+    for (const ss of f.sampleSubmissions ?? []) {
+      const v = run.variants.find((x) => x.id === vid(ss.variantId));
+      if (!v || !v.studentId) continue;
+      submissions.push({
+        id: `sub-${f.sampleId}-${vid(ss.variantId)}`,
+        runId: run.id,
+        variantId: vid(ss.variantId),
+        studentId: v.studentId,
+        text: ss.text,
+        submittedAt: ss.recordedAt,
+        grade: suggestedGrade(bp, ss.preScore, ss.recordedAt, ss.model),
+        origin: "ai-sample",
+        sampleTier: ss.tier,
+        preScore: { ...ss.preScore, at: ss.recordedAt, model: ss.model },
+      });
+    }
   }
 
   audit.sort((a, b) => (a.at < b.at ? 1 : -1));
@@ -134,7 +281,7 @@ export function fixtureWorkspace(ids?: string[], seededAt = new Date().toISOStri
     roster: { courseId: course.id, students: [...students.values()], source: "recorded sample rosters" },
     blueprints,
     runs,
-    submissions: [],
+    submissions,
     appeals: [],
     thresholds: [DEFAULT_THRESHOLDS],
     audit,
@@ -154,4 +301,9 @@ export function fixtureWorkspace(ids?: string[], seededAt = new Date().toISOStri
     outcomes: [],
     portfolioShares: [],
   };
+}
+
+/** The no-key default: every recorded run, released, with labelled sample submissions. */
+export function defaultWorkspace(seededAt?: string): Workspace {
+  return fixtureWorkspace(undefined, seededAt);
 }

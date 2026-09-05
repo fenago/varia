@@ -14,9 +14,15 @@ import type {
   ThresholdSet,
   Variant,
   Workspace,
+  IssuedCredential,
 } from "@shared/types";
+import { eligibilityOf } from "@lib/badges/credential";
 import { DEFAULT_THRESHOLDS, STRATEGY_LABELS } from "@shared/thresholds";
-import { domainLabel } from "./seedVariants";
+/** "lending" → "Lending"; keeps already-capitalised labels as they are. */
+function domainLabel(d: string): string {
+  const t = (d ?? "").trim();
+  return t ? t[0].toUpperCase() + t.slice(1) : "";
+}
 
 export function activeBlueprint(ws: Workspace): Blueprint | null {
   return ws.blueprints.find((b) => b.id === ws.activeBlueprintId) ?? null;
@@ -150,10 +156,29 @@ export function auditNewestFirst(ws: Workspace): AuditEvent[] {
   return [...ws.audit].sort((a, b) => b.at.localeCompare(a.at));
 }
 
-/** Project a released local run into a console row. */
+/** Project a local run with a report into a console row: released runs as cleared / over-threshold,
+ *  unreleased over-threshold runs as blocked (held until regenerated or released with a reason). */
 export function institutionRowForRun(ws: Workspace, run: Run): InstitutionSet | null {
-  if (!run.release || !run.report) return null;
+  if (!run.report) return null;
   const failing = (["p1", "p2", "p4"] as const).filter((p) => run.report!.checks[p].gate === "fail");
+  if (!run.release) {
+    if (!failing.length) return null;
+    return {
+      id: `set-local-${run.id}`,
+      course: ws.course.code,
+      assessment: run.blueprintName,
+      instructor: shortName(ws.course.instructor.name),
+      department: "Data Analytics & AI",
+      n: run.n,
+      strategy: run.strategy,
+      joint: Math.round(run.report.joint * 100) / 100,
+      failingChecks: failing,
+      status: "blocked",
+      releasedAt: run.finishedAt ?? run.startedAt,
+      reviewedAt: null,
+      runId: run.id,
+    };
+  }
   return {
     id: `set-local-${run.id}`,
     course: ws.course.code,
@@ -181,13 +206,29 @@ function shortName(full: string): string {
 export function consoleRows(ws: Workspace): InstitutionSet[] {
   const linked = new Set(ws.institutionSets.map((s) => s.runId).filter(Boolean));
   const local = ws.runs
-    .filter((r) => r.release && r.report && !linked.has(r.id))
+    .filter((r) => r.report && !linked.has(r.id))
     .map((r) => institutionRowForRun(ws, r))
     .filter((x): x is InstitutionSet => !!x);
   return [...ws.institutionSets, ...local].sort((a, b) => b.releasedAt.localeCompare(a.releasedAt));
 }
 
 export function consoleStats(ws: Workspace) {
+  if (!ws.institutionSets.length) {
+    // Nothing institution-wide is recorded: compute from this workspace's runs only.
+    const released = ws.runs.filter((r) => r.release);
+    const passingAll = released.filter((r) => r.report?.releasable).length;
+    const overThreshold = released.filter((r) => r.release?.overThreshold).length;
+    return {
+      inUse: released.length,
+      courses: new Set(released.map((r) => r.courseId)).size,
+      departments: 0,
+      passingAll,
+      passingPct: released.length ? Math.round((passingAll / released.length) * 100) : 0,
+      overThreshold,
+      unreviewed: 0,
+      runsOnly: true as const,
+    };
+  }
   const rows = consoleRows(ws);
   const inUseRows = rows.filter((r) => r.status !== "blocked");
   const inUse = inUseRows.length;
@@ -197,7 +238,7 @@ export function consoleStats(ws: Workspace) {
   const passingPct = inUse ? Math.round((passingAll / inUse) * 100) : 0;
   const overThreshold = inUseRows.filter((r) => r.status === "over-threshold").length;
   const unreviewed = inUseRows.filter((r) => r.status === "awaiting-sign-off" && !r.reviewedAt).length;
-  return { inUse, courses, departments, passingAll, passingPct, overThreshold, unreviewed };
+  return { inUse, courses, departments, passingAll, passingPct, overThreshold, unreviewed, runsOnly: false as const };
 }
 
 export interface ReadinessItem {
@@ -725,4 +766,37 @@ export function unassignedVariantOptions(ws: Workspace, runId: string | null | u
   return run.variants
     .filter((v) => !v.error && v.text)
     .map((v) => ({ variantId: v.id, label: `${studentById(ws, v.studentId)?.name ?? "Unassigned"} · ${v.id}` }));
+}
+
+
+// ---------------------------------------------------------------------------
+// Wave 7: credentials
+// ---------------------------------------------------------------------------
+
+export function credentialForRecord(ws: Workspace, recordId: string): IssuedCredential | null {
+  const all = (ws.credentials ?? []).filter((c) => c.recordId === recordId);
+  return all.find((c) => !c.revokedAt) ?? all[all.length - 1] ?? null;
+}
+
+export function credentialById(ws: Workspace, id: string): IssuedCredential | null {
+  return (ws.credentials ?? []).find((c) => c.id === id) ?? null;
+}
+
+/** Plain-words eligibility for issuing a credential on a record (by record id). */
+export function credentialEligibility(ws: Workspace, recordId: string): { eligible: boolean; missing: string[] } {
+  const record = ws.evidenceRecords.find((r) => r.id === recordId) ?? null;
+  const view = record ? evidenceView(ws, record.variantId) : null;
+  return eligibilityOf({
+    record,
+    grade: view?.grade ?? null,
+    validations: view?.validations ?? [],
+    endorsements: record ? endorsementsForRecord(ws, record.id) : [],
+  });
+}
+
+/** Same, addressed by variant id (the Evidence page's key). */
+export function credentialEligibilityForVariant(ws: Workspace, variantId: string): { eligible: boolean; missing: string[] } {
+  const record = evidenceForVariant(ws, variantId);
+  if (!record) return eligibilityOf({ record: null, grade: null, validations: [], endorsements: [] });
+  return credentialEligibility(ws, record.id);
 }

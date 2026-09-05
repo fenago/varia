@@ -9,7 +9,7 @@ import { estimateRunCost } from "@lib/llm";
 import { PILOT_DP_FLESCH_SIGMA, STRATEGY_LABELS, THREAT_OPTIONS, THREAT_TO_STRATEGY } from "@shared/thresholds";
 import { currentThresholds } from "@lib/store/selectors";
 import { GENERATOR_MODELS, JUDGE_MODELS, type AdvancedRunOptions, type Strategy, type ThreatProfile } from "@shared/types";
-import { modelCaveat, modelOptionText, modelsByFamily, type ModelRole } from "@shared/models";
+import { PRESET_ORDER, RUN_PRESETS, modelCaveat, modelOptionText, modelsByFamily, presetDescription, type ModelRole, type RunPreset } from "@shared/models";
 
 const RED = "#8d4a3c";
 const AMBER = "#8a6d2f";
@@ -70,8 +70,12 @@ export default function Generate() {
 
   const strategy: Strategy = threat === "manual" ? manual : THREAT_TO_STRATEGY[threat];
   const est = useMemo(
-    () => estimateRunCost(n, judgeSamples, settings.generatorModel, settings.judgeModel),
-    [n, judgeSamples, settings.generatorModel, settings.judgeModel],
+    () => estimateRunCost(n, judgeSamples, settings.generatorModel, settings.judgeModel, strategy),
+    [n, judgeSamples, settings.generatorModel, settings.judgeModel, strategy],
+  );
+  const presetNote = useMemo(
+    () => presetDescription(settings.preset, { generator: settings.generatorModel, judge: settings.judgeModel, judgeSamples, strategy }),
+    [settings.preset, settings.generatorModel, settings.judgeModel, judgeSamples, strategy],
   );
   const sameModel = settings.generatorModel === settings.judgeModel;
   const inFlight = !!run && IN_FLIGHT.has(run.status) && (starting || run.blueprintId === bp?.id);
@@ -88,6 +92,21 @@ export default function Generate() {
   }
 
   const enabledDims = bp.surfaceDimensions.filter((d) => !d.locked && d.enabled).map((d) => d.key);
+
+  /** Wave 6d: a preset sets generator, judge and samples (and hints the threat profile); editing any of them flips to Custom. */
+  function choosePreset(id: RunPreset) {
+    settings.setPreset(id);
+    if (id === "custom") return;
+    const p = RUN_PRESETS[id];
+    setJudgeSamplesLocal(p.judgeSamples);
+    if (threat !== "manual") setThreat(id === "formative" ? "copy-at-scale" : "high-stakes");
+  }
+
+  function changeJudgeSamples(raw: number) {
+    const v = Math.max(3, Math.min(9, Math.round(raw || 5)));
+    setJudgeSamplesLocal(v);
+    settings.setJudgeSamples(v);
+  }
 
   function toggleDim(key: string) {
     if (!bp) return;
@@ -293,6 +312,16 @@ export default function Generate() {
                 onChange={(e) => setN(Math.max(2, Math.min(200, Number(e.target.value) || 2)))}
               />
             </Field>
+            <div style={{ marginBottom: 12 }}>
+              <div className="va-muted-12" style={{ marginBottom: 6 }}>Preset</div>
+              <SegChoice<RunPreset>
+                name="preset"
+                value={settings.preset}
+                onChange={choosePreset}
+                options={PRESET_ORDER.map((id) => ({ value: id, label: id === "custom" ? "Custom" : RUN_PRESETS[id].label }))}
+              />
+              <div className="va-muted-12" style={{ marginTop: 6, lineHeight: 1.5 }}>{presetNote}</div>
+            </div>
             <Field label="Generator" style={{ marginBottom: 12 }}>
               <select className="input" value={settings.generatorModel} onChange={(e) => settings.setModels({ generatorModel: e.target.value })}>
                 <ModelOptions role="generator" />
@@ -319,14 +348,14 @@ export default function Generate() {
                 min={3}
                 max={9}
                 value={judgeSamples}
-                onChange={(e) => setJudgeSamplesLocal(Math.max(3, Math.min(9, Math.round(Number(e.target.value) || 5))))}
+                onChange={(e) => changeJudgeSamples(Number(e.target.value))}
               />
             </Field>
             <div className="va-muted-12" style={{ lineHeight: 1.5, marginBottom: 10 }}>
               Validate your specific model and prompt pair. In the pilot, the same strategy ranged from J 0.70 to 0.90 across models.
             </div>
             <div className="text-muted" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 12 }}>
-              Est. {est.minutes} min · ~${est.usd.toFixed(2)} at list prices for {modelLabel(settings.generatorModel)} and {modelLabel(settings.judgeModel)}.
+              Est. {est.minutes} min · ~${est.usd.toFixed(2)} (≈ ${est.perStudentUsd.toFixed(2)} per student) at list prices, caching assumed.
               {actualSoFar(run) && (
                 <>
                   <br />

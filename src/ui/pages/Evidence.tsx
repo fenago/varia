@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Blueprint, BlueprintButton, CopyField, Dialog, EmptyState, OutcomeStamps, SkillTags, Stamp } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
-import { challengeById, endorsementsForRecord, evidenceView, outcomesForRecord, skillsForBlueprint } from "@lib/store/selectors";
+import { challengeById, credentialEligibility, credentialForRecord, endorsementsForRecord, evidenceView, outcomesForRecord, skillsForBlueprint } from "@lib/store/selectors";
 import { downloadOpenBadge } from "@lib/badges/openBadges";
 import { Link } from "react-router-dom";
 import { PROPERTY_LABELS } from "@shared/thresholds";
@@ -149,6 +149,11 @@ export default function Evidence() {
       <Blueprint className="va-print-block" style={{ padding: "22px 24px" }}>
         <div className="va-row-flex" style={{ gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
           {issued ? <Stamp gate="pass">Evidence record</Stamp> : <Stamp gate="watch">Not yet issued</Stamp>}
+          {view.submission?.origin === "ai-sample" && (
+            <Stamp gate="watch" title="The submission was written by a model for the recorded demo; the grade is the model's suggestion">
+              AI-written sample · {view.submission.sampleTier} tier · suggested grade
+            </Stamp>
+          )}
           {issued && (
             <span style={{ fontFamily: "var(--font-heading)", fontSize: 20, letterSpacing: ".02em" }}>{record!.id}</span>
           )}
@@ -228,6 +233,26 @@ export default function Evidence() {
                 Portfolio
               </Link>
             )}
+            {(() => {
+              const cred = credentialForRecord(ws, record!.id);
+              const elig = credentialEligibility(ws, record!.id);
+              if (cred && !cred.revokedAt)
+                return (
+                  <Link className="btn btn-secondary" to={`/credential/${record!.id}`} style={{ textDecoration: "none" }}>
+                    Credential {cred.id}
+                  </Link>
+                );
+              return (
+                <Link
+                  className="btn btn-secondary"
+                  to={`/credential/${record!.id}`}
+                  style={{ textDecoration: "none", opacity: elig.eligible ? 1 : 0.6 }}
+                  title={elig.eligible ? "Issue an Open Badges 3.0 credential with the employer's endorsement" : `Not yet eligible: ${elig.missing.join("; ")}`}
+                >
+                  {elig.eligible ? "Issue credential" : "Credential (not yet eligible)"}
+                </Link>
+              );
+            })()}
           </>
         )}
         {issued && (

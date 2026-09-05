@@ -23,7 +23,6 @@ import { aggregateJudge, applyFlags, computeReport, computeVariantMetrics, stepC
 import { DEFAULT_ADVANCED } from "@shared/types";
 import { nowIso, variantId, variantIndex } from "./ids";
 import { progressStart, progressUpdate } from "./progress";
-import { calibrateDemoReport } from "./seed";
 
 export interface RunGenerationArgs {
   run: Run;
@@ -115,16 +114,8 @@ function progress(prev: RunProgress | undefined, phase: RunProgress["phase"], do
 }
 const words = (t: string) => (t.trim() ? t.trim().split(/\s+/).length : 0);
 
-function metricsFrom(text: string, adaptedSolution: string, scaffold: unknown, mode: Run["mode"]): Omit<VariantMetrics, "equivalence" | "judgeSamples"> {
-  const demo = (scaffold as { demoMetrics?: Partial<VariantMetrics> } | undefined)?.demoMetrics;
-  if (mode === "demo" && demo && typeof demo.fleschEase === "number") {
-    return {
-      fleschEase: demo.fleschEase,
-      lexicalComplexity: demo.lexicalComplexity ?? 0.6,
-      stepCount: demo.stepCount ?? 4,
-      solutionFleschEase: demo.solutionFleschEase ?? demo.fleschEase,
-    };
-  }
+function metricsFrom(text: string, adaptedSolution: string, _scaffold: unknown, _mode: Run["mode"]): Omit<VariantMetrics, "equivalence" | "judgeSamples"> {
+  // Every mode computes real metrics from the text; replayed recordings are re-scored like live output.
   return computeVariantMetrics(text, adaptedSolution);
 }
 
@@ -165,8 +156,7 @@ function finishPartial(r: Run, blueprint: Blueprint, thresholds: ThresholdSet, e
   if (judged.length >= 2) {
     try {
       const opts = reportOpts(r, blueprint);
-      let report = computeReport(r, thresholds, opts);
-      if (r.mode === "demo") report = calibrateDemoReport(report, thresholds);
+      const report = computeReport(r, thresholds, opts);
       r.report = report;
       r.variants = applyFlags(r.variants, report, opts);
     } catch {
@@ -362,8 +352,7 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
   r.progress = progress(r.progress, "scoring", 0, 1, "Scoring the set on all four properties");
   emit();
   const opts = reportOpts(r, blueprint);
-  let report: IntegrityReport = computeReport(r, thresholds, opts);
-  if (r.mode === "demo") report = calibrateDemoReport(report, thresholds);
+  const report: IntegrityReport = computeReport(r, thresholds, opts);
   r.report = report;
   r.variants = applyFlags(r.variants, report, opts);
   const ok = r.variants.filter((v) => v.text && !v.error).length;

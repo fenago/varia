@@ -10,6 +10,9 @@ import { SAMPLE_IDS, sampleById } from "@shared/samples";
 import { DEFAULT_GENERATOR, DEFAULT_JUDGE, modelSpec } from "@shared/models";
 import type { LlmProvider, Strategy } from "@shared/types";
 import { recordSample, resumeFixture, type SampleFixture } from "./recordSample";
+import { recordSubmissions, type SampleSubmission } from "./sampleSubmissions";
+
+type FixtureWithSamples = SampleFixture & { sampleSubmissions?: SampleSubmission[] };
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..", "..", "..");
@@ -24,7 +27,7 @@ const flag = (name: string) => process.argv.includes(`--${name}`);
 
 async function main() {
   const dryRun = flag("dry-run");
-  const VALUE_FLAGS = new Set(["--strategy", "--generator", "--judge", "--samples", "--n", "--out"]);
+  const VALUE_FLAGS = new Set(["--strategy", "--generator", "--judge", "--samples", "--n", "--out", "--submissions"]);
   const args = process.argv.slice(2);
   const ids = args.filter((a, i) => !a.startsWith("--") && !VALUE_FLAGS.has(args[i - 1] ?? ""));
   const targets = ids.length ? ids : [...SAMPLE_IDS];
@@ -68,7 +71,18 @@ async function main() {
       if (!existing) console.log(`  no fixture to resume for ${id}; recording from scratch`);
       else if (existing.run.status !== "partial") console.log(`  fixture is ${existing.run.status}; nothing to resume`);
     }
-    const fixture = existing && existing.run.status === "partial"
+    const submissionsN = arg("submissions") ? Number(arg("submissions")) : 0;
+    const submissionsOnly = flag("submissions-only");
+    if (submissionsOnly && !existing) {
+      try {
+        existing = JSON.parse(await readFile(existingPath, "utf8")) as SampleFixture;
+      } catch {
+        throw new Error(`--submissions-only needs an existing fixture for ${id}`);
+      }
+    }
+    const fixture: FixtureWithSamples = submissionsOnly
+      ? (existing as FixtureWithSamples)
+      : existing && existing.run.status === "partial"
       ? await resumeFixture(existing, { provider, onProgress: (m) => console.log(`  ${m}`) })
       : await recordSample({
       sampleId: id,
@@ -81,6 +95,23 @@ async function main() {
       n: nCap,
       onProgress: (m) => console.log(`  ${m}`),
     });
+    if (submissionsN > 0) {
+      if (dryRun) console.log("  (dry run: sample submissions need a live provider; skipping)");
+      else {
+        const apiKey = process.env.ANTHROPIC_API_KEY ?? null;
+        const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID ?? null;
+        fixture.sampleSubmissions = await recordSubmissions({
+          fixture,
+          provider,
+          settings: { apiKey, workspaceId, judgeModel: judge },
+          n: submissionsN,
+          onProgress: (m) => console.log(`  ${m}`),
+        });
+        console.log(`  ${fixture.sampleSubmissions.length} AI-written sample submissions recorded (labelled)`);
+      }
+    } else if (existing && (existing as FixtureWithSamples).sampleSubmissions && !fixture.sampleSubmissions) {
+      fixture.sampleSubmissions = (existing as FixtureWithSamples).sampleSubmissions;
+    }
     const out = path.join(fixturesDir, `${id}.json`);
     await writeFile(out, JSON.stringify(fixture, null, 2) + "\n", "utf8");
     const r = fixture.run;

@@ -19,7 +19,7 @@ export const EXEC = {
 /** At-a-glance tiles. Values are filled live; these are labels and fallbacks. */
 export const GLANCE: { key: "sets" | "cleared" | "validated" | "completed" | "hires"; label: string; sub: string; fallback: string }[] = [
   { key: "sets", label: "Variant sets in use", sub: "across courses and departments", fallback: "63" },
-  { key: "cleared", label: "Cleared all four checks", sub: "of released sets", fallback: "86%" },
+  { key: "cleared", label: "Cleared all four checks", sub: "of released sets", fallback: "—" },
   { key: "validated", label: "Blueprints validated by employers", sub: "goal 75%", fallback: "67%" },
   { key: "completed", label: "Students who did employer work", sub: "on a real problem brief", fallback: "11" },
 ];
@@ -92,7 +92,7 @@ export const PATH_STEPS: {
 }[] = [
   { key: "challenge", who: "An employer in our community", title: "brings a real problem", fallback: "A regional bank deployed a loan-default classifier in March and has a complaint from the underwriting team. It wants a structured audit with prioritised recommendations.", link: "/employer", linkLabel: "The challenge" },
   { key: "version", who: "A student", title: "gets a version that is theirs", fallback: "A regional bank deployed a loan-default classifier in March. You are auditing for the risk officer, who has the partial card and a complaint from the underwriting team…", link: "/grade/v-04", linkLabel: "The task" },
-  { key: "integrity", who: "The instructor", title: "releases a set that measured fair", fallback: "34 versions. Versions look different: pass. Same skill measured: pass. Equally hard to read: checked.", link: "/report", linkLabel: "The integrity report" },
+  { key: "integrity", who: "The instructor", title: "releases a set that measured fair", fallback: "Not yet: no recorded run is loaded.", link: "/report", linkLabel: "The integrity report" },
   { key: "result", who: "One rubric", title: "grades the work", fallback: "10 / 12. Fairness analysis, robustness evaluation, documentation review, risk prioritisation.", link: "/evidence/v-04", linkLabel: "The work sample" },
   { key: "endorsement", who: "The employer", title: "verifies and endorses it", fallback: "Bayfront Regional Bank: meets our bar, 4 of 5. Signature verified.", link: "/talent", linkLabel: "The talent view" },
   { key: "outcome", who: "The student", title: "gets the interview, then the offer", fallback: "Interviewed 3 September. Offered 4 September. Logged by the employer where it happened.", link: "/portfolio", linkLabel: "The portfolio" },
@@ -123,7 +123,7 @@ export const SHIFTS: { audience: "students" | "instructors" | "institutions" | "
   ] },
   { audience: "instructors", label: "Instructors", to: "/for/instructors", shifts: [
     { from: "Proctoring", to: "Variation that makes copying useless" },
-    { from: "Thirty-four prompts", to: "One assignment, one rubric" },
+    { from: "A prompt per student", to: "One assignment, one rubric" },
     { from: "Suspicion", to: "Identical answers as findings" },
     { from: "Arguments about fairness", to: "Appeals decided on numbers" },
   ] },

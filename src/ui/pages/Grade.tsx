@@ -208,6 +208,11 @@ function GradeView({ variantId }: { variantId: string }) {
         <div className="va-kicker" style={{ marginBottom: 8 }}>
           Submission
         </div>
+        {submission?.origin === "ai-sample" && (
+          <div className="va-surface-box" style={{ marginBottom: 10, fontSize: 13, borderLeft: "2px solid #8a6d2f" }}>
+            <strong>AI-written sample at the {submission.sampleTier} tier.</strong> This submission was written by a model for the recorded demo, not by a student; the grade shown is the model's suggestion until an instructor saves one.
+          </div>
+        )}
         {submission?.text ? (
           <>
             <div className={showFull ? undefined : "va-clip"} style={{ fontSize: 14, lineHeight: 1.65, maxHeight: showFull ? undefined : 300 }}>

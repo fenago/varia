@@ -1,5 +1,6 @@
 import { z } from "zod/v4";
 import type { Blueprint, LevelScore, PreScoreOutput, Variant } from "@shared/types";
+import { joinPromptBlocks, type CacheablePrompt } from "./shared";
 
 /** Wire shape: arrays, never records (structured outputs forbid open objects). */
 export const PreScoreSchema = z.object({
@@ -17,24 +18,29 @@ export const PRESCORE_SYSTEM = `You are a grading assistant for an instructor. Y
 
 For each criterion, choose the level 0, 1, 2 or 3 whose anchor best matches the submission, and give one sentence of rationale that cites something specific in the submission (quote a phrase or name the finding). Grade against the adapted model answer for THIS version, not a generic answer. Do not reward length. Do not penalise a different scenario, organisation or vocabulary; the version is deliberately different from other students'. If a criterion is not addressed at all, level 0 with a rationale saying so. Finish with a two-sentence summary for the instructor: the strongest criterion and the one most worth a second look.`;
 
+/**
+ * `stable` (construct and full rubric) is identical for every pre-score call
+ * on a blueprint; the version and the submission are per call. See shared.ts.
+ */
 export function buildPreScorePrompt(
   blueprint: Pick<Blueprint, "construct" | "rubric">,
   variant: Pick<Variant, "id" | "text" | "adaptedSolution">,
   submissionText: string,
-): { system: string; user: string } {
+): CacheablePrompt {
   const rubric = blueprint.rubric
     .map((c, i) => {
       const anchors = c.anchors ? c.anchors.map((a, l) => `    ${l}: ${a}`).join("\n") : "    (no level descriptions; use your judgement against the model answer)";
       return `${i + 1}. ${c.name} (${c.points} points)\n${anchors}`;
     })
     .join("\n");
-  const user = [
+  const stable = [
     `CONSTRUCT (what the task measures):`,
     blueprint.construct,
     ``,
     `RUBRIC (copy each criterion name exactly into your answer, in this order):`,
     rubric,
-    ``,
+  ].join("\n");
+  const volatile = [
     `THE VERSION THIS STUDENT RECEIVED (${variant.id}):`,
     `<task>`,
     variant.text,
@@ -50,7 +56,7 @@ export function buildPreScorePrompt(
     submissionText,
     `</submission>`,
   ].join("\n");
-  return { system: PRESCORE_SYSTEM, user };
+  return { system: PRESCORE_SYSTEM, stable, volatile, user: joinPromptBlocks(stable, volatile) };
 }
 
 /** Map the model's criterion labels back to criterion ids (exact, then substring, then position). */

@@ -3,15 +3,15 @@ import {
   formatAssignment,
   formatBlueprint,
   formatDimensions,
+  joinPromptBlocks,
   propertyConstraints,
   summarisePriorVariants,
+  type CacheablePrompt,
 } from "./shared";
 
 export type GenerationSchemaKind = "variant" | "structured-cot" | "structured-cot-nomap";
 
-export interface GenerationPrompt {
-  system: string;
-  user: string;
+export interface GenerationPrompt extends CacheablePrompt {
   schema: GenerationSchemaKind;
 }
 
@@ -26,6 +26,12 @@ export interface GenerationPrompt {
  *
  * Every strategy also gets the prior variants (diversity nudge), must return an
  * adapted canonical solution, and must return a complete student-facing task.
+ *
+ * Prefix ordering (wave 6d): `system` and `stable` depend only on the run
+ * (blueprint, strategy, thresholds, advanced options, set size) so they are
+ * byte-identical for every version of one run and can be served from the
+ * prompt cache. Everything that changes per version (which version this is,
+ * the surface assignment, the prior variants) is in `volatile`.
  */
 export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: ThresholdSet): GenerationPrompt {
   const { blueprint, strategy } = input;
@@ -34,7 +40,7 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
   const lockedDims = blueprint.surfaceDimensions.filter((d) => d.locked);
 
   const systemParts: string[] = [
-    `You generate student-specific versions of an existing assessment. Each version is a surface-different but construct-equivalent task: a different scenario for the same skill, graded by the same rubric, equally hard. This is version ${input.index + 1} of ${input.n} in the set.`,
+    `You generate student-specific versions of an existing assessment. Each version is a surface-different but construct-equivalent task: a different scenario for the same skill, graded by the same rubric, equally hard. You will be asked for one version at a time from a set of ${input.n}.`,
     ``,
     `THE FOUR INTEGRITY PROPERTIES (hard constraints on your output):`,
     propertyConstraints(thresholds),
@@ -46,7 +52,10 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
     `- Locked dimensions are never varied: ${lockedDims.map((d) => d.label.toLowerCase()).join(", ") || "reading level, step count"} must match the original task.`,
   ];
 
-  const userParts: string[] = [formatBlueprint(blueprint), ``];
+  // Stable per run: the blueprint and the strategy's per-run material (anchors, enabled dimensions).
+  const stableParts: string[] = [formatBlueprint(blueprint), ``];
+  // Per version: the assignment, the prior variants, and which version this is.
+  const volatileParts: string[] = [];
 
   switch (strategy) {
     case "zero-shot": {
@@ -54,10 +63,8 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
         ``,
         `STRATEGY: zero-shot. Work directly from the blueprint and the four properties above. No examples are provided.`,
       );
-      userParts.push(
-        `ENABLED SURFACE DIMENSIONS TO VARY:`,
-        formatDimensions(enabledDims, true),
-        ``,
+      stableParts.push(`ENABLED SURFACE DIMENSIONS TO VARY:`, formatDimensions(enabledDims, true));
+      volatileParts.push(
         `SURFACE ASSIGNMENT FOR THIS VERSION (strong hint): use this domain and stakeholder unless doing so would change the skill being measured. Every version in the set has a distinct assignment; keeping to it is what makes the set diverse.`,
         formatAssignment(input.surfaceAssignment),
       );
@@ -73,7 +80,7 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
           ? `STRATEGY: few-shot with anchors. Two positive anchor variants show what satisfies all four properties. Two negative anchors show the failure modes to avoid: the first is a paraphrastic near-copy (fails P1: same scenario, reworded), the second is construct drift (fails P2: a different skill dressed in a new scenario). Match the positives' level of departure from the original; never resemble either negative.`
           : `STRATEGY: few-shot with positive anchors only (ablation θ−FS). Two positive anchor variants show what satisfies all four properties. Match their level of departure from the original.`,
       );
-      userParts.push(
+      stableParts.push(
         `POSITIVE ANCHORS (satisfy P1–P4):`,
         ...(anchors?.positive?.length
           ? anchors.positive.map((a, i) => `<positive_anchor n="${i + 1}">\n${a}\n</positive_anchor>`)
@@ -81,7 +88,7 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
         ``,
       );
       if (withNeg) {
-        userParts.push(
+        stableParts.push(
           `NEGATIVE ANCHORS (do not produce anything like these):`,
           ...(anchors?.negative?.length
             ? anchors.negative.map(
@@ -92,10 +99,8 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
           ``,
         );
       }
-      userParts.push(
-        `ENABLED SURFACE DIMENSIONS TO VARY:`,
-        formatDimensions(enabledDims, true),
-        ``,
+      stableParts.push(`ENABLED SURFACE DIMENSIONS TO VARY:`, formatDimensions(enabledDims, true));
+      volatileParts.push(
         `SURFACE ASSIGNMENT FOR THIS VERSION (strong hint): use this domain and stakeholder unless doing so would change the skill being measured.`,
         formatAssignment(input.surfaceAssignment),
       );
@@ -122,10 +127,8 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
           : `STRATEGY: structured chain-of-thought without the construct-map step (ablation θ−SC). Fill the output fields in this order and let each one build on the last:`,
         ...steps.map((t, i) => `${i + 1}. ${t}`),
       );
-      userParts.push(
-        `ENABLED SURFACE DIMENSIONS TO VARY:`,
-        formatDimensions(enabledDims, true),
-        ``,
+      stableParts.push(`ENABLED SURFACE DIMENSIONS TO VARY:`, formatDimensions(enabledDims, true));
+      volatileParts.push(
         `SURFACE ASSIGNMENT FOR THIS VERSION (strong hint): use this domain and stakeholder unless doing so would change the skill being measured.`,
         formatAssignment(input.surfaceAssignment),
       );
@@ -141,17 +144,13 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
         `- same number of rubric criteria referenced (${blueprint.rubric.length});`,
         `- same deliverable format and approximately the same word count as the original task (${wordCount(blueprint.taskPrompt)} words).`,
       );
-      userParts.push(
-        `MANDATORY SURFACE ASSIGNMENT FOR THIS VERSION:`,
-        formatAssignment(input.surfaceAssignment),
-        ``,
-        `Locked (held constant): ${lockedDims.map((d) => d.label).join(", ") || "reading level, step count"}.`,
-      );
+      stableParts.push(`Locked (held constant): ${lockedDims.map((d) => d.label).join(", ") || "reading level, step count"}.`);
+      volatileParts.push(`MANDATORY SURFACE ASSIGNMENT FOR THIS VERSION:`, formatAssignment(input.surfaceAssignment));
       break;
     }
   }
 
-  userParts.push(
+  volatileParts.push(
     ``,
     `VERSIONS ALREADY GENERATED IN THIS SET (first 200 characters of each). This version must differ in scenario from all of these:`,
     summarisePriorVariants(input.priorVariantTexts),
@@ -159,9 +158,13 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
     `Now produce version ${input.index + 1} of ${input.n}.`,
   );
 
+  const stable = stableParts.join("\n").replace(/\n+$/, "");
+  const volatile = volatileParts.join("\n");
   return {
     system: systemParts.join("\n"),
-    user: userParts.join("\n"),
+    stable,
+    volatile,
+    user: joinPromptBlocks(stable, volatile),
     schema: strategy === "structured-cot" ? (adv.constructMap ? "structured-cot" : "structured-cot-nomap") : "variant",
   };
 }

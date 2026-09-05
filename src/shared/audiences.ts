@@ -100,7 +100,7 @@ export const AUDIENCES: AudienceContent[] = [
     costs: "About fifteen minutes the first time: two to upload, five to confirm, four unattended while it generates, three to read the report.",
     action: { label: "Load an assessment", to: "/import" },
     proof: { label: "See a finished integrity report", to: "/report" },
-    quote: "Thirty-four versions, one rubric, and I never wrote a second prompt.",
+    quote: "Ten versions, one rubric, and I never wrote a second prompt.",
   },
   {
     key: "institutions",
@@ -138,7 +138,7 @@ export const AUDIENCES: AudienceContent[] = [
     costs: "A static website and a one-page threshold policy. No integration project.",
     action: { label: "Open the compliance console", to: "/console" },
     proof: { label: "See employer outcomes", to: "/employer" },
-    quote: "Sixty-three sets in use, and we can say why every one of them was released.",
+    quote: "Every released set is on the record, and we can say why each one went out.",
   },
   {
     key: "employers",

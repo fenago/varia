@@ -37,17 +37,18 @@ import type {
   PortfolioShare,
   PreScoreOutput,
   Course,
+  IssuedCredential,
 } from "@shared/types";
 import { PROPERTY_LABELS } from "@shared/thresholds";
-import { computeReport } from "@lib/metrics";
+import {} from "@lib/metrics";
 import { estimateRunCost } from "@lib/llm";
 import { newId, nowIso } from "./ids";
 import { runGeneration } from "./orchestrator";
-import { buildDemoEmployabilityData, buildDemoEmployerData, buildDemoWorkspace, buildDemoBridgeEvents, DEMO_INSTRUCTOR } from "./seed";
-import { fixtureWorkspace } from "./fixtures";
+import { defaultWorkspace, fixtureWorkspace } from "./fixtures";
 import { applyChallengeToBlueprint, bridgeFor, recordCanonicalPure, resolveSkills, skillKeysForBlueprint, slugify, withBridgeDefaults, deriveChallengeId } from "./employer";
 import { ensureSigningKey, signCanonical } from "@lib/badges/keys";
-import { activeBlueprint, currentThresholds, evidenceForVariant, institutionRowForRun, runById, studentById, submissionForVariant, validationsForBlueprint, variantById } from "./selectors";
+import { eligibilityOf, issueCredentialDocs, nextCredentialId } from "@lib/badges/credential";
+import { activeBlueprint, currentThresholds, evidenceForVariant, institutionRowForRun, runById, studentById, submissionForVariant, validationsForBlueprint, variantById, evidenceView, endorsementsForRecord } from "./selectors";
 import { applyScenarioEdits, buildReviewPackagePure, evidenceCanonical, findPartnerByOrganisation, hashEvidence, nextEvidenceId, validationStatusText } from "./employer";
 import { clampAdvanced, clampJudgeSamples, getProvider, getSettings, useSettings } from "./settings";
 
@@ -121,6 +122,9 @@ export interface WorkspaceActions {
   // Structural bridge
   setSigningKey: (key: SigningKey) => void;
   signEvidenceRecord: (recordId: string) => Promise<EvidenceRecord>;
+  /** Wave 7: issue an Open Badges 3.0 credential (achievement + employer endorsements) for an eligible record */
+  issueCredential: (recordId: string) => Promise<IssuedCredential>;
+  revokeCredential: (credentialId: string, reason: string) => void;
   addConsent: (recordId: string, ev: Omit<ConsentEvent, "id" | "at" | "learnerId">) => ConsentEvent;
   addVerification: (ev: Omit<VerificationEvent, "id" | "at">) => VerificationEvent;
   // Employability bridge
@@ -138,9 +142,24 @@ export interface WorkspaceActions {
 
 export type WorkspaceState = Workspace & { runAbort: AbortController | null } & WorkspaceActions;
 
+/** The no-key default: recorded real runs, released, with labelled sample submissions. */
 function seed(): Workspace {
-  const ws = withBridgeDefaults(buildDemoWorkspace(computeReport));
-  return buildDemoBridgeEvents(ws);
+  return withBridgeDefaults(defaultWorkspace());
+}
+
+/** Older persisted workspaces may lack arrays added later; they get empty ones (never invented rows). */
+function fillMissing(ws: Workspace): Workspace {
+  const base = seed();
+  const out = { ...ws } as Workspace;
+  const rec = out as unknown as Record<string, unknown>;
+  for (const k of ["employerPartners", "employerValidations", "evidenceRecords", "verificationEvents", "endorsements", "outcomes", "portfolioShares", "institutionSets", "appeals", "submissions"]) {
+    if (!Array.isArray(rec[k])) rec[k] = [];
+  }
+  if (!Array.isArray(out.skills) || !out.skills.length) out.skills = base.skills;
+  if (!Array.isArray(out.challenges)) out.challenges = base.challenges;
+  if (!Array.isArray(out.thresholds) || !out.thresholds.length) out.thresholds = base.thresholds;
+  if (out.signingKey === undefined) out.signingKey = null;
+  return out;
 }
 
 function withRun(ws: Workspace, run: Run): Run[] {
@@ -219,20 +238,7 @@ export const useWorkspace = create<WorkspaceState>()(
           throw new Error("Not a VARIA workspace file (expected version 1).");
         }
         const base = seed();
-        const next = { ...base, ...parsed } as Workspace;
-        if (!Array.isArray(parsed.employerPartners) || !Array.isArray(parsed.employerValidations) || !Array.isArray(parsed.evidenceRecords)) {
-          const demo = buildDemoEmployerData(next);
-          next.employerPartners = Array.isArray(parsed.employerPartners) ? parsed.employerPartners : demo.employerPartners;
-          next.employerValidations = Array.isArray(parsed.employerValidations) ? parsed.employerValidations : demo.employerValidations;
-          next.evidenceRecords = Array.isArray(parsed.evidenceRecords) ? parsed.evidenceRecords : demo.evidenceRecords;
-        }
-        // Skills and challenges first (work-sample defaults need them), then the bridge (learner ids),
-        // then the learner-keyed employability data (outcomes, portfolio shares).
-        const emp0 = buildDemoEmployabilityData(next);
-        const prepared = { ...next, skills: emp0.skills, challenges: emp0.challenges };
-        const bridged = withBridgeDefaults(prepared);
-        const emp = buildDemoEmployabilityData({ ...prepared, evidenceRecords: bridged.evidenceRecords });
-        Object.assign(next, bridged, emp);
+        const next = withBridgeDefaults(fillMissing({ ...base, ...parsed } as Workspace));
         set({ ...next, runAbort: null });
       },
 
@@ -830,6 +836,39 @@ export const useWorkspace = create<WorkspaceState>()(
         return signed;
       },
 
+      issueCredential: async (recordId) => {
+        const ws = get();
+        const record = ws.evidenceRecords.find((r) => r.id === recordId);
+        if (!record) throw new Error(`No evidence record ${recordId}.`);
+        const existing = (ws.credentials ?? []).find((c) => c.recordId === recordId && !c.revokedAt);
+        if (existing) return existing;
+        const view = evidenceView(ws, record.variantId);
+        if (!view) throw new Error("The record's underlying work is no longer in this workspace.");
+        const endorsements = endorsementsForRecord(ws, recordId);
+        const elig = eligibilityOf({ record, grade: view.grade, validations: view.validations, endorsements });
+        if (!elig.eligible) throw new Error(`Not eligible: ${elig.missing.join("; ")}.`);
+        const key = await ensureSigningKey({ signingKey: get().signingKey, setSigningKey: get().setSigningKey });
+        const issuedAt = nowIso();
+        const id = nextCredentialId(get().credentials ?? [], new Date(issuedAt).getFullYear());
+        const docs = await issueCredentialDocs({ credentialId: id, view, record, key, endorsements, issuedAt });
+        const cred: IssuedCredential = { ...docs, revokedAt: null };
+        set((s) => ({
+          credentials: [...(s.credentials ?? []), cred],
+          audit: [auditEvent("credential", `Credential ${id} issued for ${view.student.name} (${view.blueprint.name}); endorsed by ${[...new Set(endorsements.filter((e) => e.meetsBar).map((e) => e.organisation))].join(", ")}`, s.course.instructor.name, record.runId), ...s.audit],
+        }));
+        return cred;
+      },
+
+      revokeCredential: (credentialId, reason) =>
+        set((s) => {
+          const c = (s.credentials ?? []).find((x) => x.id === credentialId);
+          if (!c || c.revokedAt) return {};
+          return {
+            credentials: (s.credentials ?? []).map((x) => (x.id === credentialId ? { ...x, revokedAt: nowIso(), revocationReason: reason } : x)),
+            audit: [auditEvent("credential", `Credential ${credentialId} revoked: ${reason}`, s.course.instructor.name), ...s.audit],
+          };
+        }),
+
       addConsent: (recordId, ev) => {
         const ws = get();
         const record = ws.evidenceRecords.find((r) => r.id === recordId);
@@ -1073,21 +1112,10 @@ export const useWorkspace = create<WorkspaceState>()(
             : r,
         );
         const merged = { ...current, ...p, runs, runAbort: null } as WorkspaceState;
-        // Workspaces persisted before the employer bridge existed get the demo employer data.
-        if (!Array.isArray(p.employerPartners) || !Array.isArray(p.employerValidations) || !Array.isArray(p.evidenceRecords)) {
-          const demo = buildDemoEmployerData(merged);
-          merged.employerPartners = Array.isArray(p.employerPartners) ? p.employerPartners : demo.employerPartners;
-          merged.employerValidations = Array.isArray(p.employerValidations) ? p.employerValidations : demo.employerValidations;
-          merged.evidenceRecords = Array.isArray(p.evidenceRecords) ? p.evidenceRecords : demo.evidenceRecords;
-        }
-        // Skills and challenges first (work-sample defaults need them), then the bridge (schema v3:
-        // learner ids, credential ids, work-sample fields; event arrays get defaults), then the
-        // learner-keyed employability data (endorsements, outcomes, portfolio shares) when missing.
-        const emp0 = buildDemoEmployabilityData(merged);
-        const prepared = { ...merged, skills: emp0.skills, challenges: emp0.challenges };
-        const bridged = withBridgeDefaults(prepared);
-        const emp = buildDemoEmployabilityData({ ...prepared, evidenceRecords: bridged.evidenceRecords });
-        return { ...merged, ...bridged, ...emp } as WorkspaceState;
+        // Workspaces persisted before later schema additions get empty arrays (never invented rows)
+        // and the bridge defaults (learner ids, credential ids, work-sample fields).
+        const bridged = withBridgeDefaults(fillMissing(merged));
+        return { ...merged, ...bridged } as WorkspaceState;
       },
     },
   ),
@@ -1102,4 +1130,3 @@ export function getWorkspace(): WorkspaceState {
   return useWorkspace.getState();
 }
 
-export { DEMO_INSTRUCTOR };

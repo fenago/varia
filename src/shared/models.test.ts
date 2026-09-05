@@ -2,16 +2,22 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_GENERATOR,
   DEFAULT_JUDGE,
+  DEFAULT_PRESET,
+  ESTIMATE_CACHE_PREFIX_TOKENS,
   ESTIMATE_TOKENS,
   GENERATOR_MODELS,
   JUDGE_MODELS,
   MODEL_CATALOG,
+  PRESET_ORDER,
+  RUN_PRESETS,
   costOf,
   estimateRunCost,
   modelCaveat,
   modelOptionText,
   modelSpec,
   modelsByFamily,
+  presetDescription,
+  presetPerStudentUsd,
 } from "./models";
 import { GENERATOR_MODELS as TYPES_GENERATOR_MODELS, JUDGE_MODELS as TYPES_JUDGE_MODELS } from "./types";
 
@@ -45,7 +51,18 @@ describe("MODEL_CATALOG", () => {
       expect(m.priceOutPerM).toBeGreaterThan(m.priceInPerM);
       expect(m.priceCacheReadPerM).toBeLessThan(m.priceInPerM);
       expect(m.priceCacheWritePerM).toBeCloseTo(m.priceInPerM * 1.25, 6);
+      expect([512, 1024, 2048, 4096]).toContain(m.minCacheTokens);
     }
+  });
+
+  it("carries the minimum cacheable prefix per model from the claude-api skill", () => {
+    expect(modelSpec("claude-opus-5")!.minCacheTokens).toBe(512);
+    expect(modelSpec("claude-fable-5-1")!.minCacheTokens).toBe(512);
+    expect(modelSpec("claude-sonnet-5")!.minCacheTokens).toBe(1024);
+    expect(modelSpec("claude-opus-4-8")!.minCacheTokens).toBe(1024);
+    expect(modelSpec("claude-opus-4-7")!.minCacheTokens).toBe(2048);
+    expect(modelSpec("claude-opus-4-6")!.minCacheTokens).toBe(4096);
+    expect(modelSpec("claude-haiku-4-5")!.minCacheTokens).toBe(4096);
   });
 
   it("marks defaults: Opus 5 generates, Sonnet 5 judges", () => {
@@ -150,16 +167,48 @@ describe("costOf", () => {
   });
 });
 
+/** `calls` calls with the shared prefix written once and read `calls - 1` times. */
+function series(id: string, calls: number, t: { inputTokens: number; outputTokens: number }): number {
+  const prefix = ESTIMATE_CACHE_PREFIX_TOKENS;
+  const rest = t.inputTokens - prefix;
+  const first = costOf(id, { inputTokens: rest, outputTokens: t.outputTokens, cacheReadTokens: 0, cacheWriteTokens: prefix });
+  const later = costOf(id, { inputTokens: rest, outputTokens: t.outputTokens, cacheReadTokens: prefix, cacheWriteTokens: 0 });
+  return first + (calls - 1) * later;
+}
+
 describe("estimateRunCost", () => {
-  it("is n generation calls plus n × samples judge calls at the assumed tokens", () => {
+  it("is n generation calls plus n × samples judge calls, with the shared prefix cached after the first call per model", () => {
     const n = 34;
     const samples = 5;
-    const perGen = costOf("claude-opus-5", { ...ESTIMATE_TOKENS.generation, cacheReadTokens: 0, cacheWriteTokens: 0 });
-    const perJudge = costOf("claude-sonnet-5", { ...ESTIMATE_TOKENS.judge, cacheReadTokens: 0, cacheWriteTokens: 0 });
-    const expected = Math.round((n * perGen + n * samples * perJudge) * 100) / 100;
-    expect(estimateRunCost(n, samples).usd).toBe(expected);
-    // Defaults are Opus 5 / Sonnet 5.
-    expect(estimateRunCost(n, samples)).toEqual(estimateRunCost(n, samples, "claude-opus-5", "claude-sonnet-5"));
+    const expected = series("claude-opus-5", n, ESTIMATE_TOKENS.generation) + series("claude-sonnet-5", n * samples, ESTIMATE_TOKENS.judge);
+    const est = estimateRunCost(n, samples);
+    expect(est.usd).toBe(Math.round(expected * 100) / 100);
+    expect(est.perStudentUsd).toBe(Math.round((expected / n) * 100) / 100);
+    // Defaults are Opus 5 / Sonnet 5 / structured CoT.
+    expect(est).toEqual(estimateRunCost(n, samples, "claude-opus-5", "claude-sonnet-5", "structured-cot"));
+  });
+
+  it("is cheaper than the same run priced without caching", () => {
+    const n = 30;
+    const uncached =
+      n * costOf("claude-opus-5", { ...ESTIMATE_TOKENS.generation, cacheReadTokens: 0, cacheWriteTokens: 0 }) +
+      n * 5 * costOf("claude-sonnet-5", { ...ESTIMATE_TOKENS.judge, cacheReadTokens: 0, cacheWriteTokens: 0 });
+    expect(estimateRunCost(n, 5).usd).toBeLessThan(uncached);
+  });
+
+  it("prices models whose cache minimum exceeds the assumed prefix uncached (Haiku 4.5, Opus 4.6, Opus 4.7)", () => {
+    for (const id of ["claude-haiku-4-5", "claude-opus-4-6", "claude-opus-4-7"]) {
+      expect(modelSpec(id)!.minCacheTokens).toBeGreaterThan(ESTIMATE_CACHE_PREFIX_TOKENS);
+      const n = 10;
+      const uncached =
+        n * costOf(id, { ...ESTIMATE_TOKENS.generationLight, cacheReadTokens: 0, cacheWriteTokens: 0 }) +
+        n * 3 * costOf(id, { ...ESTIMATE_TOKENS.judge, cacheReadTokens: 0, cacheWriteTokens: 0 });
+      expect(estimateRunCost(n, 3, id, id, "zero-shot").usd).toBe(Math.round(uncached * 100) / 100);
+    }
+  });
+
+  it("assumes lighter generation output for every strategy but structured CoT", () => {
+    expect(estimateRunCost(10, 5, "claude-opus-5", "claude-sonnet-5", "zero-shot").usd).toBeLessThan(estimateRunCost(10, 5).usd);
   });
 
   it("changes with the selected models", () => {
@@ -169,7 +218,38 @@ describe("estimateRunCost", () => {
   });
 
   it("handles zero and fractional inputs", () => {
-    expect(estimateRunCost(0, 5)).toEqual({ usd: 0, minutes: 0 });
+    expect(estimateRunCost(0, 5)).toEqual({ usd: 0, minutes: 0, perStudentUsd: 0 });
     expect(estimateRunCost(2.9, 5.9).usd).toBe(estimateRunCost(2, 5).usd);
+  });
+
+  it("lands near the recorded full-sheet run: about $0.26 per student for high-stakes", () => {
+    // Recorded uncached: $0.285 per variant (lib/store/fixtures/ml-lending-fairness-audit.json). Caching takes a little off.
+    const per = estimateRunCost(30, 5).perStudentUsd;
+    expect(per).toBeGreaterThanOrEqual(0.22);
+    expect(per).toBeLessThanOrEqual(0.3);
+  });
+});
+
+describe("run presets", () => {
+  it("high-stakes is Opus 5 + Sonnet 5 × 5 on structured CoT; formative is Sonnet 5 + Sonnet 5 × 3 on dimension-preserving", () => {
+    expect(DEFAULT_PRESET).toBe("high-stakes");
+    expect(PRESET_ORDER).toEqual(["high-stakes", "formative", "custom"]);
+    const hs = RUN_PRESETS["high-stakes"];
+    expect([hs.generator, hs.judge, hs.judgeSamples, hs.strategy]).toEqual(["claude-opus-5", "claude-sonnet-5", 5, "structured-cot"]);
+    const fm = RUN_PRESETS.formative;
+    expect([fm.generator, fm.judge, fm.judgeSamples, fm.strategy]).toEqual(["claude-sonnet-5", "claude-sonnet-5", 3, "dimension-preserving"]);
+  });
+
+  it("describes each preset with a live per-student price", () => {
+    const hs = presetDescription("high-stakes");
+    expect(hs).toMatch(/^Highest construct fidelity; about \$\d+\.\d\d per student\.$/);
+    expect(hs).toContain(`$${presetPerStudentUsd("high-stakes").toFixed(2)}`);
+    const fm = presetDescription("formative");
+    expect(fm).toMatch(/^Surface separation at about .* of the cost; about \$\d+\.\d\d per student\.$/);
+    expect(presetPerStudentUsd("formative")).toBeLessThan(presetPerStudentUsd("high-stakes") / 2);
+    expect(presetDescription("custom")).toMatch(/Your own generator/);
+    expect(presetDescription("custom", { generator: "claude-opus-5", judge: "claude-sonnet-5", judgeSamples: 5, strategy: "structured-cot" })).toContain(
+      `$${presetPerStudentUsd("high-stakes").toFixed(2)}`,
+    );
   });
 });

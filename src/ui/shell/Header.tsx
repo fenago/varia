@@ -29,7 +29,7 @@ export function Header() {
             {modelLabel}
           </span>
         ) : (
-          <Link className="tag tag-outline" to="/settings" title="No Claude key set — running on seeded demo data">
+          <Link className="tag tag-outline" to="/settings" title="No Claude key set — replaying recorded sample runs">
             Demo mode · add a key
           </Link>
         )}

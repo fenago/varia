@@ -339,6 +339,8 @@ export interface Grade {
   maxTotal: number;
   gradedAt: string;
   by: string;
+  /** Wave 5: "suggested" = an AI suggestion the demo carries; "instructor" = a person saved it */
+  basis?: "instructor" | "suggested";
 }
 
 export type SubmissionStatus = "not-started" | "submitted" | "graded" | "appeal";
@@ -351,6 +353,10 @@ export interface Submission {
   text: string | null;
   submittedAt: string | null;
   grade: Grade | null;
+  /** Wave 5: where the text came from. "ai-sample" = written by a model at a stated quality tier for the recorded demo, never passed off as a student's. */
+  origin?: "student" | "ai-sample";
+  /** For ai-sample: the tier the model was asked to write at */
+  sampleTier?: "strong" | "adequate" | "weak";
   /** File the submission was imported from, if any */
   sourceFile?: string;
   /** AI suggestion (wave 4). Never the grade; the instructor saves the grade. */
@@ -401,7 +407,8 @@ export type AuditKind =
   | "settings"
   | "employer"
   | "evidence"
-  | "outcome";
+  | "outcome"
+  | "credential";
 
 export interface AuditEvent {
   id: string;
@@ -489,6 +496,8 @@ export interface Workspace {
   endorsements?: Endorsement[];
   outcomes?: OutcomeEvent[];
   portfolioShares?: PortfolioShare[];
+  /** Wave 7: issued Open Badges 3.0 credentials (achievement + employer endorsements) */
+  credentials?: IssuedCredential[];
 }
 
 // ---------------------------------------------------------------------------
@@ -848,4 +857,31 @@ export interface SampleAssessment {
   skills: SkillTag[];
   /** Real extraction output recorded with a live key; used when no key is present */
   preExtracted?: { blueprint: BlueprintDraft; model: ModelId; recordedAt: string } | null;
+}
+
+// ---------------------------------------------------------------------------
+// Wave 7: issued credentials (Open Badges 3.0 / W3C VC 2.0)
+// ---------------------------------------------------------------------------
+
+/** JSON documents are kept loosely typed here; the shapes are built in src/lib/badges. */
+export type JsonDoc = Record<string, unknown>;
+
+export interface IssuedCredential {
+  /** "CR-2026-0001" */
+  id: string;
+  recordId: string;
+  learnerId: string;
+  issuedAt: string;
+  issuedBy: string; // "Miami Dade College"
+  /** OB3 AchievementCredential, signed */
+  achievementCredential: JsonDoc;
+  /** One OB3 EndorsementCredential per qualifying employer endorsement, signed */
+  endorsementCredentials: JsonDoc[];
+  /** VerifiablePresentation-shaped wrapper holding all of the above */
+  bundle: JsonDoc;
+  /** Compact JWS over the achievement credential's canonical JSON (proof-less) */
+  signature: string;
+  signedWithKid: string;
+  revokedAt: string | null;
+  revocationReason?: string;
 }

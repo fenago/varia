@@ -169,10 +169,12 @@ describe("buildFewShotAnchorsPrompt", () => {
 
 describe("estimateRunCost", () => {
   it("prices 34 variants × 5 judge samples from the catalog (Opus 5 generates, Sonnet 5 judges)", () => {
-    const { usd, minutes } = estimateRunCost(34, 5);
-    // 34 × (1.5k in + 1.2k out on Opus 5) + 170 × (1.2k in + 250 out on Sonnet 5) ≈ $2.11 at list prices.
-    expect(usd).toBeGreaterThanOrEqual(1.5);
-    expect(usd).toBeLessThanOrEqual(3.0);
+    const { usd, minutes, perStudentUsd } = estimateRunCost(34, 5);
+    // Wave 6d: calibrated on the recorded full-sheet run (≈ $0.285 per variant uncached), caching assumed ≈ $0.26 per student.
+    expect(usd).toBeGreaterThanOrEqual(7);
+    expect(usd).toBeLessThanOrEqual(11);
+    expect(perStudentUsd).toBeGreaterThanOrEqual(0.2);
+    expect(perStudentUsd).toBeLessThanOrEqual(0.32);
     // Formula from the build spec: ceil(n · perVariantSeconds / 60 / 3), generation 3-wide.
     const expectedMinutes = Math.ceil((34 * COST_MODEL.perVariantSeconds) / 60 / 3);
     expect(minutes).toBe(expectedMinutes);

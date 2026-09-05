@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { Blueprint, CopyField, EmptyState, OutcomeStamps, SkillTags, Stamp } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
-import { learnersWithRecords, portfolioFor, type PortfolioItem } from "@lib/store/selectors";
+import { credentialForRecord, learnersWithRecords, portfolioFor, type PortfolioItem } from "@lib/store/selectors";
 import { downloadOpenBadge } from "@lib/badges/openBadges";
 import type { OutcomeKind } from "@shared/types";
 
@@ -115,6 +115,11 @@ function WorkSampleCard({ item, learnerId }: { item: PortfolioItem; learnerId: s
             {bridge?.signature ? "Signed" : "Unsigned"}
           </Stamp>
           <Stamp gate={sample?.submissionIncluded ? "pass" : "watch"}>{sample?.submissionIncluded ? "Submission included" : "Submission withheld"}</Stamp>
+          {view.submission?.origin === "ai-sample" && (
+            <Stamp gate="watch" title="Written by a model for the recorded demo; the grade is the model's suggestion">
+              AI-written sample · {view.submission.sampleTier} tier
+            </Stamp>
+          )}
         </div>
         <div style={{ marginTop: 10 }}>
           <SkillTags skills={skills} />
@@ -149,6 +154,19 @@ function WorkSampleCard({ item, learnerId }: { item: PortfolioItem; learnerId: s
         <Link className="btn btn-ghost" to={`/evidence/${record.variantId}`} style={{ textDecoration: "none" }}>
           Open record
         </Link>
+        {(() => {
+          const cred = credentialForRecord(ws, record.id);
+          return cred && !cred.revokedAt ? (
+            <>
+              <Link className="btn btn-ghost" to={`/credential/${record.id}?as=learner`} style={{ textDecoration: "none" }}>
+                View credential
+              </Link>
+              <Link className="btn btn-ghost" to={`/credential/${record.id}?as=learner#share`} style={{ textDecoration: "none" }}>
+                Share
+              </Link>
+            </>
+          ) : null;
+        })()}
       </div>
 
       {open === "share" && (

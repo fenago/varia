@@ -37,3 +37,5 @@ export { AudienceCard } from "./AudienceCard";
 export type { AudienceCardProps } from "./AudienceCard";
 export { OutcomeStamps } from "./OutcomeStamps";
 export type { OutcomeStampsProps } from "./OutcomeStamps";
+export { ShareCredential } from "./ShareCredential";
+export type { ShareCredentialProps } from "./ShareCredential";

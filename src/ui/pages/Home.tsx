@@ -14,7 +14,14 @@ import {
 import { BOTTOM_LINE, NORTH_STAR, PATH_STEPS, SHIFTS, TRUST } from "@shared/home";
 import type { Workspace } from "@shared/types";
 
-const DEMO_VARIANT = "v-04";
+/** The version the path follows: a graded one if any exists, else the first usable version of the active run. */
+function pathVariantId(ws: Workspace): string | null {
+  const run = activeRun(ws) ?? ws.runs[0];
+  if (!run) return null;
+  const usable = run.variants.filter((v) => v.text && !v.error);
+  const graded = usable.find((v) => ws.submissions.some((s) => s.runId === run.id && s.variantId === v.id && s.grade));
+  return (graded ?? usable[0])?.id ?? null;
+}
 
 function clip(text: string, n: number): string {
   const t = text.replace(/\s+/g, " ").trim();
@@ -26,8 +33,10 @@ function usePath(ws: Workspace) {
   return useMemo(() => {
     const out: Record<string, { text: string; extra?: React.ReactNode }> = {};
     try {
-      const view = evidenceView(ws, DEMO_VARIANT);
-      const found = variantById(ws, DEMO_VARIANT);
+      const id = pathVariantId(ws);
+      if (!id) return out;
+      const view = evidenceView(ws, id);
+      const found = variantById(ws, id);
       const run = found?.run ?? activeRun(ws);
       const challenge =
         (ws.challenges ?? []).find((c) => c.id === view?.record?.bridge?.workSample?.challengeId) ??
@@ -51,7 +60,11 @@ function usePath(ws: Workspace) {
       }
       if (view?.grade) {
         const skills = view.record?.bridge?.workSample?.skills ?? [];
-        out.result = { text: `${view.grade.total} / ${view.grade.maxTotal} on the same rubric as every other version.`, extra: <SkillTags skills={skills} max={4} /> };
+        const suggested = view.grade.basis === "suggested";
+        out.result = {
+          text: `${view.grade.total} / ${view.grade.maxTotal} on the same rubric as every other version${suggested ? ` (an AI-written ${view.submission?.sampleTier ?? "sample"} sample; the grade is the model's suggestion)` : ""}.`,
+          extra: <SkillTags skills={skills} max={4} />,
+        };
       }
       if (view?.record) {
         const ends = endorsementsForRecord(ws, view.record.id);

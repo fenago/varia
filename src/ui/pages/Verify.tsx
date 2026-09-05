@@ -238,7 +238,7 @@ export default function Verify() {
       <Blueprint style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 8px" }}>Record this verification</h6>
         <p className="text-muted" style={{ margin: "0 0 12px", fontSize: 13, maxWidth: "70ch" }}>
-          Verifying is the observed form of adoption. Recording it here adds an event to the issuing workspace when you are in it; a public endpoint would record it for the institution.
+          Verifying is the observed form of adoption. Recording it here adds an event to the issuing workspace when you are in it; a public endpoint would record it for the institution. This verify link is the canonical public URL for the record: it is what the badge image, the credential and every share button point at.
         </p>
         <div className="va-btn-row" style={{ alignItems: "flex-end", gap: 12, flexWrap: "wrap" }}>
           <div className="field" style={{ minWidth: 280, margin: 0 }}>

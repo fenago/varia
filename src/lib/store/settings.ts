@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import { DEFAULT_ADVANCED, type AdvancedRunOptions, type LlmProvider, type Mode, type ModelId, type Settings } from "@shared/types";
 import { createProvider } from "@lib/llm";
-import { DEFAULT_GENERATOR, DEFAULT_JUDGE } from "@shared/models";
+import { DEFAULT_GENERATOR, DEFAULT_JUDGE, DEFAULT_PRESET, RUN_PRESETS, type RunPreset } from "@shared/models";
 
 const LS_KEY = "varia.settings";
 const SESSION_KEY = "varia.session-key";
@@ -13,6 +13,12 @@ export interface SettingsState extends Settings {
   setWorkspaceId: (id: string | null) => void;
   setModels: (m: { generatorModel?: ModelId; judgeModel?: ModelId }) => void;
   setJudgeSamples: (n: number) => void;
+  /**
+   * Wave 6d: the run preset. Choosing one sets generator, judge and judge
+   * samples; changing any of those by hand flips it to "custom".
+   */
+  preset: RunPreset;
+  setPreset: (preset: RunPreset) => void;
   markVerified: (model: ModelId) => void;
   forgetKey: () => void;
   /** Wave 6c: per-workspace defaults for the Advanced panel on Generate */
@@ -42,7 +48,7 @@ export function clampJudgeSamples(n: number): number {
   return Math.max(3, Math.min(9, Math.round(Number.isFinite(n) ? n : 5)));
 }
 
-const DEFAULTS: Settings = {
+const DEFAULTS: Settings & { preset: RunPreset } = {
   apiKey: null,
   workspaceId: null,
   rememberKey: false,
@@ -50,7 +56,13 @@ const DEFAULTS: Settings = {
   judgeModel: DEFAULT_JUDGE,
   judgeSamples: 5,
   keyVerifiedAt: null,
+  preset: DEFAULT_PRESET,
 };
+
+const PRESET_IDS = new Set<string>(["high-stakes", "formative", "custom"]);
+function validPreset(p: unknown): RunPreset {
+  return typeof p === "string" && PRESET_IDS.has(p) ? (p as RunPreset) : DEFAULT_PRESET;
+}
 
 function modeOf(key: string | null | undefined): Mode {
   return key && key.trim().length > 0 ? "live" : "demo";
@@ -143,11 +155,25 @@ export const useSettings = create<SettingsState>()(
         });
       },
       setModels: (m) =>
-        set((s) => ({
-          generatorModel: m.generatorModel ?? s.generatorModel,
-          judgeModel: m.judgeModel ?? s.judgeModel,
-        })),
-      setJudgeSamples: (n) => set({ judgeSamples: clampJudgeSamples(n) }),
+        set((s) => {
+          const generatorModel = m.generatorModel ?? s.generatorModel;
+          const judgeModel = m.judgeModel ?? s.judgeModel;
+          const changed = generatorModel !== s.generatorModel || judgeModel !== s.judgeModel;
+          return { generatorModel, judgeModel, preset: changed ? "custom" : s.preset };
+        }),
+      setJudgeSamples: (n) =>
+        set((s) => {
+          const judgeSamples = clampJudgeSamples(n);
+          return { judgeSamples, preset: judgeSamples !== s.judgeSamples ? "custom" : s.preset };
+        }),
+      setPreset: (preset) => {
+        if (preset === "custom") {
+          set({ preset });
+          return;
+        }
+        const p = RUN_PRESETS[preset];
+        set({ preset, generatorModel: p.generator, judgeModel: p.judge, judgeSamples: clampJudgeSamples(p.judgeSamples) });
+      },
       setWorkspaceId: (id) => set({ workspaceId: id && id.trim().length ? id.trim() : null, keyVerifiedAt: null }),
       markVerified: (_model) => set({ keyVerifiedAt: new Date().toISOString() }),
       forgetKey: () => set({ apiKey: null, mode: "demo", keyVerifiedAt: null }),
@@ -164,12 +190,20 @@ export const useSettings = create<SettingsState>()(
         judgeSamples: s.judgeSamples,
         keyVerifiedAt: s.keyVerifiedAt,
         advancedDefaults: s.advancedDefaults,
+        preset: s.preset,
       }),
       merge: (persisted, current) => {
-        const p = (persisted ?? {}) as Partial<Settings> & { advancedDefaults?: Partial<AdvancedRunOptions> };
+        const p = (persisted ?? {}) as Partial<Settings> & { advancedDefaults?: Partial<AdvancedRunOptions>; preset?: unknown };
         return {
           ...current,
           ...p,
+          // Older persisted states had no preset: keep the default only if their models still match it, else "custom".
+          preset:
+            "preset" in p
+              ? validPreset(p.preset)
+              : p.generatorModel === undefined || (p.generatorModel === RUN_PRESETS["high-stakes"].generator && p.judgeModel === RUN_PRESETS["high-stakes"].judge && (p.judgeSamples ?? 5) === RUN_PRESETS["high-stakes"].judgeSamples)
+                ? DEFAULT_PRESET
+                : "custom",
           judgeSamples: clampJudgeSamples(p.judgeSamples ?? current.judgeSamples),
           advancedDefaults: clampAdvanced(p.advancedDefaults ?? {}, current.advancedDefaults),
           mode: modeOf(p.apiKey ?? null),
