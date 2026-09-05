@@ -12,8 +12,7 @@ import type {
   GenerateVariantOutput,
   JudgeInput,
   JudgeSample,
-  LlmProvider,
-} from "@shared/types";
+  LlmProvider, PreScoreInput, PreScoreOutput, LevelScore } from "@shared/types";
 import { variantId } from "./ids";
 import { buildDemoBlueprintB1, buildDemoDraft, demoJudgeSamples, demoMetricsForScenario } from "./seed";
 import {
@@ -153,6 +152,30 @@ export function createDemoProvider(): LlmProvider {
       if (idx >= 0) return demoJudgeSamples(idx, dims).slice(0, Math.max(1, input.samples));
       // regenerated or unknown text: strong, uniform equivalence
       return demoJudgeSamples(0, dims).slice(0, Math.max(1, input.samples));
+    },
+
+    async preScoreSubmission(input: PreScoreInput): Promise<PreScoreOutput> {
+      await wait(400, input.signal);
+      const words = input.submissionText.split(/\s+/).filter(Boolean).length;
+      const scores: Record<string, LevelScore> = {};
+      const rationale: Record<string, string> = {};
+      input.blueprint.rubric.forEach((c, i) => {
+        const mentions = c.name
+          .toLowerCase()
+          .split(/[^a-z]+/)
+          .filter((w) => w.length > 4)
+          .some((w) => input.submissionText.toLowerCase().includes(w));
+        const lv = (words < 60 ? 1 : mentions ? (i % 2 === 0 ? 3 : 2) : 2) as LevelScore;
+        scores[c.id] = lv;
+        rationale[c.id] = mentions
+          ? `The submission addresses ${c.name.toLowerCase()} directly and cites evidence from its scenario.`
+          : `The submission touches ${c.name.toLowerCase()} only in passing; the model answer expects a named finding here.`;
+      });
+      return {
+        scores,
+        rationale,
+        summary: "Strongest on the first criterion, where the finding is specific and cited. Worth a second look on prioritisation, where the recommendation is asserted rather than argued. (Demo suggestion; add a key for a real one.)",
+      };
     },
   };
 }

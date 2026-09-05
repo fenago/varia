@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Blueprint, BlueprintButton, Dialog, Field, Pill } from "@ui/components";
 import { useSettings, getProvider } from "@lib/store/settings";
 import { useWorkspace } from "@lib/store/workspace";
+import { fixturesAreReal, listFixtures } from "@lib/store/fixtures";
 import { LlmError } from "@lib/llm";
 import { GENERATOR_MODELS, JUDGE_MODELS } from "@shared/types";
 import { modelCaveat, modelOptionText, modelsByFamily, type ModelRole } from "@shared/models";
@@ -73,7 +74,8 @@ export default function Settings() {
     s.keyVerifiedAt && s.apiKey ? { state: "ok", model: modelLabel(s.judgeModel), at: s.keyVerifiedAt } : { state: "idle" },
   );
   const [saved, setSaved] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<"forget" | "reset" | null>(null);
+  const fixtures = listFixtures();
+  const [confirm, setConfirm] = useState<"forget" | "reset" | null | "fixtures">(null);
   const [wsError, setWsError] = useState<string | null>(null);
   const importRef = useRef<HTMLInputElement>(null);
 
@@ -266,7 +268,17 @@ export default function Settings() {
           <button type="button" className="btn btn-ghost" onClick={() => setConfirm("reset")}>
             Reset to demo data
           </button>
+          <button type="button" className="btn btn-secondary" onClick={() => setConfirm("fixtures")} disabled={fixtures.length === 0}>
+            Load recorded sample runs
+          </button>
         </div>
+        {fixtures.length > 0 && (
+          <div className="va-muted-12" style={{ marginTop: 8, lineHeight: 1.5 }}>
+            {fixtures.length} recorded run{fixtures.length === 1 ? "" : "s"}:{" "}
+            {fixtures.map((f) => `${f.organisation} (${f.variants} versions, ${f.recordedWith === "live" ? `${f.models.generator}, J ${f.joint?.toFixed(2) ?? "—"}` : "dry run · not real output"})`).join("; ")}.
+            {fixturesAreReal() ? "" : " Dry-run fixtures come from the demo provider and are placeholders until the recorder is run with a real key."}
+          </div>
+        )}
         {wsError && (
           <div style={{ marginTop: 8, fontSize: 12.5, color: RED }}>
             {wsError}
@@ -331,6 +343,36 @@ export default function Settings() {
         <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
           This replaces every blueprint, run, grade and audit event with the seeded DAT 4100 course. Export first if you want to keep anything. Your
           key and model choices are not affected.
+        </p>
+      </Dialog>
+      <Dialog
+        open={confirm === "fixtures"}
+        title="Load recorded sample runs?"
+        onClose={() => setConfirm(null)}
+        actions={
+          <>
+            <button type="button" className="btn btn-secondary" onClick={() => setConfirm(null)}>
+              Cancel
+            </button>
+            <BlueprintButton
+              onClick={() => {
+                try {
+                  ws.loadFixtures();
+                  setWsError(null);
+                } catch (e) {
+                  setWsError(e instanceof Error ? e.message : String(e));
+                }
+                setConfirm(null);
+              }}
+            >
+              Load recorded runs
+            </BlueprintButton>
+          </>
+        }
+      >
+        <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
+          This replaces the workspace with the recorded sample runs: real blueprints, rosters, versions and integrity reports produced by the
+          pipeline. Nothing is invented. {fixturesAreReal() ? "" : "The current recordings are dry runs from the demo provider and are labelled as not real output."} Export first if you want to keep anything.
         </p>
       </Dialog>
     </div>

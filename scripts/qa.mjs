@@ -913,6 +913,74 @@ await check("mockup h6/th labels present", async () => {
   return `${labels.size} labels`;
 });
 
+console.log("\n35. Release and grading made real (wave 4)");
+await check("student task link opens in a fresh context without the solution", async () => {
+  await resetDemo();
+  await go("/roster");
+  await page.locator("button", { hasText: /Alvarez, R\. · v-04/ }).first().click();
+  const link = await page.locator(".va-copyfield input, input[readonly]").last().inputValue();
+  assert(link.includes("/task/v-04#pkg="), `task link ${link.slice(0, 60)}`);
+  const ctxT = await browser.newContext({ viewport: { width: 1200, height: 900 } });
+  const pt = await ctxT.newPage();
+  const errs = [];
+  pt.on("pageerror", (e) => errs.push(e.message));
+  await pt.goto(link, { waitUntil: "networkidle" });
+  const t = (await pt.locator("body").innerText()).toLowerCase();
+  assert(t.includes("your task") && t.includes("how it is graded"), "task sections");
+  assert(t.includes("r. alvarez") && !t.includes("alvarez, r."), "abbreviated student label");
+  const st = await wsState();
+  const v04 = st.runs.find((r) => r.id === "run-demo-b1" || r.variants.some((v) => v.id === "v-04")).variants.find((v) => v.id === "v-04");
+  assert(!t.includes(v04.adaptedSolution.slice(0, 30).toLowerCase()), "no adapted solution");
+  assert(!t.includes("reading ease"), "no metrics");
+  assert(errs.length === 0, errs.join(" | "));
+  await pt.screenshot({ path: `${SHOTS}/task_link.png`, fullPage: true });
+  await ctxT.close();
+});
+await check("download all versions produces a zip; copy all links produces a csv", async () => {
+  await go("/roster");
+  const [dl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: /Download as Markdown/ }).click()]);
+  assert(dl.suggestedFilename().endsWith("_versions_md.zip"), dl.suggestedFilename());
+  const [dl2] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: /Download all versions \(Word\)/ }).click()]);
+  assert(dl2.suggestedFilename().endsWith("_versions_docx.zip"), dl2.suggestedFilename());
+  const [dl3] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: /Copy all links/ }).click()]);
+  assert(dl3.suggestedFilename().endsWith("_student_links.csv"), dl3.suggestedFilename());
+});
+await check("import two .txt submissions matched by surname", async () => {
+  await go("/roster");
+  await page.locator('[data-testid="submissions-input"]').setInputFiles([
+    { name: "Ivanov_audit.txt", mimeType: "text/plain", buffer: Buffer.from("Fairness. The card omits per-office shortlist rates, so the complaint cannot be assessed. Robustness. Single-cycle validation. Documentation. No out-of-scope uses. Prioritisation: fix subgroup reporting first.") },
+    { name: "Duarte-final.txt", mimeType: "text/plain", buffer: Buffer.from("Fairness gaps: aggregate accuracy hides subgroup false positive rates for the northern hub. Robustness: temporal holdout absent. Documentation: intended use only. Prioritise subgroup metrics.") },
+  ]);
+  await page.waitForSelector("text=Import matched files");
+  const rowsText = (await page.locator("table").last().innerText()).toLowerCase();
+  assert(rowsText.includes("surname"), "matched by surname");
+  await page.getByRole("button", { name: /Import matched files/ }).click();
+  await page.waitForSelector("text=/2 submissions imported/");
+  const st = await wsState();
+  const iv = st.submissions.find((s) => s.variantId === "v-27");
+  assert(iv && iv.text && iv.sourceFile === "Ivanov_audit.txt", "Ivanov submission stored");
+});
+await check("suggest scores (demo) → apply → save grades v-27", async () => {
+  await go("/grade/v-27");
+  await page.getByRole("button", { name: /^Suggest scores$/ }).click();
+  await page.waitForSelector("text=/Suggested by/", { timeout: 15000 });
+  const pills = await page.locator("text=/suggested [0-3]/").count();
+  assert(pills === 4, `suggested pills ${pills}`);
+  await page.getByRole("button", { name: /Apply suggestions/ }).click();
+  const saveBtn = page.getByRole("button", { name: /Save score/ });
+  assert(!(await saveBtn.isDisabled()), "save enabled after apply");
+  await saveBtn.click();
+  await page.waitForTimeout(200);
+  const st = await wsState();
+  const sub = st.submissions.find((s) => s.variantId === "v-27");
+  assert(sub.grade && sub.preScore && sub.preScore.model === "demo-provider", "grade saved and suggestion kept");
+  await go("/grade/v-12");
+  await page.getByRole("button", { name: /Paste a submission|Replace submission/ }).click();
+  await page.locator('[data-testid="paste-submission"]').fill("Pasted submission text for Duarte covering fairness, robustness, documentation and prioritisation in enough words to count.");
+  await page.getByRole("button", { name: /Save submission/ }).click();
+  await page.waitForSelector("text=Submission saved.");
+});
+
 console.log("\n14. Console errors across the whole run");
 await check("no console/page errors", async () => { assert(consoleErrors.length === 0, consoleErrors.join(" | ")); });
 

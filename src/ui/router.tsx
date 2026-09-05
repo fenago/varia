@@ -6,6 +6,7 @@ import Start from "./pages/Start";
 import Home from "./pages/Home";
 import Summary from "./pages/Summary";
 import Research from "./pages/Research";
+import Task from "./pages/Task";
 import Notes from "./pages/Notes";
 import About from "./pages/About";
 import Import from "./pages/Import";
@@ -49,6 +50,7 @@ export type PageKey =
   | "share"
   | "for"
   | "portfolio"
+  | "task"
   | "talent";
 
 /** Crumb + title per page, copied from the mockup's PAGES map. */
@@ -73,6 +75,7 @@ export const PAGES: Record<PageKey, { crumb: string; title: string; path: string
   evidence: { crumb: "Evidence record", title: "Evidence of demonstrated skill", path: "/evidence" },
   verify: { crumb: "Verification", title: "Verify an evidence record", path: "/verify" },
   share: { crumb: "Your record", title: "Share your evidence record", path: "/share" },
+  task: { crumb: "Task", title: "Your task", path: "/task" },
   for: { crumb: "Orientation", title: "Who VARIA is for", path: "/for" },
   portfolio: { crumb: "Portfolio", title: "Your verified work", path: "/portfolio" },
   talent: { crumb: "Talent view", title: "Candidates who did your work", path: "/talent" },
@@ -121,6 +124,8 @@ export function App() {
           <Route path="/verify/:recordId" element={<Verify />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/share/:recordId" element={<Share />} />
+          <Route path="/task/:variantId" element={<Task />} />
+          <Route path="/task" element={<Task />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/portfolio/:learnerId" element={<Portfolio />} />
           <Route path="/talent" element={<Talent />} />

@@ -34,6 +34,11 @@ export interface RunGenerationArgs {
   onlyVariantIds?: string[];
   /** Student ids in roster order, mapped onto v-01… */
   studentIds?: (string | null)[];
+  /**
+   * Resume a partial run: generate only the indexes that have no usable text,
+   * judge every variant still lacking an equivalence score, then re-score.
+   */
+  resume?: boolean;
 }
 
 const GEN_CONCURRENCY = 3;
@@ -112,24 +117,78 @@ function isCancelled(signal: AbortSignal, e: unknown): boolean {
   return signal.aborted || (e instanceof Error && /cancelled/i.test(e.message));
 }
 
+/** How much of a run is done, for Resume affordances. */
+export function runCompletion(r: Run): { generated: number; judged: number; n: number; resumable: boolean } {
+  const generated = r.variants.filter((v) => v.text && !v.error).length;
+  const judged = r.variants.filter((v) => v.text && !v.error && v.metrics.equivalence != null).length;
+  const resumable = (r.status === "partial" || r.status === "cancelled" || r.status === "failed") && (generated < r.n || judged < generated || !r.report);
+  return { generated, judged, n: r.n, resumable };
+}
+
+/**
+ * Cancel or interruption never discards work: keep every variant, score what
+ * can be scored, and mark the run partial so it can be resumed.
+ */
+function finishPartial(r: Run, thresholds: ThresholdSet, emit: () => void, why: string): Run {
+  const judged = r.variants.filter((v) => v.text && !v.error && v.metrics.equivalence != null);
+  if (judged.length >= 2) {
+    try {
+      let report = computeReport(r, thresholds);
+      if (r.mode === "demo") report = calibrateDemoReport(report, thresholds);
+      r.report = report;
+      r.variants = applyFlags(r.variants, report);
+    } catch {
+      /* leave report as is */
+    }
+  }
+  r.status = "partial";
+  r.finishedAt = nowIso();
+  const { generated, n } = runCompletion(r);
+  r.progress = progress("partial", generated, n, `${why}: ${generated} of ${n} versions kept. Resume to continue.`);
+  emit();
+  return r;
+}
+
 export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
-  const { blueprint, provider, thresholds, onUpdate, signal, onlyVariantIds, studentIds } = args;
+  const { blueprint, provider, thresholds, onUpdate, signal, onlyVariantIds, studentIds, resume } = args;
   let r = clone(args.run);
   const emit = () => onUpdate(clone(r));
 
   const enabled = blueprint.surfaceDimensions.filter((d) => r.enabledDimensions.includes(d.key) || d.locked);
   const assignments = buildAssignments(enabled, r.n, r.strategy);
 
+  const all = Array.from({ length: r.n }, (_, i) => i);
   const targets: number[] = onlyVariantIds?.length
     ? onlyVariantIds.map(variantIndex).filter((i) => i >= 0)
-    : Array.from({ length: r.n }, (_, i) => i);
+    : resume
+      ? all.filter((i) => {
+          const v = r.variants.find((x) => x.id === variantId(i));
+          return !v || !v.text || !!v.error;
+        })
+      : all;
   const targetIds = new Set(targets.map(variantId));
+  if (resume) {
+    // Clear stale errors on variants we are about to retry so a judge retry is not blocked.
+    for (const v of r.variants) if (targetIds.has(v.id)) v.error = undefined;
+    r.error = undefined;
+    r.finishedAt = null;
+  }
 
   // Live runs show "Actual so far" from the first emit; demo runs report no usage.
   if (r.mode === "live" && !r.usage) r.usage = emptyUsage();
 
+  const done0 = resume ? r.variants.filter((v) => v.text && !v.error && !targetIds.has(v.id)).length : 0;
   r.status = "generating";
-  r.progress = progress("generating", 0, targets.length, onlyVariantIds ? `Regenerating ${targets.length} version${targets.length === 1 ? "" : "s"}` : `Generating ${targets.length} versions`);
+  r.progress = progress(
+    "generating",
+    0,
+    targets.length,
+    onlyVariantIds
+      ? `Regenerating ${targets.length} version${targets.length === 1 ? "" : "s"}`
+      : resume
+        ? `Resuming: ${done0} of ${r.n} versions already done, generating ${targets.length} more`
+        : `Generating ${targets.length} versions`,
+  );
   emit();
 
   // Generation -----------------------------------------------------------
@@ -211,16 +270,11 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
     ),
   );
 
-  if (signal.aborted) {
-    r.status = "cancelled";
-    r.progress = progress("cancelled", r.progress.done, targets.length, "Cancelled");
-    r.finishedAt = nowIso();
-    emit();
-    return r;
-  }
+  if (signal.aborted) return finishPartial(r, thresholds, emit, "Cancelled during generation");
 
   // Judging -----------------------------------------------------------------
-  const toJudge = r.variants.filter((v) => targetIds.has(v.id) && v.text && !v.error);
+  // On resume, judge everything still missing a score, not only this pass's targets.
+  const toJudge = r.variants.filter((v) => v.text && !v.error && (resume ? v.metrics.equivalence == null : targetIds.has(v.id)));
   r.status = "judging";
   r.progress = progress("judging", 0, toJudge.length, `Judging construct equivalence, ${r.judgeSamples} samples each`);
   emit();
@@ -254,13 +308,7 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
     ),
   );
 
-  if (signal.aborted) {
-    r.status = "cancelled";
-    r.progress = progress("cancelled", r.progress.done, toJudge.length, "Cancelled");
-    r.finishedAt = nowIso();
-    emit();
-    return r;
-  }
+  if (signal.aborted) return finishPartial(r, thresholds, emit, "Cancelled during judging");
 
   // Scoring -----------------------------------------------------------------
   r.status = "scoring";
@@ -270,10 +318,11 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
   if (r.mode === "demo") report = calibrateDemoReport(report, thresholds);
   r.report = report;
   r.variants = applyFlags(r.variants, report);
-  r.status = anyError ? "partial" : "complete";
+  const ok = r.variants.filter((v) => v.text && !v.error).length;
+  const incomplete = anyError || ok < r.n;
+  r.status = incomplete ? "partial" : "complete";
   r.finishedAt = nowIso();
-  const ok = r.variants.filter((v) => !v.error).length;
-  r.progress = progress(r.status, 1, 1, anyError ? `${ok} of ${r.n} versions completed; some failed` : `${r.n} versions generated, judged and scored`);
+  r.progress = progress(r.status, 1, 1, incomplete ? `${ok} of ${r.n} versions completed; resume to retry the rest` : `${r.n} versions generated, judged and scored`);
   emit();
   return r;
 }

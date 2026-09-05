@@ -33,14 +33,14 @@ import type {
   EmployerChallenge,
   Endorsement,
   OutcomeEvent,
-  PortfolioShare,
-} from "@shared/types";
+  PortfolioShare, PreScoreOutput } from "@shared/types";
 import { PROPERTY_LABELS } from "@shared/thresholds";
 import { computeReport } from "@lib/metrics";
 import { estimateRunCost } from "@lib/llm";
 import { newId, nowIso } from "./ids";
 import { runGeneration } from "./orchestrator";
 import { buildDemoEmployabilityData, buildDemoEmployerData, buildDemoWorkspace, buildDemoBridgeEvents, DEMO_INSTRUCTOR } from "./seed";
+import { fixtureWorkspace } from "./fixtures";
 import { applyChallengeToBlueprint, bridgeFor, recordCanonicalPure, resolveSkills, skillKeysForBlueprint, slugify, withBridgeDefaults, deriveChallengeId } from "./employer";
 import { ensureSigningKey, signCanonical } from "@lib/badges/keys";
 import { activeBlueprint, currentThresholds, evidenceForVariant, institutionRowForRun, runById, studentById, submissionForVariant, validationsForBlueprint, variantById } from "./selectors";
@@ -76,11 +76,19 @@ export interface WorkspaceActions {
 
   startRun: (opts: StartRunOptions) => Promise<string>;
   cancelRun: () => void;
+  /** Continue a partial run: generate missing versions, judge unscored ones, re-score. */
+  resumeRun: (runId: string) => Promise<void>;
+  /** Replace the workspace with recorded sample runs (see src/lib/store/fixtures). */
+  loadFixtures: (ids?: string[]) => void;
   regenerateAndRelease: (runId: string) => Promise<void>;
   releaseAnyway: (runId: string, reason: string) => void;
   sendToReviewer: (runId: string) => void;
 
   saveGrade: (variantId: string, scores: Record<string, LevelScore>) => void;
+  /** Wave 4: submissions in, AI suggestions stored beside them (never as the grade). */
+  importSubmissions: (items: { variantId: string; text: string; sourceFile?: string }[], runId?: string) => Submission[];
+  setSubmissionText: (variantId: string, text: string, sourceFile?: string, runId?: string) => Submission;
+  applyPreScore: (variantId: string, preScore: PreScoreOutput, model: ModelId, runId?: string) => Submission;
   openAppeal: (variantId: string, note: string) => void;
   resolveAppeal: (id: string, resolution: string) => void;
 
@@ -355,8 +363,8 @@ export const useWorkspace = create<WorkspaceState>()(
             audit: [
               auditEvent(
                 "run",
-                final.status === "cancelled"
-                  ? `Generation cancelled after ${final.variants.length} versions`
+                final.status === "partial" && !final.report
+                  ? `Generation stopped: ${final.progress.message}`
                   : `Generation ${final.status}: J ${final.report?.joint.toFixed(2) ?? "—"}, ${final.report?.releasable ? "all checks pass" : `${final.report?.outliers.length ?? 0} versions flagged`}`,
                 "system",
                 run.id,
@@ -373,6 +381,58 @@ export const useWorkspace = create<WorkspaceState>()(
 
       cancelRun: () => {
         get().runAbort?.abort();
+      },
+
+      resumeRun: async (runId) => {
+        const ws = get();
+        const run = runById(ws, runId);
+        if (!run) throw new Error("Run not found.");
+        if (ws.runAbort) throw new Error("Another run is in flight.");
+        const bp = ws.blueprints.find((b) => b.id === run.blueprintId);
+        if (!bp) throw new Error("Blueprint for this run is missing.");
+        const provider = getProvider();
+        const abort = new AbortController();
+        const studentIds = ws.roster.students.map((s) => s.id);
+        set((s) => ({
+          runAbort: abort,
+          activeRunId: run.id,
+          audit: [auditEvent("run", `Resumed generation of "${run.blueprintName}" (${run.variants.filter((v) => v.text && !v.error).length} of ${run.n} already done)`, ws.course.instructor.name, run.id), ...s.audit],
+        }));
+        try {
+          const final = await runGeneration({
+            run: { ...run, status: "queued", error: undefined },
+            blueprint: bp,
+            provider,
+            thresholds: currentThresholds(ws),
+            signal: abort.signal,
+            studentIds,
+            resume: true,
+            onUpdate: (r) => set((s) => ({ runs: withRun(s, r) })),
+          });
+          set((s) => ({
+            runs: withRun(s, final),
+            runAbort: null,
+            audit: [
+              auditEvent(
+                "run",
+                final.status === "complete"
+                  ? `Generation complete after resume: J ${final.report?.joint.toFixed(2) ?? "—"}`
+                  : `Resume stopped: ${final.progress.message}`,
+                "system",
+                run.id,
+              ),
+              ...s.audit,
+            ],
+          }));
+        } catch (e) {
+          const cur = get().runs.find((r) => r.id === run.id) ?? run;
+          set((s) => ({ runs: withRun(s, { ...cur, status: "partial", error: (e as Error).message, finishedAt: nowIso() }), runAbort: null }));
+        }
+      },
+
+      loadFixtures: (ids) => {
+        const next = fixtureWorkspace(ids);
+        set({ ...next, runAbort: null });
       },
 
       regenerateAndRelease: async (runId) => {
@@ -449,6 +509,51 @@ export const useWorkspace = create<WorkspaceState>()(
             audit: [auditEvent("grade", `Graded ${variantId}: ${total} / ${maxTotal}`, s.course.instructor.name, run.id), ...s.audit],
           };
         }),
+
+      importSubmissions: (items, runId) => {
+        const out: Submission[] = [];
+        set((s) => {
+          let submissions = s.submissions;
+          const audit = [...s.audit];
+          for (const it of items) {
+            const found = variantById(s, it.variantId, runId ?? s.activeRunId);
+            if (!found) continue;
+            const { run, variant } = found;
+            const existing = submissions.find((x) => x.variantId === it.variantId && x.runId === run.id);
+            const next: Submission = existing
+              ? { ...existing, text: it.text, submittedAt: nowIso(), sourceFile: it.sourceFile ?? existing.sourceFile, preScore: undefined }
+              : { id: newId("sub"), runId: run.id, variantId: it.variantId, studentId: variant.studentId ?? "", text: it.text, submittedAt: nowIso(), grade: null, sourceFile: it.sourceFile };
+            submissions = existing ? submissions.map((x) => (x === existing ? next : x)) : [...submissions, next];
+            out.push(next);
+          }
+          if (out.length) audit.unshift(auditEvent("grade", `Imported ${out.length} submission${out.length === 1 ? "" : "s"}`, s.course.instructor.name, out[0].runId));
+          return { submissions, audit };
+        });
+        return out;
+      },
+
+      setSubmissionText: (variantId, text, sourceFile, runId) => {
+        const [sub] = get().importSubmissions([{ variantId, text, sourceFile }], runId);
+        if (!sub) throw new Error(`No version ${variantId} in this workspace.`);
+        return sub;
+      },
+
+      applyPreScore: (variantId, preScore, model, runId) => {
+        let result: Submission | null = null;
+        set((s) => {
+          const found = variantById(s, variantId, runId ?? s.activeRunId);
+          if (!found) return s;
+          const existing = s.submissions.find((x) => x.variantId === variantId && x.runId === found.run.id);
+          if (!existing) return s;
+          result = { ...existing, preScore: { ...preScore, at: nowIso(), model } };
+          return {
+            submissions: s.submissions.map((x) => (x === existing ? result! : x)),
+            audit: [auditEvent("grade", `Suggested scores for ${variantId} (${model}); instructor decides`, s.course.instructor.name, found.run.id), ...s.audit],
+          };
+        });
+        if (!result) throw new Error("No submission to score yet.");
+        return result;
+      },
 
       openAppeal: (variantId, note) =>
         set((s) => {

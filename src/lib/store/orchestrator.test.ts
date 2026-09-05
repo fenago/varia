@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Run } from "@shared/types";
 import { DEFAULT_THRESHOLDS } from "@shared/thresholds";
 import { createDemoProvider } from "./demoProvider";
-import { buildAssignments, runGeneration } from "./orchestrator";
+import { buildAssignments, runCompletion, runGeneration } from "./orchestrator";
 import { buildDemoBlueprintB1 } from "./seed";
 
 function makeRun(n: number): Run {
@@ -98,9 +98,42 @@ describe("orchestrator", () => {
       signal: abort.signal,
       onUpdate: () => {},
     });
-    expect(run.status).toBe("cancelled");
+    // Cancel never discards: the run is partial and resumable.
+    expect(run.status).toBe("partial");
     expect(run.variants.length).toBeLessThan(12);
+    expect(runCompletion(run).resumable).toBe(true);
   }, 10000);
+
+  it("resumes a partial run to completion, generating only the missing versions", async () => {
+    const abort = new AbortController();
+    setTimeout(() => abort.abort(), 400);
+    const partial = await runGeneration({
+      run: makeRun(12),
+      blueprint: buildDemoBlueprintB1(),
+      provider: createDemoProvider(),
+      thresholds: DEFAULT_THRESHOLDS,
+      signal: abort.signal,
+      onUpdate: () => {},
+    });
+    const kept = partial.variants.filter((v) => v.text && !v.error).map((v) => v.text);
+    expect(kept.length).toBeGreaterThan(0);
+    const resumed = await runGeneration({
+      run: partial,
+      blueprint: buildDemoBlueprintB1(),
+      provider: createDemoProvider(),
+      thresholds: DEFAULT_THRESHOLDS,
+      signal: new AbortController().signal,
+      onUpdate: () => {},
+      resume: true,
+    });
+    expect(resumed.status).toBe("complete");
+    expect(resumed.variants).toHaveLength(12);
+    expect(resumed.variants.every((v) => v.metrics.equivalence != null)).toBe(true);
+    expect(resumed.report).not.toBeNull();
+    // Previously generated versions were kept, not regenerated.
+    for (const t of kept) expect(resumed.variants.some((v) => v.text === t)).toBe(true);
+    expect(runCompletion(resumed).resumable).toBe(false);
+  }, 20000);
 
   it("builds distinct surface tuples for dimension-preserving runs", () => {
     const dims = buildDemoBlueprintB1().surfaceDimensions;

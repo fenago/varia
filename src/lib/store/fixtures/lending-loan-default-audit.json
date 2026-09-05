@@ -1,0 +1,859 @@
+{
+  "version": 1,
+  "sampleId": "lending-loan-default-audit",
+  "recordedAt": "2026-09-05T17:05:03.831Z",
+  "recordedWith": "demo-provider",
+  "models": {
+    "generator": "claude-opus-5",
+    "judge": "claude-sonnet-5"
+  },
+  "strategy": "structured-cot",
+  "blueprint": {
+    "code": "DAT 4100",
+    "name": "Model Card Audit for Bayfront Regional Bank",
+    "construct": "Produce a structured audit of the deployed classifier that identifies fairness gaps, robustness gaps and documentation gaps, justifies each finding against evidence in the model card, and prioritises your recommendations.",
+    "constructDimensions": [
+      "Identifies fairness gaps with evidence",
+      "Robustness analysis under subgroup shift",
+      "Documentation completeness judgement",
+      "Prioritisation and recommendation quality"
+    ],
+    "rubric": [
+      {
+        "id": "crit-lending-loan-default-audit-1",
+        "name": "Identifies fairness gaps with evidence",
+        "points": 3,
+        "weight": 0.25,
+        "levels": 4,
+        "anchors": [
+          "No fairness gap identified, or gaps asserted with no reference to the card.",
+          "A fairness gap is named but the link to what the card does or does not report is vague.",
+          "Fairness gaps are named and tied to specific missing or present disclosures in the card.",
+          "Fairness gaps are named, tied to specific disclosures, and the audit states what evidence would be needed to support or refute the card's \"no disparate impact\" claim."
+        ],
+        "anchorsConfidence": "high",
+        "skillKeys": [
+          "fairness-analysis",
+          "model-auditing"
+        ]
+      },
+      {
+        "id": "crit-lending-loan-default-audit-2",
+        "name": "Robustness analysis under subgroup shift",
+        "points": 3,
+        "weight": 0.25,
+        "levels": 4,
+        "anchors": [
+          "Robustness is not discussed.",
+          "Robustness is mentioned in general terms without connecting it to the training window, holdout sampling or regional mix.",
+          "The audit identifies at least one concrete way the model could degrade when the applicant mix shifts and ties it to the card.",
+          "The audit identifies concrete degradation paths tied to the card and proposes a specific validation that would detect each."
+        ],
+        "anchorsConfidence": "high",
+        "skillKeys": [
+          "robustness-evaluation",
+          "evidence-based-reasoning"
+        ]
+      },
+      {
+        "id": "crit-lending-loan-default-audit-3",
+        "name": "Documentation completeness judgement",
+        "points": 3,
+        "weight": 0.25,
+        "levels": 4,
+        "anchors": [
+          "The card is taken at face value.",
+          "Missing items are listed without explaining why each matters.",
+          "Missing items are listed and each is connected to a decision the committee cannot make without it.",
+          "Missing items are listed, connected to decisions, and ranked by how much their absence undermines the deployment claim."
+        ],
+        "anchorsConfidence": "high",
+        "skillKeys": [
+          "documentation-review"
+        ]
+      },
+      {
+        "id": "crit-lending-loan-default-audit-4",
+        "name": "Prioritisation and recommendation quality",
+        "points": 3,
+        "weight": 0.25,
+        "levels": 4,
+        "anchors": [
+          "Recommendations are absent or are a restatement of the findings.",
+          "Recommendations are present but unordered or not actionable.",
+          "Recommendations are actionable and ordered, with the ordering rule stated.",
+          "Recommendations are actionable, ordered by stated rule, and each names the owner and the evidence that would show it worked."
+        ],
+        "anchorsConfidence": "high",
+        "skillKeys": [
+          "risk-prioritisation"
+        ]
+      }
+    ],
+    "canonicalSolution": "# Model Card Audit — Bayfront Regional Bank loan-default classifier\n\n**Prepared for:** Marisol Quintero, Chief Risk Officer\n**Basis:** Vendor partial model card (aggregate accuracy 0.91; training window Jan 2023 to Dec 2024; 41 features; \"no disparate impact detected\")\n\n## Finding 1 — Fairness: the disparate-impact claim is unsupported by the card\n\n**Evidence in the card.** The card states \"no disparate impact detected\" and reports a single aggregate accuracy of 0.91. It reports no per-region, per-income-band or per-credit-file-age breakdown, and no false-positive or false-negative rates for any subgroup.\n\n**Gap.** Disparate impact is a subgroup property. An aggregate accuracy figure cannot support or refute it. With Coastal and Southwest underwriters reporting decline rates they cannot reconcile, the minimum evidence is the decline rate and the false-positive rate (applicants predicted to default who would not have) by region and by income band, on the same holdout the 0.91 was computed on.\n\n**Risk if unaddressed.** A fair-lending examination would treat the card's claim as unevidenced. If the regional gap is real, the bank is declining creditworthy applicants in two regions and cannot show it knew.\n\n## Finding 2 — Robustness: the training window predates the current applicant mix\n\n**Evidence in the card.** Training data spans January 2023 to December 2024. The card does not say how the holdout was sampled, and includes zip-code-derived market indicators among its 41 features.\n\n**Gap.** The Southwest region opened two branches in the first quarter of 2025, after the training window closed. If the holdout was a random split of the same window, the reported 0.91 says nothing about applicants from those branches. Zip-code-derived features will map new-branch zips to whatever market indicators existed in the training period, which for newly served areas may be sparse or stale. The complaint pattern, concentrated in the two regions with the most post-window change, is consistent with temporal and geographic shift.\n\n**Validation that would detect it.** Score a time-sliced holdout (applications from March to August 2025) by region, and compare decline and false-positive rates to the training-period holdout. A gap above the bank's tolerance in either region confirms shift.\n\n## Finding 3 — Documentation: five omissions block committee decisions\n\n**Evidence in the card.** Absent: (a) holdout sampling method; (b) subgroup metrics; (c) intended and out-of-scope uses; (d) the feature list's provenance for the zip-code indicators; (e) a monitoring plan.\n\n**Why each matters, ranked.** (b) blocks any fairness conclusion, which is the committee's first question. (a) blocks trust in the 0.91 itself. (e) blocks the committee from knowing whether the August complaint should have been caught earlier. (c) blocks a ruling on whether using the model for line increases, which one region has begun doing, is within scope. (d) blocks assessment of whether zip-derived indicators act as a proxy for protected characteristics.\n\n## Finding 4 — Prioritisation: what to fix first\n\nThe ordering rule is severity of harm to applicants multiplied by how quickly the fix can be evidenced.\n\n1. **Produce subgroup metrics by region and income band on the existing holdout.** Owner: vendor, with bank model risk reviewing. Evidence of success: a table of decline rate, FPR and FNR by subgroup, within two weeks. Addresses Finding 1.\n2. **Run the time-sliced regional validation.** Owner: bank model risk. Evidence: shift report with tolerance bands. Addresses Finding 2.\n3. **Suspend line-increase use until scope is documented.** Owner: lending operations. Evidence: written scope statement in the card. Addresses Finding 3(c).\n4. **Require the vendor to document holdout sampling and zip-indicator provenance.** Owner: vendor management. Evidence: revised card. Addresses Finding 3(a), (d).\n5. **Stand up quarterly subgroup monitoring with an escalation threshold.** Owner: model risk. Evidence: first quarterly report. Addresses Finding 3(e).\n\n## What this audit cannot conclude\n\nWithout subgroup metrics, this audit cannot say whether the regional decline gap is a model defect or a real difference in applicant risk. It can say the card provides no basis for the claim that it is not, and that the two regions where complaints arose are the two with the most change since the training window closed. That is sufficient to justify items 1 and 2 immediately.",
+    "canonicalSolutionSource": "found",
+    "surfaceDimensions": [
+      {
+        "key": "domain",
+        "label": "Industry domain",
+        "values": [
+          "lending",
+          "insurance",
+          "credit unions",
+          "fintech",
+          "mortgage servicing"
+        ],
+        "locked": false,
+        "enabled": true,
+        "note": "from the employer brief"
+      },
+      {
+        "key": "stakeholder",
+        "label": "Stakeholder role",
+        "values": [
+          "risk officer",
+          "chief risk officer",
+          "compliance officer",
+          "head of underwriting",
+          "model risk committee chair"
+        ],
+        "locked": false,
+        "enabled": true,
+        "note": "from the employer brief"
+      },
+      {
+        "key": "scenario",
+        "label": "Organisation and scenario",
+        "values": [
+          "Bayfront Regional Bank deployed a loan-default classifier in March across its three lending regions: Metro, Coastal and Southwest.",
+          "In August the underwriting team in Coastal and Southwest escalated a complaint: applicants in those regions are being declined at a rate that underwriters cannot reconcile with the credit files in front of them.",
+          "The bank's Chief Risk Officer has asked us for an independent audit."
+        ],
+        "locked": false,
+        "enabled": true,
+        "note": "3 drafted from the assignment"
+      },
+      {
+        "key": "jargon",
+        "label": "Jargon register",
+        "values": [
+          "plain",
+          "professional",
+          "technical"
+        ],
+        "locked": false,
+        "enabled": true,
+        "note": "3 bands"
+      },
+      {
+        "key": "readingLevel",
+        "label": "Reading level",
+        "values": [],
+        "locked": true,
+        "enabled": false,
+        "note": "held constant"
+      },
+      {
+        "key": "stepCount",
+        "label": "Number of findings required",
+        "values": [],
+        "locked": true,
+        "enabled": false,
+        "note": "held constant"
+      }
+    ],
+    "taskPrompt": "# Assignment 3 — Model Card Audit for Bayfront Regional Bank (12 points)\n\n## Context\n\nBayfront Regional Bank deployed a loan-default classifier in March across its three lending regions: Metro, Coastal and Southwest. In August the underwriting team in Coastal and Southwest escalated a complaint: applicants in those regions are being declined at a rate that underwriters cannot reconcile with the credit files in front of them. The bank's Chief Risk Officer has asked us for an independent audit.\n\nYou have the vendor's partial model card. It reports an aggregate accuracy of 0.91 on a holdout set, a headline claim of \"no disparate impact detected,\" a training window of January 2023 to December 2024, and a feature list of 41 variables including debt-to-income, credit-file age, employment tenure and zip-code-derived market indicators. It does not report per-region or per-income-band metrics, does not describe the holdout sampling, and does not list out-of-scope uses.\n\nYou are auditing on behalf of the risk officer, who will bring your findings to the model risk committee.\n\n## What you must produce\n\nProduce a structured audit of the deployed classifier that identifies fairness gaps, robustness gaps and documentation gaps, justifies each finding against evidence in the model card, and prioritises your recommendations. Your audit must contain exactly four findings, each with a heading, the evidence from the card, the gap it reveals, and the risk if left unaddressed, followed by a prioritised recommendation list of no more than five items.\n\nWrite for the risk officer: a technically literate reader who will not run code but must defend your conclusions to a committee.\n\n## Constraints\n\n- Length: 900 to 1,300 words.\n- Cite the model card for every claim about what it does or does not report. Do not invent figures the card does not contain; where a figure is missing, say what its absence prevents you from concluding.\n- Recommendations must be ordered by the severity of the risk they address, and you must state the ordering rule you used.\n- Submit as a single document.",
+    "source": {
+      "files": [
+        {
+          "name": "assignment.md",
+          "kind": "task+rubric",
+          "recognisedAs": "Task prompt + rubric",
+          "sizeBytes": 3866,
+          "status": "read"
+        },
+        {
+          "name": "model-answer.md",
+          "kind": "solution",
+          "recognisedAs": "Canonical solution",
+          "sizeBytes": 4487,
+          "status": "read"
+        },
+        {
+          "name": "employer-brief.md",
+          "kind": "unknown",
+          "recognisedAs": "Text — could not classify",
+          "sizeBytes": 1242,
+          "status": "read"
+        },
+        {
+          "name": "roster.csv",
+          "kind": "roster",
+          "recognisedAs": "28 enrolled students",
+          "sizeBytes": 1296,
+          "status": "read"
+        }
+      ],
+      "extractedAt": "2026-09-05T17:05:02.814Z",
+      "extractionConfidence": "medium"
+    },
+    "fewShotAnchors": null,
+    "lastUsed": null,
+    "id": "bp-lending-loan-default-audit",
+    "courseId": "course-dat4100",
+    "createdAt": "2026-09-05T17:05:02.815Z",
+    "updatedAt": "2026-09-05T17:05:02.815Z",
+    "challengeIds": []
+  },
+  "roster": {
+    "courseId": "course-dat4100",
+    "students": [
+      {
+        "id": "s-abdullah-y",
+        "name": "Abdullah, Y.",
+        "email": "yabdullah@students.mdc.example"
+      },
+      {
+        "id": "s-adeyemi-f",
+        "name": "Adeyemi, F.",
+        "email": "fadeyemi@students.mdc.example"
+      },
+      {
+        "id": "s-brennan-d",
+        "name": "Brennan, D.",
+        "email": "dbrennan@students.mdc.example"
+      },
+      {
+        "id": "s-costa-r",
+        "name": "Costa, R.",
+        "email": "rcosta@students.mdc.example"
+      },
+      {
+        "id": "s-delgado-m",
+        "name": "Delgado, M.",
+        "email": "mdelgado@students.mdc.example"
+      },
+      {
+        "id": "s-farah-a",
+        "name": "Farah, A.",
+        "email": "afarah@students.mdc.example"
+      },
+      {
+        "id": "s-fitzgerald-a",
+        "name": "Fitzgerald, A.",
+        "email": "afitzgerald@students.mdc.example"
+      },
+      {
+        "id": "s-haddad-l",
+        "name": "Haddad, L.",
+        "email": "lhaddad@students.mdc.example"
+      },
+      {
+        "id": "s-kim-s",
+        "name": "Kim, S.",
+        "email": "skim@students.mdc.example"
+      },
+      {
+        "id": "s-kowalski-a",
+        "name": "Kowalski, A.",
+        "email": "akowalski@students.mdc.example"
+      },
+      {
+        "id": "s-lindqvist-e",
+        "name": "Lindqvist, E.",
+        "email": "elindqvist@students.mdc.example"
+      },
+      {
+        "id": "s-mensah-k",
+        "name": "Mensah, K.",
+        "email": "kmensah@students.mdc.example"
+      },
+      {
+        "id": "s-moreau",
+        "name": "Moreau, É.",
+        "email": "émoreau@students.mdc.example"
+      },
+      {
+        "id": "s-nakamura-k",
+        "name": "Nakamura, K.",
+        "email": "knakamura@students.mdc.example"
+      },
+      {
+        "id": "s-nguyen-t",
+        "name": "Nguyen, T.",
+        "email": "tnguyen@students.mdc.example"
+      },
+      {
+        "id": "s-novak-t",
+        "name": "Novak, T.",
+        "email": "tnovak@students.mdc.example"
+      },
+      {
+        "id": "s-o-sullivan-c",
+        "name": "O'Sullivan, C.",
+        "email": "cosullivan@students.mdc.example"
+      },
+      {
+        "id": "s-okonkwo-a",
+        "name": "Okonkwo, A.",
+        "email": "aokonkwo@students.mdc.example"
+      },
+      {
+        "id": "s-osei-a",
+        "name": "Osei, A.",
+        "email": "aosei@students.mdc.example"
+      },
+      {
+        "id": "s-oyelaran-t",
+        "name": "Oyelaran, T.",
+        "email": "toyelaran@students.mdc.example"
+      },
+      {
+        "id": "s-petrov-m",
+        "name": "Petrov, M.",
+        "email": "mpetrov@students.mdc.example"
+      },
+      {
+        "id": "s-reyes-c",
+        "name": "Reyes, C.",
+        "email": "creyes@students.mdc.example"
+      },
+      {
+        "id": "s-silva-b",
+        "name": "Silva, B.",
+        "email": "bsilva@students.mdc.example"
+      },
+      {
+        "id": "s-singh-p",
+        "name": "Singh, P.",
+        "email": "psingh@students.mdc.example"
+      },
+      {
+        "id": "s-tanaka-h",
+        "name": "Tanaka, H.",
+        "email": "htanaka@students.mdc.example"
+      },
+      {
+        "id": "s-vargas-l",
+        "name": "Vargas, L.",
+        "email": "lvargas@students.mdc.example"
+      },
+      {
+        "id": "s-weber-l",
+        "name": "Weber, L.",
+        "email": "lweber@students.mdc.example"
+      },
+      {
+        "id": "s-zhou-w",
+        "name": "Zhou, W.",
+        "email": "wzhou@students.mdc.example"
+      }
+    ],
+    "source": "roster.csv"
+  },
+  "run": {
+    "id": "run-lending-loan-default-audit",
+    "blueprintId": "bp-lending-loan-default-audit",
+    "blueprintName": "Model Card Audit for Bayfront Regional Bank",
+    "courseId": "course-dat4100",
+    "strategy": "structured-cot",
+    "threatProfile": "high-stakes",
+    "generatorModel": "claude-opus-5",
+    "judgeModel": "claude-sonnet-5",
+    "judgeSamples": 2,
+    "n": 6,
+    "enabledDimensions": [
+      "domain",
+      "stakeholder",
+      "scenario",
+      "jargon"
+    ],
+    "mode": "demo",
+    "status": "complete",
+    "progress": {
+      "phase": "complete",
+      "done": 1,
+      "total": 1,
+      "message": "6 versions generated, judged and scored"
+    },
+    "startedAt": "2026-09-05T17:05:02.815Z",
+    "finishedAt": "2026-09-05T17:05:03.831Z",
+    "variants": [
+      {
+        "id": "v-01",
+        "runId": "run-lending-loan-default-audit",
+        "studentId": "s-abdullah-y",
+        "text": "Bayview Community Health deployed a readmission-risk classifier in January. You are auditing on behalf of the quality director, who has the partial model card below and a complaint from the discharge planning team about who is being flagged.\n\nThe card reports an AUROC of 0.84 on the full population, but does not include any breakdown by insurance type or primary language. Validation is described as a validation set drawn from the same two quarters as training. The card is silent on the threshold used to trigger a discharge-planner visit.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the quality director.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an AUROC of 0.84 on the full population but omits any breakdown by insurance type or primary language. Without that breakdown, a complaint from the discharge planning team about who is being flagged can be neither substantiated nor dismissed, and any claim that a readmission-risk classifier treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a validation set drawn from the same two quarters as training, so the reported figures cannot speak to performance under subgroup or temporal shift. For Bayview Community Health this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the threshold used to trigger a discharge-planner visit. Intended use is asserted but not bounded, which leaves the quality director unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the language subgroup gap, because the complaint names it directly. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the threshold used to trigger a discharge-planner visit and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "healthcare",
+          "stakeholder": "quality director",
+          "scenario": "Bayview Community Health · a readmission-risk classifier",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 48.5,
+          "lexicalComplexity": 0.56,
+          "stepCount": 4,
+          "solutionFleschEase": 47.3,
+          "equivalence": 0.875,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 4,
+                "Robustness analysis under subgroup shift": 5,
+                "Documentation completeness judgement": 4,
+                "Prioritisation and recommendation quality": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 4,
+                "Robustness analysis under subgroup shift": 4,
+                "Documentation completeness judgement": 5,
+                "Prioritisation and recommendation quality": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": true,
+          "p2Low": true
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain healthcare; stakeholder quality director; organisation Bayview Community Health; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 48.5,
+            "lexicalComplexity": 0.56,
+            "stepCount": 4,
+            "solutionFleschEase": 47.3,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-02",
+        "runId": "run-lending-loan-default-audit",
+        "studentId": "s-adeyemi-f",
+        "text": "The chief lending officer at Harbor Credit Union has asked for an independent audit of a small-business loan pre-screening model that went live last spring. What they can give you is a partial model card and a member complaint alleging that businesses in two ZIP codes are routinely screened out.\n\nThe card reports an overall approval precision of 0.88, but does not include approval rates by ZIP code or business age. Validation is described as a holdout from a single pre-rate-rise quarter. The card is silent on who can override a screen-out and how often that happens.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the chief lending officer should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an overall approval precision of 0.88 but omits approval rates by ZIP code or business age. Without that breakdown, a member complaint alleging that businesses in two ZIP codes are routinely screened out can be neither substantiated nor dismissed, and any claim that a small-business loan pre-screening model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a holdout from a single pre-rate-rise quarter, so the reported figures cannot speak to performance under subgroup or temporal shift. For Harbor Credit Union this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state who can override a screen-out and how often that happens. Intended use is asserted but not bounded, which leaves the chief lending officer unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the geographic disparity, which is both a fairness and a regulatory exposure. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with who can override a screen-out and how often that happens and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "lending",
+          "stakeholder": "chief lending officer",
+          "scenario": "Harbor Credit Union · a small-business loan pre-screening model",
+          "jargon": "plain"
+        },
+        "metrics": {
+          "fleschEase": 50.4,
+          "lexicalComplexity": 0.6,
+          "stepCount": 4,
+          "solutionFleschEase": 51,
+          "equivalence": 0.875,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 5,
+                "Robustness analysis under subgroup shift": 3,
+                "Documentation completeness judgement": 5,
+                "Prioritisation and recommendation quality": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            },
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 4,
+                "Robustness analysis under subgroup shift": 4,
+                "Documentation completeness judgement": 5,
+                "Prioritisation and recommendation quality": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": true,
+          "p2Low": true
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain lending; stakeholder chief lending officer; organisation Harbor Credit Union; register plain.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 50.4,
+            "lexicalComplexity": 0.6,
+            "stepCount": 4,
+            "solutionFleschEase": 51,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-03",
+        "runId": "run-lending-loan-default-audit",
+        "studentId": "s-brennan-d",
+        "text": "You have been retained by Cobalt Retail Group to audit a store-associate application ranker deployed in February. Your client is the talent acquisition lead; the materials are a partial model card and an internal note that shortlists from one region skew younger than the applicant pool.\n\nThe card reports a shortlist hit rate of 0.31, but does not include shortlist rates by age band or region. Validation is described as validation on one hiring season only. The card is silent on the features derived from application timestamps.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the talent acquisition lead.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a shortlist hit rate of 0.31 but omits shortlist rates by age band or region. Without that breakdown, an internal note that shortlists from one region skew younger than the applicant pool can be neither substantiated nor dismissed, and any claim that a store-associate application ranker treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on validation on one hiring season only, so the reported figures cannot speak to performance under subgroup or temporal shift. For Cobalt Retail Group this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the features derived from application timestamps. Intended use is asserted but not bounded, which leaves the talent acquisition lead unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the age skew, since it may indicate proxy discrimination through availability fields. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the features derived from application timestamps and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "hiring",
+          "stakeholder": "talent acquisition lead",
+          "scenario": "Cobalt Retail Group · a store-associate application ranker",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 71.8,
+          "lexicalComplexity": 0.64,
+          "stepCount": 4,
+          "solutionFleschEase": 71.2,
+          "equivalence": 0.875,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 4,
+                "Robustness analysis under subgroup shift": 5,
+                "Documentation completeness judgement": 4,
+                "Prioritisation and recommendation quality": 5
+              },
+              "rationale": "The scenario changes the domain but not the skill: evidence-grounded gap analysis."
+            },
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 5,
+                "Robustness analysis under subgroup shift": 5,
+                "Documentation completeness judgement": 4,
+                "Prioritisation and recommendation quality": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": true
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain hiring; stakeholder talent acquisition lead; organisation Cobalt Retail Group; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 71.8,
+            "lexicalComplexity": 0.64,
+            "stepCount": 4,
+            "solutionFleschEase": 71.2,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-04",
+        "runId": "run-lending-loan-default-audit",
+        "studentId": "s-costa-r",
+        "text": "A regional bank deployed a loan-default classifier in March. You are auditing for the risk officer, who has the partial card and a complaint from the underwriting team.\n\nThe card reports aggregate accuracy of 0.91, but does not include per-subgroup false-positive rates. Validation is described as an evaluation set drawn from the same window as training. The card is silent on any statement of out-of-scope uses.\n\nProduce a structured audit identifying fairness, robustness and documentation gaps, justify each against evidence in the card, and prioritise your recommendations for the risk officer.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports aggregate accuracy of 0.91 but omits per-subgroup false-positive rates. Without that breakdown, a complaint from the underwriting team can be neither substantiated nor dismissed, and any claim that a loan-default classifier treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on an evaluation set drawn from the same window as training, so the reported figures cannot speak to performance under subgroup or temporal shift. For a regional bank this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state any statement of out-of-scope uses. Intended use is asserted but not bounded, which leaves the risk officer unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the missing subgroup false-positive rates, which leave the no-disparate-impact claim unsupported. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with any statement of out-of-scope uses and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "lending",
+          "stakeholder": "risk officer",
+          "scenario": "a regional bank · a loan-default classifier",
+          "jargon": "professional"
+        },
+        "metrics": {
+          "fleschEase": 52.1,
+          "lexicalComplexity": 0.59,
+          "stepCount": 4,
+          "solutionFleschEase": 53.3,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 5,
+                "Robustness analysis under subgroup shift": 5,
+                "Documentation completeness judgement": 5,
+                "Prioritisation and recommendation quality": 4
+              },
+              "rationale": "Prioritisation is required and addressed to a named stakeholder, as in the blueprint."
+            },
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 5,
+                "Robustness analysis under subgroup shift": 5,
+                "Documentation completeness judgement": 4,
+                "Prioritisation and recommendation quality": 5
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain lending; stakeholder risk officer; organisation a regional bank; register professional.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 52.1,
+            "lexicalComplexity": 0.59,
+            "stepCount": 4,
+            "solutionFleschEase": 53.3,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-05",
+        "runId": "run-lending-loan-default-audit",
+        "studentId": "s-delgado-m",
+        "text": "Meridian Freight deployed a late-delivery prediction model over the summer. You are auditing on behalf of the network planner, who has the partial model card below and an escalation from rural depots that their routes are flagged late far more often.\n\nThe card reports a macro-F1 of 0.77, but does not include any breakdown by depot type or route density. Validation is described as a validation window that excludes the winter season. The card is silent on the definition of a 'late' label.\n\nWrite a structured audit that names the fairness gaps, the robustness gaps and the documentation gaps, grounds every finding in what the card does or does not say, and ranks your recommendations in the order the network planner should act on them.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports a macro-F1 of 0.77 but omits any breakdown by depot type or route density. Without that breakdown, an escalation from rural depots that their routes are flagged late far more often can be neither substantiated nor dismissed, and any claim that a late-delivery prediction model treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on a validation window that excludes the winter season, so the reported figures cannot speak to performance under subgroup or temporal shift. For Meridian Freight this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state the definition of a 'late' label. Intended use is asserted but not bounded, which leaves the network planner unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the rural flagging pattern, because it drives resourcing decisions. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with the definition of a 'late' label and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "logistics",
+          "stakeholder": "network planner",
+          "scenario": "Meridian Freight · a late-delivery prediction model",
+          "jargon": "technical"
+        },
+        "metrics": {
+          "fleschEase": 49.5,
+          "lexicalComplexity": 0.63,
+          "stepCount": 4,
+          "solutionFleschEase": 49.5,
+          "equivalence": 0.875,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 5,
+                "Robustness analysis under subgroup shift": 5,
+                "Documentation completeness judgement": 4,
+                "Prioritisation and recommendation quality": 4
+              },
+              "rationale": "Reading register shifts slightly, but every construct dimension remains load-bearing."
+            },
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 5,
+                "Robustness analysis under subgroup shift": 4,
+                "Documentation completeness judgement": 5,
+                "Prioritisation and recommendation quality": 4
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": true,
+          "p2Low": true
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain logistics; stakeholder network planner; organisation Meridian Freight; register technical.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 49.5,
+            "lexicalComplexity": 0.63,
+            "stepCount": 4,
+            "solutionFleschEase": 49.5,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      },
+      {
+        "id": "v-06",
+        "runId": "run-lending-loan-default-audit",
+        "studentId": "s-farah-a",
+        "text": "The practice manager at Northgate Dental Partners has asked for an independent audit of an appointment no-show predictor that went live in April. What they can give you is a partial model card and front-desk staff reporting that overbooking hits one clinic disproportionately.\n\nThe card reports an accuracy of 0.79, but does not include no-show prediction rates by clinic or patient age. Validation is described as one clinic's data used for both training and testing. The card is silent on how predictions translate into overbooking decisions.\n\nYour deliverable is a structured audit: fairness gaps, robustness gaps and documentation gaps, each justified from the card itself, followed by prioritised recommendations addressed to the practice manager.",
+        "adaptedSolution": "Finding 1 — Fairness. The card reports an accuracy of 0.79 but omits no-show prediction rates by clinic or patient age. Without that breakdown, front-desk staff reporting that overbooking hits one clinic disproportionately can be neither substantiated nor dismissed, and any claim that an appointment no-show predictor treats groups equally is unsupported by the card.\n\nFinding 2 — Robustness. Evaluation rests on one clinic's data used for both training and testing, so the reported figures cannot speak to performance under subgroup or temporal shift. For Northgate Dental Partners this matters because the population the model now scores differs from the one it was validated on.\n\nFinding 3 — Documentation. The card does not state how predictions translate into overbooking decisions. Intended use is asserted but not bounded, which leaves the practice manager unable to tell whether current practice is inside the model's design envelope.\n\nFinding 4 — Prioritisation. Address the clinic imbalance, which directly affects patient access. Second, commission a shifted validation that covers the missing subgroup and time period. Third, complete the card with how predictions translate into overbooking decisions and an explicit out-of-scope statement before the next review cycle.",
+        "surfaceAssignment": {
+          "domain": "healthcare",
+          "stakeholder": "practice manager",
+          "scenario": "Northgate Dental Partners · an appointment no-show predictor",
+          "jargon": "plain"
+        },
+        "metrics": {
+          "fleschEase": 51.4,
+          "lexicalComplexity": 0.58,
+          "stepCount": 4,
+          "solutionFleschEase": 50.2,
+          "equivalence": 0.9375,
+          "judgeSamples": [
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 4,
+                "Robustness analysis under subgroup shift": 4,
+                "Documentation completeness judgement": 5,
+                "Prioritisation and recommendation quality": 5
+              },
+              "rationale": "The variant still requires an audit grounded in the card's omissions; the construct is intact."
+            },
+            {
+              "dimensionScores": {
+                "Identifies fairness gaps with evidence": 5,
+                "Robustness analysis under subgroup shift": 5,
+                "Documentation completeness judgement": 5,
+                "Prioritisation and recommendation quality": 5
+              },
+              "rationale": "Fairness, robustness and documentation are each demanded explicitly and tied to card evidence."
+            }
+          ]
+        },
+        "flags": {
+          "p4Outlier": false,
+          "p2Low": false
+        },
+        "status": "draft",
+        "generation": 1,
+        "scaffold": {
+          "demo": true,
+          "constructMap": "Fairness gap identification; robustness reasoning; documentation critique; evidence-grounded prioritisation.",
+          "surfacePlan": "Domain healthcare; stakeholder practice manager; organisation Northgate Dental Partners; register plain.",
+          "selfCheck": {
+            "p1": true,
+            "p2": true,
+            "p3": true,
+            "p4": true,
+            "notes": "Reading level held to the original task."
+          },
+          "demoMetrics": {
+            "fleschEase": 51.4,
+            "lexicalComplexity": 0.58,
+            "stepCount": 4,
+            "solutionFleschEase": 50.2,
+            "equivalence": null,
+            "judgeSamples": []
+          }
+        }
+      }
+    ],
+    "report": {
+      "runId": "run-lending-loan-default-audit",
+      "computedAt": "2026-09-05T17:05:03.831Z",
+      "thresholdsVersion": 2,
+      "cosineMean": 0.095,
+      "ngramOverlapMean": 0.088,
+      "equivalenceMean": 0.8958333333333334,
+      "rubricProxySigma": 8.005570976930171,
+      "fleschSigma": 8.069025137317807,
+      "fleschMean": 53.94999999999999,
+      "joint": 0.861,
+      "failure": 0.139,
+      "checks": {
+        "p1": {
+          "property": "p1",
+          "label": "Versions look different",
+          "metricLabel": "cosine 0.095",
+          "detail": "P1 — mean pairwise TF-IDF n-gram cosine (pilot proxy for all-mpnet-base-v2), τdiv ≤ 0.15",
+          "value": 0.095,
+          "threshold": 0.15,
+          "barFill": 0.8416666666666667,
+          "barTick": 0.75,
+          "gate": "pass",
+          "note": null
+        },
+        "p2": {
+          "property": "p2",
+          "label": "Same skill measured",
+          "metricLabel": "equivalence 0.896",
+          "detail": "P2 — LLM judge construct equivalence, median of 5 self-consistency samples, τeq ≥ 0.90",
+          "value": 0.8958333333333334,
+          "threshold": 0.9,
+          "barFill": 0.8958333333333334,
+          "barTick": 0.9,
+          "gate": "fail",
+          "note": "4 versions drift from the construct. Regenerate the named versions."
+        },
+        "p3": {
+          "property": "p3",
+          "label": "One rubric grades them all",
+          "metricLabel": "provisional proxy",
+          "detail": "P3 — approximated by cross-variant readability dispersion of the canonical solution; full rubric re-application is pre-registered, not yet implemented",
+          "value": 8.005570976930171,
+          "threshold": null,
+          "barFill": 0.8220984227348851,
+          "barTick": null,
+          "gate": "advisory",
+          "note": "Measured by proxy. Spot-check three versions against the rubric before release."
+        },
+        "p4": {
+          "property": "p4",
+          "label": "Equally hard to read",
+          "metricLabel": "σ Flesch 8.1",
+          "detail": "P4 — standard deviation of Flesch reading-ease across the variant set, τdiff ≤ 8.0",
+          "value": 8.069025137317807,
+          "threshold": 8,
+          "barFill": 0.6772389945072878,
+          "barTick": 0.6799999999999999,
+          "gate": "fail",
+          "note": "3 versions read 1 grade levels above the rest. Regenerate those 3, or loosen the jargon register."
+        }
+      },
+      "outliers": [
+        "v-01",
+        "v-02",
+        "v-03",
+        "v-05"
+      ],
+      "releasable": false
+    },
+    "release": null,
+    "costEstimateUsd": 0.28,
+    "estMinutes": 1
+  },
+  "extraction": {
+    "model": null,
+    "repairs": [],
+    "unresolved": [],
+    "by": "local parser"
+  }
+}

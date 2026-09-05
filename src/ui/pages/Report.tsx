@@ -4,6 +4,7 @@ import { Blueprint, BlueprintButton, CheckBar, Dialog, EmptyState, Pill, Progres
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
 import { activeRun, studentById } from "@lib/store/selectors";
+import { runCompletion } from "@lib/store/orchestrator";
 import { cosine, isScorable, tfidfVectors } from "@lib/metrics";
 import { FRONTIER_BAND } from "@shared/thresholds";
 import type { Property, Run, Variant } from "@shared/types";
@@ -106,12 +107,17 @@ export default function Report() {
     );
   }
   if (!run.report) {
+    const c = runCompletion(run);
     return (
       <EmptyState
-        heading={run.status === "failed" ? "The run failed" : "No report yet"}
-        text={run.error ?? "This run finished without producing a report. Generate again."}
-        actionLabel="Back to Generate"
-        onAction={() => navigate("/generate")}
+        heading={run.status === "failed" ? "The run failed" : c.resumable ? "The run stopped part-way" : "No report yet"}
+        text={
+          c.resumable
+            ? `${c.generated} of ${run.n} versions were generated and kept. ${run.progress.message}${run.error ? ` · ${run.error}` : ""}`
+            : run.error ?? "This run finished without producing a report. Generate again."
+        }
+        actionLabel={c.resumable ? `Resume: ${run.n - c.generated} to go` : "Back to Generate"}
+        onAction={() => (c.resumable ? void ws.resumeRun(run.id).catch(() => {}) : navigate("/generate"))}
       />
     );
   }
@@ -184,7 +190,14 @@ export default function Report() {
           </div>
           {run.status === "partial" && (
             <div style={{ marginTop: 10, fontSize: 11.5, color: RED }}>
-              {run.variants.filter((v) => v.error).length} versions failed to generate and are excluded.
+              {run.n - runCompletion(run).generated} of {run.n} versions are missing or failed and are excluded.
+              {runCompletion(run).resumable && !inFlight ? (
+                <div style={{ marginTop: 8 }}>
+                  <button type="button" className="btn btn-secondary" onClick={() => void ws.resumeRun(run.id).catch(() => {})}>
+                    Resume the run
+                  </button>
+                </div>
+              ) : null}
             </div>
           )}
           {run.usage && (

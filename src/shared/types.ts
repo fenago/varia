@@ -308,6 +308,10 @@ export interface Submission {
   text: string | null;
   submittedAt: string | null;
   grade: Grade | null;
+  /** File the submission was imported from, if any */
+  sourceFile?: string;
+  /** AI suggestion (wave 4). Never the grade; the instructor saves the grade. */
+  preScore?: PreScoreOutput & { at: string; model: ModelId };
 }
 
 export interface Appeal {

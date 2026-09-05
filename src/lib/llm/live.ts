@@ -17,8 +17,7 @@ import type {
   SourceFile,
   SurfaceDimension,
   ThresholdSet,
-  UsageTotals,
-} from "@shared/types";
+  UsageTotals, PreScoreInput, PreScoreOutput } from "@shared/types";
 import { DEFAULT_THRESHOLDS } from "@shared/thresholds";
 import { costOf, modelSpec, type ModelSpec } from "@shared/models";
 import { makeClient } from "./client";
@@ -38,6 +37,7 @@ import {
 import { buildDraftAnchorsPrompt, buildCanonicalSolutionPrompt, buildFewShotAnchorsPrompt } from "./prompts/anchors";
 import { buildExtractPrompt } from "./prompts/extract";
 import { buildJudgePrompt } from "./prompts/judge";
+import { PreScoreSchema, buildPreScorePrompt, preScoreToOutput } from "./prompts/prescore";
 import { buildGenerationPrompt } from "./prompts/strategies";
 
 export { shapeRequest } from "./shape";
@@ -490,6 +490,19 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
         }),
       );
       return Promise.all(runs);
+    },
+
+    async preScoreSubmission(input: PreScoreInput): Promise<PreScoreOutput> {
+      const { system, user } = buildPreScorePrompt(input.blueprint, input.variant, input.submissionText);
+      const model = input.judgeModel || judgeModel;
+      const out = await callParse(
+        "judge",
+        { model, max_tokens: MAX_TOKENS_JUDGE, system, messages: [{ role: "user", content: user }] },
+        betaZodOutputFormat(PreScoreSchema),
+        input.signal,
+        input.onUsage,
+      );
+      return preScoreToOutput(input.blueprint, out);
     },
   };
 

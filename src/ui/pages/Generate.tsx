@@ -4,6 +4,7 @@ import { Blueprint, BlueprintButton, EmptyState, Field, ProgressBlock, SegChoice
 import { useWorkspace } from "@lib/store/workspace";
 import { useSettings } from "@lib/store/settings";
 import { activeBlueprint, activeRun } from "@lib/store/selectors";
+import { runCompletion } from "@lib/store/orchestrator";
 import { estimateRunCost } from "@lib/llm";
 import { STRATEGY_LABELS, THREAT_OPTIONS, THREAT_TO_STRATEGY } from "@shared/thresholds";
 import { GENERATOR_MODELS, JUDGE_MODELS, type Strategy, type ThreatProfile } from "@shared/types";
@@ -197,6 +198,27 @@ export default function Generate() {
       </div>
 
       <div className="va-sticky">
+        {run && !inFlight && run.blueprintId === bp?.id && runCompletion(run).resumable ? (
+          <Blueprint style={{ padding: "16px 18px", marginBottom: 14 }}>
+            <h6 style={{ margin: "0 0 6px" }}>A run stopped part-way</h6>
+            <div className="va-muted-12" style={{ lineHeight: 1.5, marginBottom: 10 }}>
+              {runCompletion(run).generated} of {run.n} versions done · {run.progress.message}
+              {run.error ? ` · ${run.error}` : ""}
+            </div>
+            <BlueprintButton
+              block
+              onClick={() => {
+                setError(null);
+                void ws.resumeRun(run.id).then(() => {
+                  const r = useWorkspace.getState().runs.find((x) => x.id === run.id);
+                  if (r?.report) navigate("/report");
+                }).catch((e) => setError((e as Error).message));
+              }}
+            >
+              Resume: generate the remaining {run.n - runCompletion(run).generated}
+            </BlueprintButton>
+          </Blueprint>
+        ) : null}
         {inFlight && run ? (
           <>
             <ProgressBlock progress={run.progress} onCancel={ws.cancelRun} title={`Generating ${run.n} versions`} />

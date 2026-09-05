@@ -9,6 +9,7 @@ import type { BlueprintDraft, EmployerChallenge, EmployerPartner, LlmProvider, R
 import { sampleById } from "@shared/samples";
 import { parseFiles, type ParsedFiles } from "@lib/ingest";
 import { localExtract } from "@lib/ingest/localExtract";
+import { guardDraft } from "@lib/llm/extractGuard";
 
 export interface SampleLoadActions {
   addPartner: (p: { organisation: string; sector: string; contactName?: string; contactRole?: string; contactEmail?: string }) => EmployerPartner;
@@ -27,6 +28,8 @@ export interface SampleLoadResult {
   /** How the blueprint was produced */
   extractedBy: "claude" | "recorded" | "local parser";
   extractionModel: string | null;
+  /** What the extraction guard repaired from the source text (live path only) */
+  repairs: string[];
 }
 
 export interface SampleLoadOptions {
@@ -98,6 +101,7 @@ export async function loadSample(id: string, opts: SampleLoadOptions): Promise<S
   let draft: BlueprintDraft;
   let extractedBy: SampleLoadResult["extractedBy"];
   let extractionModel: string | null = null;
+  let repairs: string[] = [];
 
   if (provider.mode === "live") {
     onPhase?.("extracting", "Extracting the blueprint with Claude…");
@@ -108,6 +112,9 @@ export async function loadSample(id: string, opts: SampleLoadOptions): Promise<S
     };
     extractedBy = "claude";
     extractionModel = null; // the provider does not expose the model id here; the page reads settings
+    const guarded = guardDraft(draft, parsed.sources, sample);
+    draft = guarded.draft;
+    repairs = guarded.repairs;
   } else if (sample.preExtracted) {
     onPhase?.("extracting", "Loading the recorded extraction…");
     draft = { ...sample.preExtracted.blueprint, source: { ...sample.preExtracted.blueprint.source, files: parsed.sources.map(({ text: _t, ...rest }) => rest), readSeconds: parsed.readSeconds } };
@@ -125,5 +132,5 @@ export async function loadSample(id: string, opts: SampleLoadOptions): Promise<S
   draft.rubric = draft.rubric.map((c, i) => (c.skillKeys?.length ? c : { ...c, skillKeys: skillKeys.filter((_, k) => k % Math.max(1, draft.rubric.length) === i) }));
   draft.code = draft.code ?? sample.course.code;
 
-  return { sample, draft, roster: parsed.roster, partner, challenge, parsed, extractedBy, extractionModel };
+  return { sample, draft, roster: parsed.roster, partner, challenge, parsed, extractedBy, extractionModel, repairs };
 }

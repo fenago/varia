@@ -15,6 +15,7 @@ import {
   variantById,
 } from "@lib/store/selectors";
 import type { LevelScore } from "@shared/types";
+import { getProvider, useSettings } from "@lib/store/settings";
 
 const RED = "#8d4a3c";
 
@@ -84,6 +85,12 @@ function GradeView({ variantId }: { variantId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [appealDialog, setAppealDialog] = useState<"open" | "resolve" | null>(null);
   const [appealText, setAppealText] = useState("");
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
+  const settings = useSettings();
+  const preScore = submission?.preScore ?? null;
 
   useEffect(() => {
     setScores((submission?.grade?.scores as Record<string, LevelScore>) ?? {});
@@ -119,6 +126,45 @@ function GradeView({ variantId }: { variantId: string }) {
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
+  };
+
+  const submitPaste = () => {
+    const text = pasteText.trim();
+    if (!text) return;
+    try {
+      ws.setSubmissionText(variant.id, text, undefined, run.id);
+      setPasteOpen(false);
+      setPasteText("");
+      setNote("Submission saved.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  const suggest = async () => {
+    if (!submission?.text || !blueprint) return;
+    setSuggesting(true);
+    setSuggestError(null);
+    try {
+      const provider = getProvider();
+      if (!provider.preScoreSubmission) throw new Error("This provider cannot suggest scores.");
+      const out = await provider.preScoreSubmission({
+        blueprint,
+        variant: { id: variant.id, text: variant.text, adaptedSolution: variant.adaptedSolution },
+        submissionText: submission.text,
+        judgeModel: settings.judgeModel,
+      });
+      ws.applyPreScore(variant.id, out, provider.mode === "demo" ? "demo-provider" : settings.judgeModel, run.id);
+    } catch (e) {
+      setSuggestError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const applySuggestions = () => {
+    if (!preScore) return;
+    setScores({ ...preScore.scores });
   };
 
   const easeLine = (() => {
@@ -172,6 +218,21 @@ function GradeView({ variantId }: { variantId: string }) {
             Nothing submitted yet.
           </p>
         )}
+        <div className="va-btn-row" style={{ marginTop: 10 }}>
+          <button type="button" className="btn btn-secondary" onClick={() => { setPasteText(submission?.text ?? ""); setPasteOpen(true); }}>
+            {submission?.text ? "Replace submission" : "Paste a submission"}
+          </button>
+          {submission?.sourceFile && <span className="va-muted-12" style={{ alignSelf: "center" }}>from {submission.sourceFile}</span>}
+        </div>
+        {pasteOpen && (
+          <div style={{ marginTop: 10 }}>
+            <textarea className="input" data-testid="paste-submission" style={{ minHeight: 160, width: "100%" }} value={pasteText} onChange={(e) => setPasteText(e.target.value)} placeholder="Paste the student's submission text" />
+            <div className="va-btn-row" style={{ marginTop: 8 }}>
+              <BlueprintButton onClick={submitPaste} disabled={!pasteText.trim()}>Save submission</BlueprintButton>
+              <button type="button" className="btn btn-ghost" onClick={() => setPasteOpen(false)}>Cancel</button>
+            </div>
+          </div>
+        )}
       </Blueprint>
 
       <div className="va-sticky">
@@ -186,16 +247,48 @@ function GradeView({ variantId }: { variantId: string }) {
             {rubric.length === 0 && <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>This run's blueprint has no rubric.</p>}
             {rubric.map((c) => (
               <div key={c.id}>
-                <div style={{ fontSize: 13.5, marginBottom: 6 }}>{c.name}</div>
+                <div className="va-row-flex" style={{ fontSize: 13.5, marginBottom: 6, gap: 8 }}>
+                  <span>{c.name}</span>
+                  {preScore && preScore.scores[c.id] !== undefined && (
+                    <span className="va-pill va-watch" title={preScore.rationale[c.id] ?? ""} style={{ marginLeft: "auto", cursor: "help" }}>
+                      suggested {preScore.scores[c.id]}
+                    </span>
+                  )}
+                </div>
                 <SegScale
                   name={`crit-${c.id}`}
                   value={scores[c.id] ?? null}
                   disabled={!canGrade}
                   onChange={(v) => setScores((s) => ({ ...s, [c.id]: v as LevelScore }))}
                 />
+                {preScore?.rationale[c.id] && (
+                  <details style={{ marginTop: 4 }}>
+                    <summary className="va-muted-115" style={{ cursor: "pointer" }}>Why</summary>
+                    <div className="va-muted-12" style={{ lineHeight: 1.5, marginTop: 2 }}>{preScore.rationale[c.id]}</div>
+                  </details>
+                )}
               </div>
             ))}
           </div>
+          {canGrade && (
+            <div style={{ marginTop: 12, borderTop: "1px solid var(--color-divider)", paddingTop: 10 }}>
+              <div className="va-btn-row">
+                <button type="button" className="btn btn-secondary" onClick={suggest} disabled={suggesting}>
+                  {suggesting ? "Reading the submission…" : preScore ? "Suggest again" : "Suggest scores"}
+                </button>
+                {preScore && (
+                  <button type="button" className="btn btn-secondary" onClick={applySuggestions}>Apply suggestions</button>
+                )}
+              </div>
+              {preScore && (
+                <div className="va-muted-115" style={{ marginTop: 6, lineHeight: 1.5 }}>
+                  Suggested by {preScore.model} · {formatShort(preScore.at)}. A suggestion only; what you save is the grade.
+                  <div style={{ marginTop: 4 }}>{preScore.summary}</div>
+                </div>
+              )}
+              {suggestError && <div style={{ marginTop: 6, fontSize: 12.5, color: RED }}>{suggestError}</div>}
+            </div>
+          )}
           <BlueprintButton block style={{ marginTop: 16 }} disabled={!canGrade || !allScored} onClick={save}>
             Save score · next submission
           </BlueprintButton>

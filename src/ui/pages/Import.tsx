@@ -6,6 +6,7 @@ import { getProvider } from "@lib/store/settings";
 import { extractionSummary } from "@lib/store/selectors";
 import { parseFiles, parsePastedText } from "@lib/ingest";
 import { loadSample } from "@lib/store/samples";
+import { guardDraft } from "@lib/llm/extractGuard";
 import { SAMPLES } from "@shared/samples";
 import { LlmError } from "@lib/llm";
 import type { BlueprintDraft, Criterion, SourceFile } from "@shared/types";
@@ -81,14 +82,16 @@ export default function Import() {
     setMessage("Extracting the blueprint…");
     try {
       const out = await getProvider().extractBlueprint({ files, rawText, course: ws.course });
+      const guarded = guardDraft(out, files);
       const merged: BlueprintDraft = {
-        ...out,
+        ...guarded.draft,
         source: {
-          ...out.source,
-          files: files.length ? stripText(files) : out.source.files,
-          readSeconds: secs ?? out.source.readSeconds,
+          ...guarded.draft.source,
+          files: files.length ? stripText(files) : guarded.draft.source.files,
+          readSeconds: secs ?? guarded.draft.source.readSeconds,
         },
       };
+      setRepairNote(guarded.repairs.length ? `Repaired from your files: ${guarded.repairs.join("; ")}.` : "");
       ws.setPendingDraft(merged);
       setPhase("ready");
       setMessage("");
@@ -113,6 +116,8 @@ export default function Import() {
   }
 
   const [sampleNote, setSampleNote] = useState<string | null>(null);
+
+  const [repairNote, setRepairNote] = useState("");
   const [loadingSample, setLoadingSample] = useState<string | null>(null);
 
   async function handleSample(id: string) {
@@ -135,6 +140,7 @@ export default function Import() {
       ws.setPendingDraft({ ...result.draft, challengeIds: [result.challenge.id] });
       const by = result.extractedBy === "claude" ? "Claude" : result.extractedBy === "recorded" ? `a recorded ${result.extractionModel} extraction` : "the local parser";
       setSampleNote(`Loaded from the ${result.sample.organisation} sample · extracted by ${by}`);
+      setRepairNote(result.repairs.length ? `Repaired from the sample files: ${result.repairs.join("; ")}.` : "");
       setPhase("ready");
       setMessage("");
     } catch (e) {
@@ -291,6 +297,7 @@ export default function Import() {
                 <span className="text-muted" style={{ fontSize: 12 }}>
                   {sources.length} file{sources.length === 1 ? "" : "s"}{readSeconds != null ? ` · read in ${readSeconds} second${readSeconds === 1 ? "" : "s"}` : ""}{sampleNote ? ` · ${sampleNote}` : ""}
                 </span>
+                {repairNote ? <div className="va-muted-12" style={{ marginTop: 4 }}>{repairNote}</div> : null}
               </div>
               <table className="table">
                 <thead><tr><th>File</th><th>Recognised as</th><th>Size</th><th>Status</th></tr></thead>

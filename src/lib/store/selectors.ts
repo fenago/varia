@@ -694,3 +694,35 @@ export function outcomeStats(ws: Workspace): OutcomeStats {
     meanOnboardingHours: hours.length ? Math.round((hours.reduce((a, b) => a + b, 0) / hours.length) * 10) / 10 : null,
   };
 }
+
+
+// ---------------------------------------------------------------------------
+// Wave 4: submissions import preview
+// ---------------------------------------------------------------------------
+
+import { matchSubmissionFiles, type MatchResult } from "@lib/release/submissionMatch";
+
+export interface SubmissionImportRow extends MatchResult {
+  studentName: string | null;
+  alreadySubmitted: boolean;
+}
+
+/** Match uploaded file names to students on a run and flag rows that would overwrite a submission. */
+export function submissionImportPreview(ws: Workspace, runId: string | null | undefined, fileNames: string[]): SubmissionImportRow[] {
+  const run = runById(ws, runId);
+  if (!run) return fileNames.map((fileName) => ({ fileName, studentId: null, variantId: null, reason: "unmatched", studentName: null, alreadySubmitted: false }));
+  return matchSubmissionFiles(fileNames, ws.roster, run).map((m) => ({
+    ...m,
+    studentName: m.studentId ? (studentById(ws, m.studentId)?.name ?? null) : null,
+    alreadySubmitted: !!(m.variantId && submissionForVariant(ws, m.variantId, run.id)?.submittedAt),
+  }));
+}
+
+/** Variants on a run that have no submission yet, for the mapping select. */
+export function unassignedVariantOptions(ws: Workspace, runId: string | null | undefined): { variantId: string; label: string }[] {
+  const run = runById(ws, runId);
+  if (!run) return [];
+  return run.variants
+    .filter((v) => !v.error && v.text)
+    .map((v) => ({ variantId: v.id, label: `${studentById(ws, v.studentId)?.name ?? "Unassigned"} · ${v.id}` }));
+}
