@@ -53,6 +53,7 @@ const ROUTES = {
   "/": ["Home", "Proof an employer can verify"],
   "/start": ["Orientation", "Getting started"],
   "/summary": ["Orientation", "Executive summary"],
+  "/research": ["Orientation", "Research grounding"],
   "/notes": ["Orientation", "Design notes and assumptions"],
   "/about": ["Orientation", "About VARIA"],
   "/import": ["Instructor · step 0 of 5", "Load an assessment you already have"],
@@ -100,7 +101,7 @@ await check("rail sections and labels", async () => {
   await go("/notes");
   const rail = await page.locator("aside, .va-rail").first().innerText();
   for (const s of ["Orientation", "Instructor", "Oversight", "Setup"]) assert(rail.toLowerCase().includes(s.toLowerCase()), `section ${s}`);
-  for (const l of ["Home", "Who it's for", "Getting started", "Design notes", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "API key & models"]) assert(rail.includes(l), `label ${l}`);
+  for (const l of ["Home", "Who it's for", "Getting started", "Design notes", "Research grounding", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "API key & models"]) assert(rail.includes(l), `label ${l}`);
   const current = await page.locator('[aria-current="page"]').innerText();
   assert(current.includes("Design notes"), `aria-current is ${current}`);
 });

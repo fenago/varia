@@ -15,6 +15,7 @@ const SECTIONS: { heading: string; items: RailItem[] }[] = [
       { to: "/for", label: "Who it's for" },
       { to: "/start", label: "Getting started" },
       { to: "/notes", label: "Design notes" },
+      { to: "/research", label: "Research grounding" },
       { to: "/about", label: "About" },
     ],
   },

@@ -5,6 +5,7 @@ import { PageTitleProvider } from "./shell/PageTitleContext";
 import Start from "./pages/Start";
 import Home from "./pages/Home";
 import Summary from "./pages/Summary";
+import Research from "./pages/Research";
 import Notes from "./pages/Notes";
 import About from "./pages/About";
 import Import from "./pages/Import";
@@ -28,6 +29,7 @@ import Talent from "./pages/Talent";
 export type PageKey =
   | "home"
   | "summary"
+  | "research"
   | "start"
   | "notes"
   | "about"
@@ -53,6 +55,7 @@ export type PageKey =
 export const PAGES: Record<PageKey, { crumb: string; title: string; path: string }> = {
   home: { crumb: "Home", title: "Proof an employer can verify", path: "/" },
   summary: { crumb: "Orientation", title: "Executive summary", path: "/summary" },
+  research: { crumb: "Orientation", title: "Research grounding", path: "/research" },
   start: { crumb: "Orientation", title: "Getting started", path: "/start" },
   notes: { crumb: "Orientation", title: "Design notes and assumptions", path: "/notes" },
   about: { crumb: "Orientation", title: "About VARIA", path: "/about" },
@@ -92,6 +95,7 @@ export function App() {
           <Route path="/" element={<Home />} />
           <Route path="/start" element={<Start />} />
           <Route path="/summary" element={<Summary />} />
+          <Route path="/research" element={<Research />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/about" element={<About />} />
           <Route path="/import" element={<Import />} />
