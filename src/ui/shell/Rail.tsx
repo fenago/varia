@@ -1,4 +1,6 @@
 import { NavLink } from "react-router-dom";
+import { useWorkspace } from "@lib/store/workspace";
+import { journeyState, JOURNEY_LABELS } from "@lib/store/journey";
 
 interface RailItem {
   to: string;
@@ -16,19 +18,13 @@ const SECTIONS: { heading: string; items: RailItem[] }[] = [
       { to: "/start", label: "Getting started" },
       { to: "/notes", label: "Design notes" },
       { to: "/research", label: "Research grounding" },
+      { to: "/glossary", label: "Glossary" },
       { to: "/about", label: "About" },
     ],
   },
   {
     heading: "Instructor",
-    items: [
-      { to: "/import", label: "0 · Load your assessment" },
-      { to: "/blueprint", label: "1 · Blueprint" },
-      { to: "/generate", label: "2 · Generate variants" },
-      { to: "/report", label: "3 · Integrity report" },
-      { to: "/roster", label: "4 · Release & roster" },
-      { to: "/grade", label: "5 · Grade with rubric" },
-    ],
+    items: JOURNEY_LABELS.map((l) => ({ to: l.path, label: l.label })),
   },
   {
     heading: "Oversight",
@@ -45,6 +41,9 @@ const SECTIONS: { heading: string; items: RailItem[] }[] = [
 ];
 
 export function Rail() {
+  const ws = useWorkspace();
+  const journey = journeyState(ws);
+  const stepFor = (to: string) => journey.steps.find((st) => st.path === to);
   return (
     <aside className="va-rail" aria-label="Navigation">
       <div className="va-rail-brand">
@@ -64,17 +63,19 @@ export function Rail() {
       {SECTIONS.map((s) => (
         <nav key={s.heading} aria-label={s.heading}>
           <div className="va-railhd">{s.heading}</div>
-          {s.items.map((it) => (
-            <NavLink
-              key={it.to}
-              to={it.to}
-              end={it.end}
-              className="va-nav"
-              aria-current={undefined}
-            >
-              {it.label}
-            </NavLink>
-          ))}
+          {s.items.map((it) => {
+            const st = s.heading === "Instructor" ? stepFor(it.to) : undefined;
+            const glyph = st ? (st.status === "done" ? "✓" : st.status === "current" ? "●" : "○") : null;
+            return (
+              <span key={it.to}>
+                <NavLink to={it.to} end={it.end} className="va-nav" aria-current={undefined} title={st ? `${st.status === "done" ? "Done" : st.status === "current" ? "You are here" : "Not yet"}${st.summary ? ` · ${st.summary}` : ""}` : undefined}>
+                  {glyph ? <span className={`va-nav-glyph is-${st!.status}`} aria-hidden="true">{glyph}</span> : null}
+                  {it.label}
+                </NavLink>
+                {st && st.status === "current" && st.summary ? <span className="va-nav-summary">{st.summary}</span> : null}
+              </span>
+            );
+          })}
         </nav>
       ))}
 

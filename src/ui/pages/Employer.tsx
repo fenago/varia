@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, CopyField, DataTable, Field, Funnel, Pill, SkillTags, Stamp, StatTile, type Column, type PillGate, type StatColor } from "@ui/components";
+import { Blueprint, BlueprintButton, CopyField, DataTable, Field, Funnel, Pill, SkillTags, Stamp, StatTile, type Column, type PillGate, type StatColor, Info } from "@ui/components";
 import { Link } from "react-router-dom";
+import { glossaryTerm } from "@shared/glossary";
 import { useWorkspace } from "@lib/store/workspace";
 import { activeBlueprint, blueprintRowsForEmployer, employerFunnel, employerStats, evidenceRows, skillByKey, type BlueprintValidationStatus, type EmployerBlueprintRow, type EvidenceRow } from "@lib/store/selectors";
 import { decodePackage, downloadJson, readFragmentParam, readJsonFile, reviewLink } from "@lib/share";
@@ -527,6 +528,7 @@ export default function Employer() {
           color={stats.hires > 0 ? "pass" : undefined}
         />
       </div>
+      <div className="va-stepintro-learn" style={{ marginTop: 10 }}><span className="text-muted">Words on this page:</span><span className="va-stepintro-learn-item">{glossaryTerm("challenge")?.term} <Info term="challenge" /></span><span className="va-stepintro-learn-item">{glossaryTerm("employer-validation")?.term} <Info term="employer-validation" /></span><span className="va-stepintro-learn-item">{glossaryTerm("endorsement")?.term} <Info term="endorsement" /></span><span className="va-stepintro-learn-item">{glossaryTerm("talent-view")?.term} <Info term="talent-view" /></span><span className="va-stepintro-learn-item">{glossaryTerm("evidence-record")?.term} <Info term="evidence-record" /></span><span className="va-stepintro-learn-item">{glossaryTerm("credential")?.term} <Info term="credential" /></span><span className="va-stepintro-learn-item">{glossaryTerm("portfolio")?.term} <Info term="portfolio" /></span></div>
 
       <Blueprint style={{ padding: "20px 22px" }}>
         <div className="va-row-flex" style={{ marginBottom: 12 }}>

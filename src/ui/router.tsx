@@ -6,6 +6,7 @@ import Start from "./pages/Start";
 import Home from "./pages/Home";
 import Summary from "./pages/Summary";
 import Research from "./pages/Research";
+import Glossary from "./pages/Glossary";
 import Task from "./pages/Task";
 import Notes from "./pages/Notes";
 import About from "./pages/About";
@@ -30,6 +31,7 @@ import Credential from "./pages/Credential";
 
 export type PageKey =
   | "home"
+  | "glossary"
   | "summary"
   | "research"
   | "start"
@@ -63,12 +65,13 @@ export const PAGES: Record<PageKey, { crumb: string; title: string; path: string
   start: { crumb: "Orientation", title: "Getting started", path: "/start" },
   notes: { crumb: "Orientation", title: "Design notes and assumptions", path: "/notes" },
   about: { crumb: "Orientation", title: "About VARIA", path: "/about" },
-  import: { crumb: "Instructor · step 0 of 5", title: "Load an assessment you already have", path: "/import" },
-  blueprint: { crumb: "Instructor · step 1 of 5", title: "Assessment blueprint", path: "/blueprint" },
-  generate: { crumb: "Instructor · step 2 of 5", title: "Generate student versions", path: "/generate" },
-  report: { crumb: "Instructor · step 3 of 5", title: "Integrity report", path: "/report" },
-  roster: { crumb: "Instructor · step 4 of 5", title: "Release and roster", path: "/roster" },
-  grade: { crumb: "Instructor · step 5 of 5", title: "Grade with the rubric", path: "/grade" },
+  glossary: { crumb: "Orientation", title: "Glossary", path: "/glossary" },
+  import: { crumb: "Instructor · step 1 of 6", title: "Load the assignment you already give", path: "/import" },
+  blueprint: { crumb: "Instructor · step 2 of 6", title: "Check what we found", path: "/blueprint" },
+  generate: { crumb: "Instructor · step 3 of 6", title: "Make the versions", path: "/generate" },
+  report: { crumb: "Instructor · step 4 of 6", title: "Check the versions", path: "/report" },
+  roster: { crumb: "Instructor · step 5 of 6", title: "Release to students", path: "/roster" },
+  grade: { crumb: "Instructor · step 6 of 6", title: "Grade the work", path: "/grade" },
   surface: { crumb: "Oversight", title: "Strategy trade-off surface", path: "/surface" },
   console: { crumb: "Oversight", title: "Institution compliance console", path: "/console" },
   settings: { crumb: "Setup", title: "Your Claude key and models", path: "/settings" },
@@ -102,6 +105,7 @@ export function App() {
           <Route path="/start" element={<Start />} />
           <Route path="/summary" element={<Summary />} />
           <Route path="/research" element={<Research />} />
+          <Route path="/glossary" element={<Glossary />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/about" element={<About />} />
           <Route path="/import" element={<Import />} />

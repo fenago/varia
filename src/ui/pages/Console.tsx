@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Blueprint, DataTable, Pill, SegChoice, StatTile, type Column, type PillGate } from "@ui/components";
+import { Blueprint, DataTable, Pill, SegChoice, StatTile, type Column, type PillGate, Info } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
 import { auditNewestFirst, consoleRows, consoleStats, currentThresholds, employerStats, outcomeStats, strategyLabel } from "@lib/store/selectors";
 import { DEFAULT_P1_MAXPAIR, DEFAULT_P1_NGRAM, metricsVersionLabel } from "@shared/thresholds";
+import { glossaryTerm } from "@shared/glossary";
 import { PROPERTY_LABELS } from "@shared/thresholds";
 import type { InstitutionSet, InstitutionSetStatus, Property } from "@shared/types";
 
@@ -124,10 +125,11 @@ export default function Console() {
         <StatTile kicker="Released over threshold" value={stats.overThreshold} sub="each with a recorded reason" color="fail" />
         <StatTile kicker="Unreviewed > 14 days" value={stats.unreviewed} sub={stats.runsOnly ? "no institution-wide review queue is recorded" : "needs a specialist sign-off"} color="watch" />
       </div>
+      <div className="va-stepintro-learn" style={{ marginTop: -6 }}><span className="text-muted">Words on this page:</span><span className="va-stepintro-learn-item">{glossaryTerm("four-checks")?.term} <Info term="four-checks" /></span><span className="va-stepintro-learn-item">{glossaryTerm("release")?.term} <Info term="release" /></span><span className="va-stepintro-learn-item">{glossaryTerm("over-threshold")?.term} <Info term="over-threshold" /></span><span className="va-stepintro-learn-item">{glossaryTerm("threshold")?.term} <Info term="threshold" /></span><span className="va-stepintro-learn-item">{glossaryTerm("joint-score")?.term} <Info term="joint-score" /></span><span className="va-stepintro-learn-item">{glossaryTerm("recorded-run")?.term} <Info term="recorded-run" /></span></div>
 
       <div>
         <div className="va-row-flex" style={{ alignItems: "baseline", gap: 12, marginBottom: 10 }}>
-          <div className="va-kicker">Employer outcomes</div>
+          <div className="va-kicker">Employer outcomes <Info term="employer-validation" /></div>
           <Link to="/employer" className="va-muted-12" style={{ marginLeft: "auto" }}>
             Manage on Employer validation →
           </Link>
@@ -232,7 +234,7 @@ export default function Console() {
                 const isEditing = editing !== null && editing === r.key;
                 return (
                   <tr key={r.property}>
-                    <td title={PROPERTY_LABELS[r.property].tooltip}>{r.label}</td>
+                    <td title={PROPERTY_LABELS[r.property].tooltip}>{r.label} <Info term={r.property} /></td>
                     <td>
                       {isEditing ? (
                         <input

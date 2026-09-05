@@ -1,6 +1,9 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Blueprint, BlueprintButton, CopyField, DataTable, EmptyState, Pill, SegChoice, StatTile, type Column } from "@ui/components";
+import { Info } from "@ui/components/Info";
+import { StepIntro } from "@ui/components/StepIntro";
+import { Verdict } from "@ui/components/Verdict";
 import { useWorkspace } from "@lib/store/workspace";
 import { activeRun, evidenceForVariant, rosterRows, rosterStats, submissionImportPreview, unassignedVariantOptions, type RosterRow, type SubmissionImportRow } from "@lib/store/selectors";
 import { allTaskLinksCsv, buildTaskPackage, buildVersionsZip, downloadBlob, readSubmissionText, taskLink, SUBMISSION_ACCEPT } from "@lib/release";
@@ -20,8 +23,8 @@ function readSel(): string | null {
 function statusCell(status: SubmissionStatus, origin?: "student" | "ai-sample", tier?: string) {
   if (origin === "ai-sample") {
     return (
-      <span className="tag tag-outline" title={`AI-written sample at the ${tier ?? ""} tier · grade is the model's suggestion`}>
-        AI sample · {tier ?? "sample"} · suggested grade
+      <span className="tag tag-outline" title={`Written by a model at the ${tier ?? ""} tier for the recorded demo, not by a student. The grade shown is a suggestion.`}>
+        AI-written sample{tier ? ` · ${tier}` : ""} <Info term="ai-sample" />
       </span>
     );
   }
@@ -71,29 +74,47 @@ export default function Roster() {
   const rows = useMemo(() => (run ? rosterRows(ws, run.id) : []), [ws, run]);
   const stats = useMemo(() => (run ? rosterStats(ws, run.id) : null), [ws, run]);
 
+  const intro = (
+    <StepIntro
+      step={5}
+      title="Release to students"
+      what="Each student gets their own version through a private link or a downloaded document. No two students get the same task."
+      doThis="Send the links or download the documents. When work comes back, import it here."
+      next="Grade every submission with the one rubric."
+      learn={["student-link", "submission", "roster"]}
+    />
+  );
+
   if (!run) {
     return (
-      <EmptyState
-        heading="No versions to release yet"
-        text="Generate a set of versions first. Once the integrity report clears, release it and the roster appears here."
-        actionLabel="Go to generation"
-        onAction={() => navigate("/generate")}
-      />
+      <div className="va-page" style={{ gap: 22 }}>
+        {intro}
+        <EmptyState
+          heading="Nothing to release yet"
+          text="Make the versions first. Once they pass the checks and you release them, every student's version appears here."
+          actionLabel="Go to Make the versions"
+          onAction={() => navigate("/generate")}
+        />
+      </div>
     );
   }
 
   if (!run.release) {
     const state =
       run.status === "complete" || run.status === "partial"
-        ? "The set has been scored but not released."
-        : `The run is ${run.status}.`;
+        ? "The versions have been checked but not released yet."
+        : `The versions are still being made (${run.status}).`;
     return (
-      <EmptyState
-        heading="Not released yet"
-        text={`${state} Release it from the integrity report to assign one version to each student.`}
-        actionLabel="Open the integrity report"
-        onAction={() => navigate("/report")}
-      />
+      <div className="va-page" style={{ gap: 22 }}>
+        {intro}
+        <Verdict
+          tone="watch"
+          stamp="Not released"
+          headline="Nothing released yet"
+          body={`${state} Release them from the previous step and each student gets one version.`}
+          action={{ label: "Go to Check the versions", onClick: () => navigate("/report") }}
+        />
+      </div>
     );
   }
 
@@ -110,13 +131,13 @@ export default function Roster() {
   const columns: Column<RosterRow>[] = [
     { key: "student", header: "Student", render: (r) => r.student?.name ?? <span className="text-muted">Unassigned</span> },
     { key: "version", header: "Version", render: (r) => r.variant.id },
-    { key: "ds", header: "Domain / stakeholder", render: (r) => r.domainStakeholder },
-    { key: "ease", header: "Reading ease", render: (r) => r.readingEase.toFixed(1) },
+    { key: "ds", header: "Setting", render: (r) => r.domainStakeholder },
+    { key: "ease", header: <>Reading ease <Info term="flesch" /></>, render: (r) => r.readingEase.toFixed(1) },
     { key: "status", header: "Status", render: (r) => statusCell(r.status, r.submission?.origin, r.submission?.sampleTier) },
     { key: "score", header: "Score", render: (r) => r.scoreLabel },
     {
       key: "evidence",
-      header: "Evidence",
+      header: <>Record <Info term="evidence-record" /></>,
       render: (r) => {
         const rec = evidenceForVariant(ws, r.variant.id);
         if (rec) {
@@ -129,7 +150,7 @@ export default function Roster() {
         if (r.status === "graded") {
           return (
             <a href={`/evidence/${r.variant.id}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-              Issue
+              Create record
             </a>
           );
         }
@@ -247,10 +268,12 @@ export default function Roster() {
 
   return (
     <div className="va-page" style={{ gap: 22 }}>
+      {intro}
+
       <div className="va-tiles">
-        <StatTile kicker="Released" value={stats?.released ?? 0} sub="one version per student" />
-        <StatTile kicker="Submitted" value={stats?.submitted ?? 0} sub={dueLabel} />
-        <StatTile kicker="Graded" value={stats?.graded ?? 0} sub="same rubric throughout" />
+        <StatTile kicker="Students with a version" value={stats?.released ?? 0} sub="one version each, nobody shares" />
+        <StatTile kicker="Work handed in" value={stats?.submitted ?? 0} sub={dueLabel} />
+        <StatTile kicker="Graded" value={stats?.graded ?? 0} sub="with the one rubric" />
         <StatTile
           kicker="Difficulty appeals"
           value={stats?.appeals ?? 0}
@@ -259,86 +282,47 @@ export default function Roster() {
         />
       </div>
 
-      <Blueprint style={{ padding: "20px 22px" }}>
-        <div className="va-row-flex" style={{ gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
-          <h6 style={{ margin: 0 }}>Who got which version</h6>
-          <span className="va-muted-12">Click a row to open it with the rubric</span>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-            <SegChoice<Filter>
-              name="roster-filter"
-              value={filter}
-              onChange={(v) => {
-                setFilter(v);
-                setShowAll(false);
-              }}
-              options={[
-                { value: "all", label: "All" },
-                { value: "submitted", label: "Submitted" },
-                { value: "graded", label: "Graded" },
-                { value: "appeals", label: "Appeals" },
-              ]}
-            />
-            <button type="button" className="btn btn-secondary" onClick={exportCsv}>
-              Export
-            </button>
-          </div>
-        </div>
-        <DataTable<RosterRow>
-          columns={columns}
-          rows={visible}
-          rowKey={(r) => r.variant.id}
-          onRowClick={open}
-          selectedKey={selected}
-          empty="No students match this filter."
-        />
-        <div className="va-row-flex" style={{ marginTop: 10 }}>
-          <span className="va-muted-12">
-            Showing {visible.length} of {filtered.length}
-            {filter !== "all" ? ` (${rows.length} total)` : ""}
-          </span>
-          {filtered.length > 8 && (
-            <button type="button" className="btn btn-ghost" style={{ marginLeft: "auto" }} onClick={() => setShowAll((s) => !s)}>
-              {showAll ? "Show fewer" : "Show all"}
-            </button>
-          )}
-        </div>
-      </Blueprint>
-
       <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 22, alignItems: "start" }}>
         <Blueprint style={{ padding: "20px 22px" }}>
-          <h6 style={{ margin: "0 0 4px" }}>Student links</h6>
-          <p className="va-muted-125" style={{ margin: "0 0 12px" }}>
-            Each link carries that student's version and nothing else. Paste it into your LMS, an email, or a message. Nothing is stored on a server.
+          <div className="va-row-flex" style={{ gap: 8, alignItems: "baseline", marginBottom: 4 }}>
+            <h6 style={{ margin: 0 }}>Send the versions</h6>
+            <Info term="student-link" />
+          </div>
+          <p className="va-muted-125" style={{ margin: "0 0 12px", lineHeight: 1.55 }}>
+            Two ways, pick either. <strong>Copy all student links</strong> gives you one private link per student to paste into your LMS or an email; each link opens only that student's task. <strong>Download all as Word documents</strong> gives you one file per student to hand out however you like. Nothing is stored on a server.
           </p>
           <div className="va-btn-row" style={{ flexWrap: "wrap" }}>
-            <BlueprintButton onClick={copyAllLinks} disabled={busy !== null}>{busy === "links" ? "Preparing…" : "Copy all links"}</BlueprintButton>
+            <BlueprintButton onClick={copyAllLinks} disabled={busy !== null}>{busy === "links" ? "Preparing…" : "Copy all student links"}</BlueprintButton>
             <button type="button" className="btn btn-secondary" disabled={busy !== null} onClick={() => downloadVersions("docx")}>
-              {busy === "docx" ? "Packaging…" : "Download all versions (Word)"}
+              {busy === "docx" ? "Packaging…" : "Download all as Word documents"}
             </button>
-            <button type="button" className="btn btn-secondary" disabled={busy !== null} onClick={() => downloadVersions("md")}>
-              {busy === "md" ? "Packaging…" : "Download as Markdown"}
+            <button type="button" className="btn btn-ghost" disabled={busy !== null} onClick={() => downloadVersions("md")}>
+              {busy === "md" ? "Packaging…" : "Plain text instead"}
             </button>
           </div>
-          <div className="va-muted-12" style={{ marginTop: 10 }}>Per student: pick a row below, or copy one link here.</div>
+          <div className="va-muted-12" style={{ marginTop: 10 }}>One student at a time: click a name below to copy just their link.</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
             {rows.slice(0, showAll ? rows.length : 12).map((r) => (
               <button key={r.variant.id} type="button" className="btn btn-ghost" style={{ padding: "2px 8px", fontSize: 12.5 }} onClick={() => copyLink(r.variant.id)}>
                 {r.student?.name ?? r.variant.id} · {r.variant.id}
               </button>
             ))}
-            {!showAll && rows.length > 12 && <span className="va-muted-12" style={{ alignSelf: "center" }}>+{rows.length - 12} more (Show all)</span>}
+            {!showAll && rows.length > 12 && <span className="va-muted-12" style={{ alignSelf: "center" }}>+{rows.length - 12} more (Show all below)</span>}
           </div>
           {linkFor && (
             <div style={{ marginTop: 10 }}>
-              <CopyField label={`Task link · ${linkFor.variantId}`} value={linkFor.link} />
+              <CopyField label={`Student link · ${linkFor.variantId}`} value={linkFor.link} />
             </div>
           )}
         </Blueprint>
 
         <Blueprint style={{ padding: "20px 22px" }}>
-          <h6 style={{ margin: "0 0 4px" }}>Import submissions</h6>
-          <p className="va-muted-125" style={{ margin: "0 0 12px" }}>
-            Word, PDF, text or Markdown, one file per student. Files are matched by the student's email, surname, or version id in the filename. Unmatched files can be assigned by hand.
+          <div className="va-row-flex" style={{ gap: 8, alignItems: "baseline", marginBottom: 4 }}>
+            <h6 style={{ margin: 0 }}>Bring work back</h6>
+            <Info term="submission" />
+          </div>
+          <p className="va-muted-125" style={{ margin: "0 0 12px", lineHeight: 1.55 }}>
+            When students hand in their work, choose the files here, one file per student. Name each file with the student's surname or their version number (for example <code>Alvarez.docx</code> or <code>v-04.pdf</code>) and it is matched automatically. Word, PDF, plain text or Markdown. Anything unmatched you can assign by hand.
           </p>
           <input
             ref={fileInput}
@@ -352,7 +336,7 @@ export default function Roster() {
               e.target.value = "";
             }}
           />
-          <BlueprintButton onClick={() => fileInput.current?.click()} disabled={busy !== null}>Choose files</BlueprintButton>
+          <BlueprintButton onClick={() => fileInput.current?.click()} disabled={busy !== null}>Import submissions</BlueprintButton>
           {preview && (
             <div style={{ marginTop: 12 }}>
               <table className="table">
@@ -382,8 +366,8 @@ export default function Roster() {
                           </select>
                         </td>
                         <td className="va-muted-12">
-                          {r.reason === "ambiguous" ? `ambiguous: ${(r.candidates ?? []).join(", ")}` : r.reason}
-                          {r.alreadySubmitted ? " · replaces existing" : ""}
+                          {r.reason === "ambiguous" ? `more than one student matches: ${(r.candidates ?? []).join(", ")}` : r.reason === "unmatched" ? "no match, pick a student" : `matched by ${r.reason}`}
+                          {r.alreadySubmitted ? " · replaces what is there" : ""}
                         </td>
                       </tr>
                     );
@@ -398,6 +382,51 @@ export default function Roster() {
           )}
         </Blueprint>
       </div>
+
+      <Blueprint style={{ padding: "20px 22px" }}>
+        <div className="va-row-flex" style={{ gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
+          <h6 style={{ margin: 0 }}>Who has which version</h6>
+          <span className="va-muted-12">Click a student to grade their work</span>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
+            <SegChoice<Filter>
+              name="roster-filter"
+              value={filter}
+              onChange={(v) => {
+                setFilter(v);
+                setShowAll(false);
+              }}
+              options={[
+                { value: "all", label: "Everyone" },
+                { value: "submitted", label: "Handed in" },
+                { value: "graded", label: "Graded" },
+                { value: "appeals", label: "Appeals" },
+              ]}
+            />
+            <button type="button" className="btn btn-secondary" onClick={exportCsv}>
+              Export
+            </button>
+          </div>
+        </div>
+        <DataTable<RosterRow>
+          columns={columns}
+          rows={visible}
+          rowKey={(r) => r.variant.id}
+          onRowClick={open}
+          selectedKey={selected}
+          empty="No students match this filter."
+        />
+        <div className="va-row-flex" style={{ marginTop: 10 }}>
+          <span className="va-muted-12">
+            Showing {visible.length} of {filtered.length}
+            {filter !== "all" ? ` (${rows.length} total)` : ""}
+          </span>
+          {filtered.length > 8 && (
+            <button type="button" className="btn btn-ghost" style={{ marginLeft: "auto" }} onClick={() => setShowAll((s) => !s)}>
+              {showAll ? "Show fewer" : "Show all"}
+            </button>
+          )}
+        </div>
+      </Blueprint>
 
       {(notice || error) && (
         <div style={{ fontSize: 12.5, color: error ? "#8d4a3c" : undefined }} className={error ? undefined : "text-muted"}>

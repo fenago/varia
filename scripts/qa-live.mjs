@@ -139,10 +139,10 @@ await check("upload docx + docx + csv → extracted draft", async () => {
     const t = await body();
     if (/Reading \d+ files/i.test(t)) sawReading = true;
     if (/Extracting the blueprint/i.test(t)) sawExtracting = true;
-    if (t.includes("What the system pulled out")) break;
+    if (t.includes("Here is what we found")) break;
     await page.waitForTimeout(500);
   }
-  await page.getByText("What the system pulled out").waitFor({ timeout: 150000 });
+  await page.getByText("Here is what we found").waitFor({ timeout: 150000 });
   timings.extract = ((Date.now() - ti) / 1000).toFixed(1) + "s";
   const t = await body();
   const rows = await page.locator("table").first().locator("tbody tr").count();
@@ -156,7 +156,7 @@ await check("upload docx + docx + csv → extracted draft", async () => {
   assert(st.roster.students.length === 6, `roster ${st.roster.students.length}`);
   const repaired = (t.match(/Repaired from your files: [^\n]+/) || [])[0] ?? "no repairs";
   await shot("import_draft");
-  await page.getByRole("button", { name: /^Open as blueprint$/ }).click();
+  await page.getByRole("button", { name: /^Looks right, continue$/ }).click();
   await page.waitForURL("**/blueprint", { timeout: 10000 });
   return `extracted in ${timings.extract} · progress seen: reading=${sawReading} extracting=${sawExtracting} · ${criteriaCount} criteria · roster 6 · uploaded rows ${rows} · ${repaired}`;
 });
@@ -168,7 +168,7 @@ await check("live run with visible progress", async () => {
   await page.waitForURL("**/generate");
   await page.locator(".seg-opt", { hasText: /^\s*Formative\s*$/ }).first().click();
   await page.waitForTimeout(200);
-  await page.locator("label", { hasText: /group chat/i }).first().click();
+  await page.locator("label", { hasText: /Students copying from each other/i }).first().click();
   const nInput = page.locator('.field:has(label:has-text("Versions to generate")) input');
   await nInput.fill("4");
   await page.waitForTimeout(200);

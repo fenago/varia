@@ -53,7 +53,7 @@ const [VA, VB, VC] = FRESH;
 if (!VC) throw new Error("Need at least three ungraded versions with unique surnames in the flagship fixture.");
 const J2 = REPORT.joint.toFixed(2);
 const GATE = Object.fromEntries(Object.values(REPORT.checks).map((c) => [c.property, c.gate]));
-const PILL = { pass: "Pass", fail: "Over threshold", advisory: "Advisory" };
+const PILL = { pass: "Passed", fail: "Needs attention", advisory: "Estimated" };
 const TOTAL_SAMPLES = FIXTURES.reduce((a, f) => a + (f.sampleSubmissions?.length ?? 0), 0);
 const ORG = S.organisation;
 const ORG2 = (FIXTURES.map((f) => SAMPLES[f.sampleId]?.organisation).find((o) => o && o !== ORG)) ?? "Another Organisation";
@@ -157,13 +157,13 @@ const ROUTES = {
   "/research": ["Orientation", "Research grounding"],
   "/notes": ["Orientation", "Design notes and assumptions"],
   "/about": ["Orientation", "About VARIA"],
-  "/import": ["Instructor · step 0 of 5", "Load an assessment you already have"],
-  "/blueprint": ["Instructor · step 1 of 5", "Assessment blueprint"],
-  "/generate": ["Instructor · step 2 of 5", "Generate student versions"],
-  "/report": ["Instructor · step 3 of 5", `Integrity report — ${BP.name}`],
-  "/roster": ["Instructor · step 4 of 5", "Release and roster"],
-  "/grade": ["Instructor · step 5 of 5", "Grade with the rubric"],
-  [`/grade/${VA.id}`]: ["Instructor · step 5 of 5", "Grade with the rubric"],
+  "/import": ["Instructor · step 1 of 6", "Load the assignment you already give"],
+  "/blueprint": ["Instructor · step 2 of 6", "Check what we found"],
+  "/generate": ["Instructor · step 3 of 6", "Make the versions"],
+  "/report": ["Instructor · step 4 of 6", `Check the versions — ${BP.name}`],
+  "/roster": ["Instructor · step 5 of 6", "Release to students"],
+  "/grade": ["Instructor · step 6 of 6", "Grade the work"],
+  [`/grade/${VA.id}`]: ["Instructor · step 6 of 6", "Grade the work"],
   "/surface": ["Oversight", "Strategy trade-off surface"],
   "/console": ["Oversight", "Institution compliance console"],
   "/settings": ["Setup", "Your Claude key and models"],
@@ -206,7 +206,7 @@ for (const [p, [crumb, title]] of Object.entries(ROUTES)) {
 await check("deep-link hard reload on /roster", async () => {
   await go("/roster");
   await page.reload({ waitUntil: "networkidle" });
-  assert((await page.locator(".va-header").innerText()).includes("Release and roster"), "title after reload");
+  assert((await page.locator(".va-header").innerText()).includes("Release to students"), "title after reload");
 });
 await check("no console errors so far", async () => { assert(consoleErrors.length === 0, consoleErrors.join(" | ")); });
 
@@ -222,7 +222,7 @@ await check("rail sections and labels", async () => {
   await go("/notes");
   const rail = await page.locator("aside, .va-rail").first().innerText();
   for (const s of ["Orientation", "Instructor", "Oversight", "Setup"]) assert(lc(rail).includes(lc(s)), `section ${s}`);
-  for (const l of ["Home", "Who it's for", "Getting started", "Design notes", "Research grounding", "About", "0 · Load your assessment", "1 · Blueprint", "2 · Generate variants", "3 · Integrity report", "4 · Release & roster", "5 · Grade with rubric", "Trade-off surface", "Compliance console", "Employer validation", "API key & models"]) assert(rail.includes(l), `label ${l}`);
+  for (const l of ["Home", "Who it's for", "Getting started", "Design notes", "Research grounding", "Glossary", "About", "1 · Load your assignment", "2 · Check what we found", "3 · Make the versions", "4 · Check the versions", "5 · Release to students", "6 · Grade the work", "Trade-off surface", "Compliance console", "Employer validation", "API key & models"]) assert(rail.includes(l), `label ${l}`);
   const current = await page.locator('[aria-current="page"]').innerText();
   assert(current.includes("Design notes"), `aria-current is ${current}`);
 });
@@ -235,17 +235,19 @@ await check("report content matches the recording", async () => {
   const labels = ["Versions look different", "Same skill measured", "One rubric grades them all", "Equally hard to read"];
   let last = -1;
   for (const l of labels) { const i = t.indexOf(l); assert(i > last, `order ${l}`); last = i; }
-  const pills = (await page.locator(".va-check .va-pill, .va-pill").allInnerTexts()).map((p) => lc(p.trim()));
+  const pills = (await page.locator(".va-stamp, .va-pill").allInnerTexts()).map((p) => lc(p.trim()));
   for (const prop of ["p1", "p2", "p3", "p4"]) assert(pills.includes(lc(PILL[GATE[prop]])), `pill for ${prop} (${GATE[prop]}): ${pills.join(",")}`);
+  const ev = page.getByRole("button", { name: /Show the evidence/ });
+  if (await ev.count()) { await ev.click(); await page.waitForTimeout(150); }
   const polylines = await page.locator("svg polyline").count();
   assert(polylines === NV, `polylines ${polylines} (want ${NV})`);
   if (REPORT.outliers.length) {
     assert(t.includes(REPORT.outliers.join(", ")), "outlier label");
-    assert(await page.getByRole("button", { name: new RegExp(`^Regenerate ${REPORT.outliers.length}`) }).count() === 1, "regenerate button");
+    assert(await page.getByRole("button", { name: /^Fix / }).count() >= 1, "fix button");
   } else {
-    assert(await page.getByRole("button", { name: /^Regenerate \d+/ }).count() === 0, "no regenerate button on a clean set");
+    assert(await page.getByRole("button", { name: /^Fix / }).count() === 0, "no fix button on a clean set");
   }
-  assert(/Released /.test(t) || t.includes("Open roster"), "released state");
+  assert(/Released /.test(t) || t.includes("Go to release and roster"), "released state");
   return `${polylines} polylines · J ${J2}`;
 });
 
@@ -253,7 +255,7 @@ console.log("\n5. Roster");
 await check("roster tiles and rows follow the recording; AI samples are labelled", async () => {
   await go("/roster");
   const t = await snapshotText("/roster-recorded");
-  for (const s of [`Released\n${NV}`, `Submitted\n${SAMPLE_SUBS.length}`, `Graded\n${SAMPLE_SUBS.length}`, "Difficulty appeals\n0"]) assert(lc(t).includes(lc(s)), `tile ${s}`);
+  for (const s of [`Students with a version\n${NV}`, `Work handed in\n${SAMPLE_SUBS.length}`, `Graded\n${SAMPLE_SUBS.length}`, "Difficulty appeals\n0"]) assert(lc(t).includes(lc(s)), `tile ${s}`);
   await showAllRows();
   const s0 = student(VA.studentId);
   const row = page.locator("tr", { hasText: s0.name }).first();
@@ -263,7 +265,7 @@ await check("roster tiles and rows follow the recording; AI samples are labelled
   if (SAMPLE_SUBS.length) {
     const sv = SAMPLE_SUBS[0];
     const srow = await page.locator("tr", { hasText: student(V.find((v) => v.id === sv.variantId).studentId).name }).first().innerText();
-    assert(/AI sample/i.test(srow) && new RegExp(sv.tier, "i").test(srow), `sample row labelled: ${srow}`);
+    assert(/AI[- ]written sample|AI sample/i.test(srow) && new RegExp(sv.tier, "i").test(srow), `sample row labelled: ${srow}`);
   }
   await row.click();
   await page.waitForURL(`**/grade/${VA.id}`);
@@ -327,35 +329,38 @@ await check("console tiles compute from the recorded runs; rows list every bluep
 console.log("\n8. Import — paste text → draft → blueprint; sample rows load");
 await check("paste text extraction", async () => {
   await go("/import");
+  await page.getByRole("button", { name: /Switch to this/ }).first().click();
   await page.getByRole("button", { name: /Paste text instead/ }).click();
   await page.locator("textarea").first().fill("Assignment 4 — Stakeholder memo (10 points)\nTranslate a confusion-matrix finding into a one-page memo for a non-technical executive.\nRubric\nDecision relevance (4) · Accuracy of the technical claim (3) · Clarity for a non-technical reader (3)");
   await page.getByRole("button", { name: /Read text/ }).click();
-  await page.getByText("What the system pulled out").waitFor({ timeout: 12000 });
+  await page.getByText("Here is what we found").waitFor({ timeout: 12000 });
   await page.waitForTimeout(300);
   const t = await snapshotText("/import-draft");
-  assert(/uploaded/i.test(t), "uploaded table");
-  assert(/criterion/i.test(t), "criteria table");
+  assert(/here is what we found/i.test(t), "what-we-found card");
+  assert(/criteri(on|a)/i.test(t), "criteria list");
   await shot("import_draft");
-  await page.getByRole("button", { name: /^Open as blueprint$/ }).click();
+  await page.getByRole("button", { name: /^Looks right, continue$/ }).click();
   await page.waitForURL("**/blueprint");
   await snapshotText("/blueprint-after-import");
 });
 await check("sample rows are clickable and load through the local parser", async () => {
   await go("/import");
+  const over = page.getByRole("button", { name: /^Start over$/ });
+  if (await over.count()) { await over.click(); await page.waitForTimeout(150); }
   const rows = page.locator('[role="button"][aria-label^="Load the"]');
   assert((await rows.count()) === Object.keys(SAMPLES).length, `sample rows ${await rows.count()}`);
   await rows.filter({ hasText: ORG2 }).first().click();
-  await page.getByText("What the system pulled out").waitFor({ timeout: 15000 });
+  await page.getByText("Here is what we found").waitFor({ timeout: 15000 });
   const t = await snapshotText("/import-sample");
   assert(lc(t).includes(lc(`Loaded from the ${ORG2} sample`)), "loaded-from line");
-  assert(/criterion/i.test(t), "criteria table");
+  assert(/criteri(on|a)/i.test(t), "criteria list");
 });
 
 console.log("\n9. Generate (no key) replays a recorded run → report → release → roster");
 await check("replayed generate reproduces the recorded report", async () => {
   await resetDemo();
   await go("/generate");
-  const btn = page.getByRole("button", { name: /Generate \d+ versions/ });
+  const btn = page.getByRole("button", { name: /^Make the versions$/ });
   const label = await btn.innerText();
   await btn.click();
   await page.locator(".va-progress, [class*=progress]").first().waitFor({ timeout: 5000 }).catch(() => {});
@@ -371,22 +376,22 @@ await check("replayed generate reproduces the recorded report", async () => {
   assert(Math.abs(run.report.joint - REPORT.joint) < 0.02, `replayed J ${run.report.joint.toFixed(3)} vs recorded ${REPORT.joint.toFixed(3)}`);
   assert(run.usage == null || run.usage.costUsd === 0, "no cost in replay");
   await shot("report_generated");
-  const regen = page.getByRole("button", { name: /^Regenerate \d+/ });
+  const regen = page.getByRole("button", { name: /^Fix / });
   if (await regen.count()) {
     await regen.click();
-    await page.getByRole("button", { name: /^(Release \d+ versions|Release all \d+ anyway)$/ }).first().waitFor({ timeout: 60000 });
+    await page.getByRole("button", { name: /^(Release \d+ versions|Release anyway)$/ }).first().waitFor({ timeout: 60000 });
     assert((await page.getByText(/^Released /).count()) === 0, "regenerate must not auto-release");
   }
   const clean = page.getByRole("button", { name: /^Release \d+ versions$/ });
   if (await clean.count()) await clean.click();
   else {
-    await page.getByRole("button", { name: /^Release all \d+ anyway$/ }).click();
+    await page.getByRole("button", { name: /^Release anyway$/ }).click();
     await page.locator("textarea").last().fill("QA: formative, low stakes");
     await page.getByRole("button", { name: /Release with this reason/ }).click();
   }
   await page.getByText(/^Released /).first().waitFor({ timeout: 5000 });
   await go("/roster");
-  assert(new RegExp(`Released\\n${run.variants.length}`, "i").test(await page.locator("body").innerText()), `roster Released ${run.variants.length}`);
+  assert(new RegExp(`Students with a version\\n${run.variants.length}`, "i").test(await page.locator("body").innerText()), `roster released ${run.variants.length}`);
   return label;
 });
 
@@ -424,11 +429,14 @@ await check("reset restores the recorded report", async () => {
 console.log("\n11. Import — CSV roster upload");
 await check("csv roster upload", async () => {
   await go("/import");
+  const over2 = page.getByRole("button", { name: /^Start over$/ });
+  if (await over2.count()) { await over2.click(); await page.waitForTimeout(150); }
+  await page.getByRole("button", { name: /Switch to this/ }).first().click();
   const csv = "name,email\nRivera, A.,ar@x.edu\nOkafor, B.,bo@x.edu\nLindqvist, C.,cl@x.edu\nNakamura, D.,dn@x.edu\nHaddad, E.,eh@x.edu\n";
   await page.locator('input[type="file"]').first().setInputFiles({ name: "roster.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
   await page.waitForTimeout(2500);
   const t = await snapshotText("/import-csv");
-  assert(t.includes("5 enrolled students"), `roster not recognised:\n${t.slice(0, 600)}`);
+  assert(/5 (enrolled )?students/.test(t), `roster not recognised:\n${t.slice(0, 600)}`);
 });
 
 console.log("\n12. Console — threshold edit does not re-clear released sets");
@@ -446,7 +454,7 @@ await check("threshold edit + audit; released report unchanged", async () => {
   const audit = await page.locator("text=Audit trail").locator("..").innerText();
   assert(/Difficulty parity.*(8|9)/.test(audit.split("\n").slice(0, 4).join(" ")), `audit top: ${audit.slice(0, 200)}`);
   await go("/report");
-  const pills = (await page.locator(".va-pill").allInnerTexts()).map((p) => lc(p.trim()));
+  const pills = (await page.locator(".va-stamp, .va-pill").allInnerTexts()).map((p) => lc(p.trim()));
   assert(pills.includes(lc(PILL[GATE.p4])), `report P4 pill unchanged: ${pills.join(",")}`);
 });
 
@@ -670,7 +678,7 @@ await check("employer tiles, evidence column, grade line", async () => {
   assert((await page.locator("tr", { hasText: student(VA.studentId).name }).first().innerText()).includes(recordId), "evidence column");
   await go(`/grade/${VA.id}`);
   const g = await page.locator("body").innerText();
-  assert(new RegExp(`Evidence record\\s+${recordId}\\s+issued`).test(g.replace(/\n/g, " ")), "grade evidence line");
+  assert(new RegExp(`verified record\\s+${recordId}`).test(g.replace(/\n/g, " ")), "grade evidence line");
 });
 
 console.log("\n24. Migration from an older persisted workspace");
@@ -920,7 +928,7 @@ console.log("\n32. Grade page portfolio line");
 await check("graded version links to the portfolio", async () => {
   await go(`/grade/${VA.id}`);
   const t = await page.locator("body").innerText();
-  assert(t.includes("verified sample in the student's portfolio"), "portfolio line");
+  assert(t.includes("student's portfolio"), "portfolio line");
   const href = await page.locator('a[href^="/portfolio/"]').first().getAttribute("href");
   assert(href && /\/portfolio\/L-/.test(href), `portfolio href ${href}`);
 });
@@ -940,8 +948,19 @@ await check("mockup h6/th labels present", async () => {
     const txt = m[2].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
     if (txt && txt !== "—") labels.add(txt);
   }
-  const RENAMED = new Map([["The whole thing, in five steps", "The whole thing, in six steps"]]);
+  const RENAMED = new Map([
+    ["The whole thing, in five steps", "The whole thing, in six steps"],
+    ["Every version, on all four axes", "The evidence"],
+    ["Who got which version", "Who has which version"],
+    ["Student links", "Send the versions"],
+    ["Reference for this version", "Model answer for this version"],
+    ["Domain / stakeholder", "Setting"],
+    ["Rubric", "Score with the rubric"],
+  ]);
   for (const [from, to] of RENAMED) if (labels.delete(from)) labels.add(to);
+  // Retired on purpose by the plain-language rewrite of steps 1–3 (content moved behind "Details" /
+  // "Show options" or reworded for non-technical instructors).
+  for (const l of ["Recognised as", "Size", "Anchors found", "Surface dimensions it can vary", "Extraction summary", "No model answer?", "Competency construct", "Library", "What is this assessment protecting against?", "Surface dimensions to vary", "Institution policy", "Analytic rubric", "Canonical solution", "Readiness", "Uploaded", "What the system pulled out", "Run"]) labels.delete(l);
   const all = lc(corpus.map((c) => c.text.replace(/\s+/g, " ")).join("\n"));
   const missing = [...labels].filter((l) => !all.includes(lc(l)));
   assert(missing.length === 0, `missing: ${missing.join(" | ")}`);
@@ -971,11 +990,11 @@ await check("student task link opens in a fresh context without the solution", a
 });
 await check("download all versions produces a zip; copy all links produces a csv", async () => {
   await go("/roster");
-  const [dl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: /Download as Markdown/ }).click()]);
+  const [dl] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: /Plain text instead/ }).click()]);
   assert(dl.suggestedFilename().endsWith("_versions_md.zip"), dl.suggestedFilename());
-  const [dl2] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: /Download all versions \(Word\)/ }).click()]);
+  const [dl2] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: /Download all as Word documents/ }).click()]);
   assert(dl2.suggestedFilename().endsWith("_versions_docx.zip"), dl2.suggestedFilename());
-  const [dl3] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: /Copy all links/ }).click()]);
+  const [dl3] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: /Copy all student links/ }).click()]);
   assert(dl3.suggestedFilename().endsWith("_student_links.csv"), dl3.suggestedFilename());
 });
 await check("import two .txt submissions matched by surname", async () => {
@@ -986,7 +1005,7 @@ await check("import two .txt submissions matched by surname", async () => {
     { name: `${sc}-final.txt`, mimeType: "text/plain", buffer: Buffer.from(SUBMISSION("the third office")) },
   ]);
   await page.waitForSelector("text=Import matched files");
-  assert(lc(await page.locator("table").last().innerText()).includes("surname"), "matched by surname");
+  assert(lc(await page.locator("table", { hasText: "Matched to" }).first().innerText()).includes("surname"), "matched by surname");
   await page.getByRole("button", { name: /Import matched files/ }).click();
   await page.waitForSelector("text=/2 submissions imported/");
   const st = await wsState();

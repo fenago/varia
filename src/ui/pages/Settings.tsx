@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { Blueprint, BlueprintButton, Dialog, Field, Pill, SegChoice } from "@ui/components";
+import { Blueprint, BlueprintButton, Dialog, Field, Pill, SegChoice, Info } from "@ui/components";
+import { glossaryTerm } from "@shared/glossary";
 import { useSettings, getProvider } from "@lib/store/settings";
 import { useWorkspace } from "@lib/store/workspace";
 import { fixturesAreReal, listFixtures } from "@lib/store/fixtures";
@@ -222,12 +223,12 @@ export default function Settings() {
       </Blueprint>
 
       <Blueprint style={{ padding: "20px 22px" }}>
-        <h6 style={{ margin: "0 0 4px" }}>Models</h6>
+        <h6 style={{ margin: "0 0 4px" }}>Models <Info term="generator" /></h6>
         <p className="va-muted-125" style={{ margin: "0 0 14px" }}>
           The generator writes the versions and extracts blueprints on Import; the judge scores construct equivalence and is held fixed across a run.
         </p>
         <div style={{ marginBottom: 14 }}>
-          <div className="va-muted-12" style={{ marginBottom: 6 }}>Preset</div>
+          <div className="va-muted-12" style={{ marginBottom: 6 }}>Preset <Info term="preset" /></div>
           <SegChoice<RunPreset>
             name="settings-preset"
             value={s.preset}
@@ -245,7 +246,7 @@ export default function Settings() {
             </select>
             <ModelCaveat id={s.generatorModel} />
           </Field>
-          <Field label="Judge (held fixed)" htmlFor="judgeModel">
+          <Field label="Judge (held fixed)" htmlFor="judgeModel" hint="A second model that checks every version still measures the same skill.">
             <select id="judgeModel" className="input" value={s.judgeModel} onChange={(e) => s.setModels({ judgeModel: e.target.value })}>
               <ModelOptions role="judge" />
             </select>
@@ -271,7 +272,7 @@ export default function Settings() {
       </Blueprint>
 
       <Blueprint style={{ padding: "20px 22px" }}>
-        <h6 style={{ margin: "0 0 4px" }}>Workspace</h6>
+        <h6 style={{ margin: "0 0 4px" }}>Workspace <Info term="recorded-run" /></h6>
         <p className="va-muted-125" style={{ margin: "0 0 14px" }}>
           Everything — blueprints, runs, versions, grades, thresholds, audit trail — lives in this browser's local storage. There is no database.
         </p>

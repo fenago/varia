@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Blueprint, BlueprintButton, Dialog, EmptyState, Pill, SegScale, StepProgressBlock, type StepProgress } from "@ui/components";
+import { Info } from "@ui/components/Info";
+import { StepIntro } from "@ui/components/StepIntro";
 import { useWorkspace } from "@lib/store/workspace";
 import {
   activeRun,
@@ -104,6 +106,17 @@ function GradeView({ variantId }: { variantId: string }) {
   const allScored = useMemo(() => rubric.length > 0 && rubric.every((c) => scores[c.id] !== undefined), [rubric, scores]);
   const canGrade = !!submission?.submittedAt;
 
+  const intro = (
+    <StepIntro
+      step={6}
+      title="Grade the work"
+      what="One rubric grades every version. Each student's version comes with its own model answer so you compare against the right reference."
+      doThis="Read the submission, score each criterion, save. Ask for suggested scores if you want a starting point."
+      next="The graded work becomes a verified record the student can share."
+      learn={["rubric", "pre-score", "evidence-record"]}
+    />
+  );
+
   if (!run || !variant) {
     return (
       <EmptyState
@@ -184,7 +197,9 @@ function GradeView({ variantId }: { variantId: string }) {
   })();
 
   return (
-    <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 400px", gap: 26, alignItems: "start", maxWidth: 1180 }}>
+    <div className="va-page" style={{ gap: 22, maxWidth: 1180 }}>
+    {intro}
+    <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 400px", gap: 26, alignItems: "start" }}>
       <Blueprint style={{ padding: "22px 24px" }}>
         <div className="va-row-flex" style={{ marginBottom: 14 }}>
           <span className="tag tag-accent">{variant.id}</span>
@@ -196,7 +211,7 @@ function GradeView({ variantId }: { variantId: string }) {
 
         <div className="va-surface-box" style={{ padding: "18px 20px", marginBottom: 18 }}>
           <div className="va-kicker" style={{ marginBottom: 8 }}>
-            The task this student received
+            The task this student received <Info term="version" />
           </div>
           {paragraphs(variant.text).map((p, i) => (
             <p key={i} style={{ margin: "0 0 10px", fontSize: 14, lineHeight: 1.6 }}>
@@ -206,11 +221,11 @@ function GradeView({ variantId }: { variantId: string }) {
         </div>
 
         <div className="va-kicker" style={{ marginBottom: 8 }}>
-          Submission
+          What the student handed in <Info term="submission" />
         </div>
         {submission?.origin === "ai-sample" && (
           <div className="va-surface-box" style={{ marginBottom: 10, fontSize: 13, borderLeft: "2px solid #8a6d2f" }}>
-            <strong>AI-written sample at the {submission.sampleTier} tier.</strong> This submission was written by a model for the recorded demo, not by a student; the grade shown is the model's suggestion until an instructor saves one.
+            <strong>This is an AI-written sample, not a student's work.</strong> <Info term="ai-sample" /> A model wrote it at the {submission.sampleTier} tier so the demo has something to grade. The grade shown is a suggestion until you save one.
           </div>
         )}
         {submission?.text ? (
@@ -227,7 +242,7 @@ function GradeView({ variantId }: { variantId: string }) {
           </>
         ) : (
           <p className="text-muted" style={{ margin: 0, fontSize: 14 }}>
-            Nothing submitted yet.
+            Nothing handed in yet. Import files on the previous step, or paste the student's text below.
           </p>
         )}
         <div className="va-btn-row" style={{ marginTop: 10 }}>
@@ -250,9 +265,10 @@ function GradeView({ variantId }: { variantId: string }) {
       <div className="va-sticky">
         <Blueprint style={{ padding: "18px 20px" }}>
           <div className="va-row-flex" style={{ gap: 8, marginBottom: 4 }}>
-            <h6 style={{ margin: 0 }}>Rubric</h6>
+            <h6 style={{ margin: 0 }}>Score with the rubric</h6>
+            <Info term="rubric" />
             <span className="va-muted-115" style={{ marginLeft: "auto" }}>
-              unchanged across all {totalN}
+              the same for all {totalN} versions
             </span>
           </div>
           <div className="va-stack" style={{ gap: 16, marginTop: 12 }}>
@@ -299,7 +315,7 @@ function GradeView({ variantId }: { variantId: string }) {
               </div>
               {preScore && (
                 <div className="va-muted-115" style={{ marginTop: 6, lineHeight: 1.5 }}>
-                  Suggested by {preScore.model} · {formatShort(preScore.at)}. A suggestion only; what you save is the grade.
+                  Suggested by {preScore.model} on {formatShort(preScore.at)}; you decide. <Info term="pre-score" /> Only what you save counts as the grade.
                   <div style={{ marginTop: 4 }}>{preScore.summary}</div>
                 </div>
               )}
@@ -309,11 +325,15 @@ function GradeView({ variantId }: { variantId: string }) {
           <BlueprintButton block style={{ marginTop: 16 }} disabled={!canGrade || !allScored} onClick={save}>
             Save score · next submission
           </BlueprintButton>
-          {!canGrade && (
+          {!canGrade ? (
             <div className="va-muted-115" style={{ marginTop: 8 }}>
-              Nothing to grade until this student submits.
+              Nothing to grade until this student hands something in.
             </div>
-          )}
+          ) : !allScored ? (
+            <div className="va-muted-115" style={{ marginTop: 8 }}>
+              Score every criterion to save.
+            </div>
+          ) : null}
           {note && (
             <div className="va-muted-12" style={{ marginTop: 8 }}>
               {note}
@@ -327,12 +347,15 @@ function GradeView({ variantId }: { variantId: string }) {
         </Blueprint>
 
         <Blueprint style={{ padding: "18px 20px" }}>
-          <h6 style={{ margin: "0 0 10px" }}>Reference for this version</h6>
+          <div className="va-row-flex" style={{ gap: 8, alignItems: "baseline", marginBottom: 10 }}>
+            <h6 style={{ margin: 0 }}>Model answer for this version</h6>
+            <Info term="model-answer" />
+          </div>
           <p className="card-body" style={{ margin: "0 0 12px" }}>
-            The canonical solution, rewritten into this student's {variant.surfaceAssignment.domain ?? "own"} scenario. Compare against this, not the original.
+            Your model answer, rewritten into this student's {variant.surfaceAssignment.domain ?? "own"} scenario. Compare their work against this, not against the original.
           </p>
           <button type="button" className="btn btn-secondary btn-block" style={{ marginTop: 0 }} onClick={() => setShowSolution((s) => !s)}>
-            {showSolution ? "Hide adapted solution" : "Open adapted solution"}
+            {showSolution ? "Hide the model answer" : "Open the model answer"}
           </button>
           {showSolution && (
             <div className="va-surface-box" style={{ marginTop: 12, fontSize: 13, lineHeight: 1.6 }}>
@@ -354,13 +377,13 @@ function GradeView({ variantId }: { variantId: string }) {
             <div style={{ marginTop: 12 }}>
               {evidence ? (
                 <div className="va-muted-12" style={{ lineHeight: 1.55 }}>
-                  Evidence record{" "}
+                  This grade is a verified record{" "}
                   <a href={`/evidence/${variant.id}`} target="_blank" rel="noopener noreferrer">
                     {evidence.id}
                   </a>{" "}
-                  issued.
+                  the student can share with employers. <Info term="evidence-record" />
                   <div style={{ marginTop: 4 }}>
-                    This work becomes a verified sample in the student's{" "}
+                    It sits in the student's{" "}
                     {evidence.bridge?.learnerId ? (
                       <a href={`/portfolio/${evidence.bridge.learnerId}`} target="_blank" rel="noopener noreferrer">
                         portfolio
@@ -384,7 +407,7 @@ function GradeView({ variantId }: { variantId: string }) {
                     }
                   }}
                 >
-                  Issue evidence record
+                  Make this a verified record the student can share
                 </button>
               )}
               {evidenceError && (
@@ -469,6 +492,7 @@ function GradeView({ variantId }: { variantId: string }) {
           placeholder={appealDialog === "open" ? "Reason for the appeal" : "Resolution"}
         />
       </Dialog>
+    </div>
     </div>
   );
 }

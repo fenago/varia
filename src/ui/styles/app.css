@@ -570,3 +570,46 @@ code, .va-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fo
 .va-progress-strip:hover { background: var(--color-accent-200); }
 .va-progress-strip .va-progress { flex: 1; max-width: 320px; }
 .va-progress-strip .va-strip-link { margin-left: auto; font-family: var(--font-heading); color: var(--color-accent-700); white-space: nowrap; }
+
+/* ---- Narrator: Info popovers, step intros, verdicts, journey glyphs ---- */
+.va-info { position: relative; display: inline-flex; align-items: center; vertical-align: middle; }
+.va-info-btn { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-left: 4px; padding: 0; border: 1px solid var(--color-accent-700); border-radius: 50%; background: transparent; color: var(--color-accent-700); cursor: pointer; line-height: 0; }
+.va-info-btn:hover { background: var(--color-accent-100); }
+.va-info-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.va-term { padding: 0; border: 0; background: transparent; font: inherit; color: inherit; cursor: help; border-bottom: 1px dotted color-mix(in srgb, var(--color-text) 55%, transparent); }
+.va-term:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.va-info-pop { position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; width: 320px; max-width: min(320px, 90vw); background: var(--color-bg); border: 1px solid var(--color-divider); box-shadow: var(--shadow-md); padding: 12px 14px; font-family: var(--font-body); font-size: 13px; line-height: 1.5; color: var(--color-text); text-align: left; font-weight: 400; text-transform: none; letter-spacing: 0; text-decoration: none; }
+.va-info-pop.is-end { left: auto; right: 0; }
+.va-info-pop-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.va-info-pop-term { font-family: var(--font-heading); font-size: 16px; }
+.va-info-pop-close { margin-left: auto; border: 0; background: transparent; font-size: 18px; line-height: 1; cursor: pointer; color: var(--color-neutral-600); }
+.va-info-pop-plain { margin: 0 0 8px; }
+.va-info-pop-more { margin: 0 0 8px; color: var(--color-neutral-700); }
+.va-info-pop-paper { font-size: 12px; color: var(--color-neutral-600); margin-bottom: 8px; }
+.va-info-pop-link { display: inline-block; margin-right: 12px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 12.5px; color: var(--color-accent-700); cursor: pointer; text-decoration: none; font-family: var(--font-heading); }
+.va-stepintro { background: var(--color-accent-100); }
+.va-stepintro-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.va-stepintro-title { font-family: var(--font-heading); font-size: 20px; line-height: 1.15; margin-top: 4px; }
+.va-stepintro-hide { margin-left: auto; }
+.va-stepintro-lines { display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.55; max-width: 80ch; }
+.va-stepintro-lines p { margin: 0; }
+.va-stepintro-learn { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; font-size: 12.5px; }
+.va-stepintro-learn-item { display: inline-flex; align-items: center; }
+.va-stepintro-hidden { display: flex; align-items: center; gap: 12px; }
+.va-stepintro-show { cursor: pointer; background: transparent; }
+.va-verdict { border-width: 1px; }
+.va-verdict.is-pass { background: color-mix(in srgb, #3d6b4d 6%, transparent); }
+.va-verdict.is-watch { background: color-mix(in srgb, #8a6d2f 7%, transparent); }
+.va-verdict.is-fail { background: color-mix(in srgb, #8d4a3c 7%, transparent); }
+.va-verdict-top { margin-bottom: 8px; }
+.va-verdict-headline { font-family: var(--font-heading); font-size: 26px; line-height: 1.1; max-width: 30ch; }
+.va-verdict-body { font-size: 14.5px; line-height: 1.6; margin-top: 8px; max-width: 72ch; }
+.va-nav-glyph { display: inline-block; width: 14px; margin-right: 6px; font-size: 11px; color: #8fa8bf; }
+.va-nav-glyph.is-done { color: #7fb891; }
+.va-nav-glyph.is-current { color: #fff; }
+.va-nav-summary { display: block; padding: 0 14px 8px 36px; font-size: 11px; line-height: 1.4; color: #7f95ac; }
+.va-glossary-group { margin-bottom: 26px; }
+.va-glossary-entry { padding: 12px 0; border-top: 1px solid var(--color-divider); scroll-margin-top: 20px; }
+.va-glossary-entry:target { background: var(--color-accent-100); }
+.va-glossary-term { font-family: var(--font-heading); font-size: 17px; }
+.va-glossary-paper { font-size: 12px; color: var(--color-neutral-600); margin-top: 4px; }

@@ -1,5 +1,6 @@
+import { glossaryTerm } from "@shared/glossary";
 import { useMemo } from "react";
-import { Blueprint } from "@ui/components";
+import { Blueprint, Info } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
 import { PILOT_CONDITIONS, PILOT_META, RECOMMENDED_BY_COURSE_TYPE, type PilotCondition } from "@shared/pilot";
 
@@ -57,7 +58,7 @@ export default function Surface() {
 
       <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 360px", gap: 24, alignItems: "start" }}>
         <Blueprint style={{ padding: "20px 22px" }}>
-          <h6 style={{ margin: "0 0 12px" }}>Diversity against equivalence</h6>
+          <h6 style={{ margin: "0 0 12px" }}>Diversity against equivalence <Info term="strategy" /></h6>
           <svg viewBox="0 0 700 430" style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label="Pairwise cosine against construct equivalence for every pilot condition">
             <g className="va-ax">
               <line x1={X0} y1={Y0} x2={X1} y2={Y0} />
@@ -197,15 +198,16 @@ export default function Surface() {
 
       <Blueprint style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 10px" }}>Full condition table</h6>
+        <div className="va-stepintro-learn" style={{ margin: "0 0 12px" }}><span className="text-muted">Words on this page:</span><span className="va-stepintro-learn-item">{glossaryTerm("zero-shot")?.term} <Info term="zero-shot" /></span><span className="va-stepintro-learn-item">{glossaryTerm("few-shot")?.term} <Info term="few-shot" /></span><span className="va-stepintro-learn-item">{glossaryTerm("structured-cot")?.term} <Info term="structured-cot" /></span><span className="va-stepintro-learn-item">{glossaryTerm("dimension-preserving")?.term} <Info term="dimension-preserving" /></span><span className="va-stepintro-learn-item">{glossaryTerm("recorded-run")?.term} <Info term="recorded-run" /></span></div>
         <table className="table">
           <thead>
             <tr>
               <th>Condition</th>
-              <th>Joint J ↑</th>
-              <th>Cosine ↓</th>
-              <th>Construct eq. ↑</th>
-              <th>4-gram ↓</th>
-              <th>σ Flesch ↓</th>
+              <th>Joint J ↑ <Info term="joint-score" /></th>
+              <th>Cosine ↓ <Info term="cosine" /></th>
+              <th>Construct eq. ↑ <Info term="equivalence" /></th>
+              <th>4-gram ↓ <Info term="four-gram" /></th>
+              <th>σ Flesch ↓ <Info term="sigma-flesch" /></th>
             </tr>
           </thead>
           <tbody>
