@@ -139,15 +139,22 @@ export async function recordSample(opts: RecordOptions): Promise<SampleFixture> 
   };
   const studentIds = parsed.roster.students.map((s) => s.id);
   const signal = opts.signal ?? new AbortController().signal;
-  const final = await runGeneration({
+  const onUpdate = (r: Run) => say(`${r.progress.message}${r.usage ? ` · $${r.usage.costUsd.toFixed(2)} so far` : ""}`);
+  let final = await runGeneration({
     run,
     blueprint,
     provider: opts.provider,
     thresholds: opts.thresholds ?? DEFAULT_THRESHOLDS,
     signal,
     studentIds,
-    onUpdate: (r) => say(`${r.progress.message}${r.usage ? ` · $${r.usage.costUsd.toFixed(2)} so far` : ""}`),
+    onUpdate,
   });
+  // A transient failure (one truncated judge sample, one dropped connection) leaves the run
+  // partial. Resume once automatically so a recording is complete unless something is really wrong.
+  if (final.status === "partial") {
+    say(`Run is partial; resuming once to retry what failed`);
+    final = await runGeneration({ run: final, blueprint, provider: opts.provider, thresholds: opts.thresholds ?? DEFAULT_THRESHOLDS, signal, studentIds, onUpdate, resume: true });
+  }
 
   return {
     version: FIXTURE_VERSION,
@@ -161,4 +168,24 @@ export async function recordSample(opts: RecordOptions): Promise<SampleFixture> 
     run: final,
     extraction: { model: extractionModel, repairs: guarded.repairs, unresolved: guarded.unresolved, by },
   };
+}
+
+
+/** Resume a recorded run that ended partial (re-judges/regenerates only what is missing). */
+export async function resumeFixture(fixture: SampleFixture, opts: Pick<RecordOptions, "provider" | "thresholds" | "signal" | "onProgress" | "now">): Promise<SampleFixture> {
+  const say = opts.onProgress ?? (() => {});
+  const now = opts.now ?? nowIso;
+  const signal = opts.signal ?? new AbortController().signal;
+  const studentIds = fixture.roster.students.map((s) => s.id);
+  const final = await runGeneration({
+    run: fixture.run,
+    blueprint: fixture.blueprint,
+    provider: opts.provider,
+    thresholds: opts.thresholds ?? DEFAULT_THRESHOLDS,
+    signal,
+    studentIds,
+    resume: true,
+    onUpdate: (r) => say(`${r.progress.message}${r.usage ? ` · $${r.usage.costUsd.toFixed(2)} so far` : ""}`),
+  });
+  return { ...fixture, recordedAt: now(), run: final };
 }

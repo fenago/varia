@@ -39,13 +39,14 @@ import { buildDraftAnchorsPrompt, buildCanonicalSolutionPrompt, buildFewShotAnch
 import { buildExtractPrompt } from "./prompts/extract";
 import { buildJudgePrompt } from "./prompts/judge";
 import { PreScoreSchema, buildPreScorePrompt, preScoreToOutput } from "./prompts/prescore";
-import { buildGenerationPrompt } from "./prompts/strategies";
+import { buildGenerationPrompt, type GenerationSchemaKind } from "./prompts/strategies";
+import type { CacheablePrompt } from "./prompts/shared";
 
 export { shapeRequest } from "./shape";
 
 const MAX_TOKENS_LONG = 16000;
 /** Room for a short adaptive/budget think plus the JSON. */
-const MAX_TOKENS_JUDGE = 4000;
+const MAX_TOKENS_JUDGE = 8000;
 const MAX_TOKENS_VERIFY = 64;
 const JUDGE_CONCURRENCY = 4;
 
@@ -75,6 +76,7 @@ function specFor(id: ModelId): ModelSpec {
       priceOutPerM: 0,
       priceCacheReadPerM: 0,
       priceCacheWritePerM: 0,
+      minCacheTokens: 1024,
       note: "not in catalog",
     }
   );
@@ -135,12 +137,59 @@ function requestOptions(signal?: AbortSignal): Anthropic.RequestOptions | undefi
   return signal ? { signal } : undefined;
 }
 
-type BaseParams = {
+export type BaseParams = {
   model: ModelId;
   max_tokens: number;
   system: string;
   messages: Anthropic.Beta.Messages.BetaMessageParam[];
 };
+
+/**
+ * Prompt caching (wave 6d). One user message of two text blocks: the stable
+ * block carries `cache_control`, so the rendered prefix up to and including it
+ * (tools → system → stable block) is written to the cache on the first call
+ * of a run and read back on every later call whose prefix is byte-identical.
+ * The volatile block after the breakpoint is priced as ordinary input.
+ *
+ * The API silently skips caching when the prefix is shorter than the model's
+ * minimum (`ModelSpec.minCacheTokens`: 512 on Opus 5, 1024 on Sonnet 5, 4096
+ * on Haiku 4.5). Nothing is padded; the order is right regardless.
+ */
+export const CACHE_CONTROL = { type: "ephemeral" } as const;
+
+export function cachedUserMessage(p: Pick<CacheablePrompt, "stable" | "volatile">): Anthropic.Beta.Messages.BetaMessageParam {
+  return {
+    role: "user",
+    content: [
+      { type: "text", text: p.stable, cache_control: CACHE_CONTROL },
+      { type: "text", text: p.volatile },
+    ],
+  };
+}
+
+/** The generation request before per-model shaping. Pure, so tests can compare two variants of one run. */
+export function buildGenerationRequest(
+  input: GenerateVariantInput,
+  thresholds: ThresholdSet,
+  model: ModelId = input.generatorModel,
+): { base: BaseParams; schema: GenerationSchemaKind } {
+  const prompt = buildGenerationPrompt(input, thresholds);
+  return {
+    base: { model, max_tokens: MAX_TOKENS_LONG, system: prompt.system, messages: [cachedUserMessage(prompt)] },
+    schema: prompt.schema,
+  };
+}
+
+/** One judge sample's request (every sample of a variant sends the same bytes). */
+export function buildJudgeRequest(input: Pick<JudgeInput, "blueprint" | "variantText">, model: ModelId): BaseParams {
+  const prompt = buildJudgePrompt(input.blueprint, input.variantText);
+  return { model, max_tokens: MAX_TOKENS_JUDGE, system: prompt.system, messages: [cachedUserMessage(prompt)] };
+}
+
+export function buildPreScoreRequest(input: Pick<PreScoreInput, "blueprint" | "variant" | "submissionText">, model: ModelId): BaseParams {
+  const prompt = buildPreScorePrompt(input.blueprint, input.variant, input.submissionText);
+  return { model, max_tokens: MAX_TOKENS_JUDGE, system: prompt.system, messages: [cachedUserMessage(prompt)] };
+}
 
 type StructuredParams<T> = Anthropic.Beta.Messages.MessageCreateParamsNonStreaming & {
   output_config: { format: AutoParseableBetaOutputFormat<T> };
@@ -438,16 +487,10 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
         blueprint = { ...blueprint, fewShotAnchors: await pending };
       }
 
-      const prompt = buildGenerationPrompt({ ...input, blueprint }, thresholds);
       const model = input.generatorModel || generatorModel;
-      const base: BaseParams = {
-        model,
-        max_tokens: MAX_TOKENS_LONG,
-        system: prompt.system,
-        messages: [{ role: "user", content: prompt.user }],
-      };
+      const { base, schema } = buildGenerationRequest({ ...input, blueprint }, thresholds, model);
 
-      if (prompt.schema === "structured-cot") {
+      if (schema === "structured-cot") {
         const out = await callStream("generate", base, betaZodOutputFormat(StructuredCotSchema), input.signal, onUsage);
         return {
           text: out.final.trim(),
@@ -457,7 +500,7 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
           usage: total,
         };
       }
-      if (prompt.schema === "structured-cot-nomap") {
+      if (schema === "structured-cot-nomap") {
         const out = await callStream("generate", base, betaZodOutputFormat(StructuredCotNoMapSchema), input.signal, onUsage);
         return {
           text: out.final.trim(),
@@ -478,21 +521,15 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
     },
 
     async judgeVariant(input: JudgeInput): Promise<JudgeSample[]> {
-      const { system, user } = buildJudgePrompt(input.blueprint, input.variantText);
       const format = betaZodOutputFormat(JudgeSchema);
       const limit = pLimit(JUDGE_CONCURRENCY);
       const model = input.judgeModel || judgeModel;
       const samples = Math.max(1, Math.floor(input.samples));
+      const base = buildJudgeRequest(input, model);
 
       const runs = Array.from({ length: samples }, () =>
         limit(async () => {
-          const out = await callParse(
-            "judge",
-            { model, max_tokens: MAX_TOKENS_JUDGE, system, messages: [{ role: "user", content: user }] },
-            format,
-            input.signal,
-            input.onUsage,
-          );
+          const out = await callParse("judge", base, format, input.signal, input.onUsage);
           const sample: JudgeSample = {
             dimensionScores: scoresToRecord(input.blueprint, out.dimensionScores),
             rationale: out.rationale.trim(),
@@ -500,19 +537,20 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
           return sample;
         }),
       );
-      return Promise.all(runs);
+      // Self-consistency tolerates a minority of failed samples: the median over the
+      // successful ones is still the paper's aggregation. Fewer than a majority is a failure.
+      const settled = await Promise.allSettled(runs);
+      const ok = settled.filter((r): r is PromiseFulfilledResult<JudgeSample> => r.status === "fulfilled").map((r) => r.value);
+      const failed = settled.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+      const needed = Math.ceil(samples / 2);
+      if (ok.length >= needed) return ok;
+      const first = failed[0]?.reason as Error | undefined;
+      throw first instanceof LlmError ? first : new LlmError("parse", `Judge: ${ok.length} of ${samples} samples succeeded; ${first?.message ?? "unknown error"}`);
     },
 
     async preScoreSubmission(input: PreScoreInput): Promise<PreScoreOutput> {
-      const { system, user } = buildPreScorePrompt(input.blueprint, input.variant, input.submissionText);
       const model = input.judgeModel || judgeModel;
-      const out = await callParse(
-        "judge",
-        { model, max_tokens: MAX_TOKENS_JUDGE, system, messages: [{ role: "user", content: user }] },
-        betaZodOutputFormat(PreScoreSchema),
-        input.signal,
-        input.onUsage,
-      );
+      const out = await callParse("judge", buildPreScoreRequest(input, model), betaZodOutputFormat(PreScoreSchema), input.signal, input.onUsage);
       return preScoreToOutput(input.blueprint, out);
     },
   };

@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { SAMPLE_IDS, sampleById } from "@shared/samples";
 import { DEFAULT_GENERATOR, DEFAULT_JUDGE, modelSpec } from "@shared/models";
 import type { LlmProvider, Strategy } from "@shared/types";
-import { recordSample } from "./recordSample";
+import { recordSample, resumeFixture, type SampleFixture } from "./recordSample";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..", "..", "..");
@@ -57,7 +57,20 @@ async function main() {
   for (const id of targets) {
     const started = Date.now();
     console.log(`\n== ${id} ==`);
-    const fixture = await recordSample({
+    const existingPath = path.join(fixturesDir, `${id}.json`);
+    let existing: SampleFixture | null = null;
+    if (flag("resume")) {
+      try {
+        existing = JSON.parse(await readFile(existingPath, "utf8")) as SampleFixture;
+      } catch {
+        existing = null;
+      }
+      if (!existing) console.log(`  no fixture to resume for ${id}; recording from scratch`);
+      else if (existing.run.status !== "partial") console.log(`  fixture is ${existing.run.status}; nothing to resume`);
+    }
+    const fixture = existing && existing.run.status === "partial"
+      ? await resumeFixture(existing, { provider, onProgress: (m) => console.log(`  ${m}`) })
+      : await recordSample({
       sampleId: id,
       provider,
       readFile: (p) => readFile(path.join(root, "public", "samples", id, p), "utf8"),

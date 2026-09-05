@@ -22,7 +22,8 @@ export class LlmError extends Error {
   }
 
   get retryable(): boolean {
-    return this.kind === "rate" || this.kind === "network";
+    // "parse" = truncated or malformed structured output; a fresh call almost always succeeds.
+    return this.kind === "rate" || this.kind === "network" || this.kind === "parse";
   }
 }
 
@@ -54,9 +55,11 @@ export function toLlmError(e: unknown): LlmError {
     }
     return new LlmError("other", `Anthropic returned ${status ?? "an error"}: ${e.message}`, { status, cause: e });
   }
-  // zodOutputFormat / the parser throw a plain AnthropicError when the JSON does not match the schema.
-  if (e instanceof Anthropic.AnthropicError && /structured output/i.test(e.message)) {
-    return new LlmError("parse", e.message, { cause: e });
+  // zodOutputFormat / the parser throw a plain AnthropicError when the JSON does not match the schema,
+  // and a truncated response (max_tokens reached mid-JSON) surfaces from the SDK's own JSON.parse as a
+  // SyntaxError. Both are "parse": a fresh call almost always succeeds, so they are retried.
+  if (e instanceof Error && /structured output|Unterminated string|Unexpected (token|end)|JSON at position|SyntaxError/i.test(`${e.name}: ${e.message}`)) {
+    return new LlmError("parse", `Failed to parse structured output (${e.message.slice(0, 160)})`, { cause: e });
   }
   if (e instanceof Error) {
     if (e.name === "AbortError") return new LlmError("other", "Request cancelled.", { cause: e });
