@@ -76,7 +76,8 @@ export default function Generate() {
 
   const [worry, setWorry] = useState<Worry>(settings.preset === "formative" ? "copying" : "fairness");
   const [manual, setManual] = useState<Strategy>("zero-shot");
-  const [n, setN] = useState<number>(Math.max(2, Math.min(nMax, recordedCount > 0 ? recordedCount : rosterSize || 10)));
+  // Start small: a first run of 5 shows what you get for a few dollars. "All my students" is one click.
+  const [n, setN] = useState<number>(Math.max(2, Math.min(nMax, 5)));
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -175,7 +176,7 @@ export default function Generate() {
   const facts =
     settings.mode === "demo"
       ? `Replaying the recorded run: ${n} versions, made with ${modelLabel(recorded?.models.generator ?? settings.generatorModel)} · no cost · under a minute`
-      : `Making ${n} version${n === 1 ? "" : "s"} for ${rosterSize || n} student${rosterSize === 1 ? "" : "s"} with ${modelLabel(settings.generatorModel)} · about $${est.usd.toFixed(2)} · about ${est.minutes} minute${est.minutes === 1 ? "" : "s"}`;
+      : `Making ${n} version${n === 1 ? "" : "s"}${rosterSize > 0 && n < rosterSize ? ` (the first ${n} of your ${rosterSize} students)` : rosterSize > 0 ? ` (one for each of your ${rosterSize} students)` : ""} with ${modelLabel(settings.generatorModel)} · about $${est.usd.toFixed(2)} · about ${est.minutes} minute${est.minutes === 1 ? "" : "s"}`;
 
   return (
     <div className="va-stack" style={{ gap: 22, maxWidth: 980 }}>
@@ -250,6 +251,33 @@ export default function Generate() {
           <p style={{ margin: "14px 0 0", fontSize: 14, lineHeight: 1.5, color: "var(--color-accent-700)", fontFamily: "var(--font-heading)" }}>{consequence}</p>
 
           <div style={{ marginTop: 18, borderTop: "1px solid var(--color-divider)", paddingTop: 16 }}>
+            <div className="va-row-flex" style={{ alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+              <label htmlFor="versionCount" className="va-heading-16" style={{ margin: 0 }}>How many versions?</label>
+              <input
+                id="versionCount"
+                className="input"
+                type="number"
+                min={2}
+                max={nMax}
+                value={n}
+                onChange={(e) => setN(Math.max(2, Math.min(nMax, Number(e.target.value) || 2)))}
+                style={{ width: 88 }}
+                aria-describedby="versionCountHint"
+              />
+              <div className="va-btn-row" style={{ gap: 6 }}>
+                {[5, 10].filter((k) => k <= nMax).map((k) => (
+                  <button key={k} type="button" className={`btn ${n === k ? "btn-secondary" : "btn-ghost"}`} onClick={() => setN(k)}>{k}</button>
+                ))}
+                {rosterSize > 0 && rosterSize <= nMax && (
+                  <button type="button" className={`btn ${n === rosterSize ? "btn-secondary" : "btn-ghost"}`} onClick={() => setN(rosterSize)}>
+                    All {rosterSize} students
+                  </button>
+                )}
+              </div>
+              <span id="versionCountHint" className="text-muted" style={{ fontSize: 12.5 }}>
+                {recordedCount > 0 ? `Replaying a recorded run: up to ${recordedCount} versions.` : "Start with a few to see what you get; you can make more later. Cost grows with the count."}
+              </span>
+            </div>
             <p style={{ margin: "0 0 12px", fontSize: 14.5 }}>
               {facts} <Info term="generator" />
             </p>
@@ -285,9 +313,7 @@ export default function Generate() {
           {optionsOpen && (
             <div style={{ marginTop: 18, borderTop: "1px solid var(--color-divider)", paddingTop: 16 }} className="va-stack">
               <div className="va-two" style={{ gap: 16 }}>
-                <Field label="How many versions" hint={rosterSize ? `${rosterSize} students enrolled` : undefined}>
-                  <input className="input" type="number" min={2} max={nMax} value={n} onChange={(e) => setN(Math.max(2, Math.min(nMax, Number(e.target.value) || 2)))} />
-                </Field>
+
                 <Field label="Preset">
                   <SegChoice<RunPreset> name="preset" value={settings.preset} onChange={(id) => { settings.setPreset(id); if (id !== "custom") setJudgeSamplesLocal(RUN_PRESETS[id].judgeSamples); }} options={[{ value: "high-stakes", label: "High-stakes" }, { value: "formative", label: "Formative" }, { value: "custom", label: "Custom" }]} />
                 </Field>
