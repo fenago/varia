@@ -7,12 +7,45 @@ import { activeBlueprint, activeRun } from "@lib/store/selectors";
 import { estimateRunCost } from "@lib/llm";
 import { STRATEGY_LABELS, THREAT_OPTIONS, THREAT_TO_STRATEGY } from "@shared/thresholds";
 import { GENERATOR_MODELS, JUDGE_MODELS, type Strategy, type ThreatProfile } from "@shared/types";
+import { modelCaveat, modelOptionText, modelsByFamily, type ModelRole } from "@shared/models";
 
 const RED = "#8d4a3c";
 const IN_FLIGHT = new Set(["queued", "generating", "judging", "scoring"]);
 
 function modelLabel(id: string): string {
   return GENERATOR_MODELS.find((m) => m.id === id)?.label ?? JUDGE_MODELS.find((m) => m.id === id)?.label ?? id;
+}
+
+/** Whole catalog grouped by family; label, note and price per million in the option text. */
+function ModelOptions({ role }: { role: ModelRole }) {
+  return (
+    <>
+      {modelsByFamily(role).map((g) => (
+        <optgroup key={g.family} label={g.label}>
+          {g.models.map((m) => (
+            <option key={m.id} value={m.id}>
+              {modelOptionText(m)}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </>
+  );
+}
+
+function ModelCaveat({ id }: { id: string }) {
+  const text = modelCaveat(id);
+  if (!text) return null;
+  return (
+    <div className="va-muted-12" style={{ marginTop: 6, lineHeight: 1.5 }}>
+      {text}
+    </div>
+  );
+}
+
+function actualSoFar(run: { usage?: { costUsd: number; calls: number } } | null | undefined): string | null {
+  if (!run?.usage) return null;
+  return `Actual so far: $${run.usage.costUsd.toFixed(2)} · ${run.usage.calls} call${run.usage.calls === 1 ? "" : "s"}`;
 }
 
 export default function Generate() {
@@ -30,7 +63,10 @@ export default function Generate() {
   const [starting, setStarting] = useState(false);
 
   const strategy: Strategy = threat === "manual" ? manual : THREAT_TO_STRATEGY[threat];
-  const est = useMemo(() => estimateRunCost(n, settings.judgeSamples), [n, settings.judgeSamples]);
+  const est = useMemo(
+    () => estimateRunCost(n, settings.judgeSamples, settings.generatorModel, settings.judgeModel),
+    [n, settings.judgeSamples, settings.generatorModel, settings.judgeModel],
+  );
   const inFlight = !!run && IN_FLIGHT.has(run.status) && (starting || run.blueprintId === bp?.id);
 
   if (!bp) {
@@ -162,7 +198,14 @@ export default function Generate() {
 
       <div className="va-sticky">
         {inFlight && run ? (
-          <ProgressBlock progress={run.progress} onCancel={ws.cancelRun} title={`Generating ${run.n} versions`} />
+          <>
+            <ProgressBlock progress={run.progress} onCancel={ws.cancelRun} title={`Generating ${run.n} versions`} />
+            {actualSoFar(run) && (
+              <div className="va-muted-12" style={{ marginTop: 8, lineHeight: 1.5 }}>
+                {actualSoFar(run)}
+              </div>
+            )}
+          </>
         ) : (
           <Blueprint style={{ padding: "18px 20px" }}>
             <h6 style={{ margin: "0 0 14px" }}>Run</h6>
@@ -178,20 +221,24 @@ export default function Generate() {
             </Field>
             <Field label="Generator" style={{ marginBottom: 12 }}>
               <select className="input" value={settings.generatorModel} onChange={(e) => settings.setModels({ generatorModel: e.target.value })}>
-                {GENERATOR_MODELS.map((m) => (
-                  <option key={m.id} value={m.id}>{m.label} — {m.note}</option>
-                ))}
+                <ModelOptions role="generator" />
               </select>
+              <ModelCaveat id={settings.generatorModel} />
             </Field>
-            <Field label="Judge (held fixed)" style={{ marginBottom: 14 }}>
+            <Field label="Judge (held fixed)" hint={`— ${settings.judgeSamples} samples per version`} style={{ marginBottom: 14 }}>
               <select className="input" value={settings.judgeModel} onChange={(e) => settings.setModels({ judgeModel: e.target.value })}>
-                {JUDGE_MODELS.map((m) => (
-                  <option key={m.id} value={m.id}>{m.label} · {settings.judgeSamples} samples</option>
-                ))}
+                <ModelOptions role="judge" />
               </select>
+              <ModelCaveat id={settings.judgeModel} />
             </Field>
             <div className="text-muted" style={{ fontSize: 12, lineHeight: 1.5, marginBottom: 12 }}>
-              Est. {est.minutes} min · ~${est.usd.toFixed(2)}. Judge calls dominate the cost.
+              Est. {est.minutes} min · ~${est.usd.toFixed(2)} at list prices for {modelLabel(settings.generatorModel)} and {modelLabel(settings.judgeModel)}.
+              {actualSoFar(run) && (
+                <>
+                  <br />
+                  {actualSoFar(run)}
+                </>
+              )}
             </div>
             <BlueprintButton block onClick={generate} disabled={starting || enabledDims.length === 0}>
               {starting ? "Starting…" : `Generate ${n} versions`}

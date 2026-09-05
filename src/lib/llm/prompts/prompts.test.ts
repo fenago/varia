@@ -166,10 +166,11 @@ describe("buildFewShotAnchorsPrompt", () => {
 });
 
 describe("estimateRunCost", () => {
-  it("matches the mockup's ~$0.60 for 34 variants × 5 judge samples", () => {
+  it("prices 34 variants × 5 judge samples from the catalog (Opus 5 generates, Sonnet 5 judges)", () => {
     const { usd, minutes } = estimateRunCost(34, 5);
-    expect(usd).toBeGreaterThanOrEqual(0.4);
-    expect(usd).toBeLessThanOrEqual(0.9);
+    // 34 × (1.5k in + 1.2k out on Opus 5) + 170 × (1.2k in + 250 out on Sonnet 5) ≈ $2.11 at list prices.
+    expect(usd).toBeGreaterThanOrEqual(1.5);
+    expect(usd).toBeLessThanOrEqual(3.0);
     // Formula from the build spec: ceil(n · perVariantSeconds / 60 / 3), generation 3-wide.
     const expectedMinutes = Math.ceil((34 * COST_MODEL.perVariantSeconds) / 60 / 3);
     expect(minutes).toBe(expectedMinutes);

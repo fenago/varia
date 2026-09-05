@@ -4,6 +4,7 @@ import { useSettings, getProvider } from "@lib/store/settings";
 import { useWorkspace } from "@lib/store/workspace";
 import { LlmError } from "@lib/llm";
 import { GENERATOR_MODELS, JUDGE_MODELS } from "@shared/types";
+import { modelCaveat, modelOptionText, modelsByFamily, type ModelRole } from "@shared/models";
 
 const RED = "#8d4a3c";
 const WORKSPACE_KEY = "varia.workspace.v1";
@@ -30,6 +31,33 @@ function formatTime(iso: string): string {
 
 function modelLabel(id: string): string {
   return [...GENERATOR_MODELS, ...JUDGE_MODELS].find((m) => m.id === id)?.label ?? id;
+}
+
+/** Whole catalog grouped by family; label, note and price per million in the option text. */
+function ModelOptions({ role }: { role: ModelRole }) {
+  return (
+    <>
+      {modelsByFamily(role).map((g) => (
+        <optgroup key={g.family} label={g.label}>
+          {g.models.map((m) => (
+            <option key={m.id} value={m.id}>
+              {modelOptionText(m)}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </>
+  );
+}
+
+function ModelCaveat({ id }: { id: string }) {
+  const text = modelCaveat(id);
+  if (!text) return null;
+  return (
+    <div className="va-muted-12" style={{ marginTop: 6, lineHeight: 1.5 }}>
+      {text}
+    </div>
+  );
 }
 
 type Verify = { state: "idle" } | { state: "busy" } | { state: "ok"; model: string; at: string } | { state: "bad"; text: string };
@@ -187,21 +215,15 @@ export default function Settings() {
         <div className="va-two" style={{ gap: 16 }}>
           <Field label="Generator" htmlFor="genModel">
             <select id="genModel" className="input" value={s.generatorModel} onChange={(e) => s.setModels({ generatorModel: e.target.value })}>
-              {GENERATOR_MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label} — {m.note}
-                </option>
-              ))}
+              <ModelOptions role="generator" />
             </select>
+            <ModelCaveat id={s.generatorModel} />
           </Field>
           <Field label="Judge (held fixed)" htmlFor="judgeModel">
             <select id="judgeModel" className="input" value={s.judgeModel} onChange={(e) => s.setModels({ judgeModel: e.target.value })}>
-              {JUDGE_MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label} — {m.note}
-                </option>
-              ))}
+              <ModelOptions role="judge" />
             </select>
+            <ModelCaveat id={s.judgeModel} />
           </Field>
         </div>
         <Field label="Judge samples per version" htmlFor="judgeSamples" hint="Self-consistency: independent judge calls whose median is taken. The pilot used 5.">

@@ -187,6 +187,11 @@ export default function Report() {
               {run.variants.filter((v) => v.error).length} versions failed to generate and are excluded.
             </div>
           )}
+          {run.usage && (
+            <div className="va-muted-12" style={{ marginTop: 10 }}>
+              Actual cost ${run.usage.costUsd.toFixed(2)} · {run.usage.calls} call{run.usage.calls === 1 ? "" : "s"}
+            </div>
+          )}
         </Blueprint>
 
         <Blueprint style={{ padding: "20px 22px" }}>

@@ -2,7 +2,10 @@ import type { LlmProvider, Settings } from "@shared/types";
 import { createDemoProvider } from "@lib/store/demoProvider";
 import { createLiveProvider } from "./live";
 
-export { estimateRunCost } from "./cost";
+export { estimateRunCost, costOf } from "./cost";
+export { shapeRequest, effortFor, FALLBACK_BETA } from "./shape";
+export type { RequestKind, ShapedRequest } from "./shape";
+export { emptyUsage, addUsage, usageOf } from "./live";
 export { LlmError, toLlmError, withRetry } from "./errors";
 export type { LlmErrorKind } from "./errors";
 export { createLiveProvider } from "./live";

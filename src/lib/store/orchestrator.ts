@@ -15,6 +15,7 @@ import type {
   SurfaceAssignment,
   SurfaceDimension,
   ThresholdSet,
+  UsageTotals,
   Variant,
   VariantMetrics,
 } from "@shared/types";
@@ -64,6 +65,25 @@ export function buildAssignments(dims: SurfaceDimension[], n: number, strategy: 
   return out;
 }
 
+function emptyUsage(): UsageTotals {
+  return { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, calls: 0 };
+}
+
+/** Add one call's usage to a variant's and the run's running totals. */
+function accumulateUsage(r: Run, v: Variant | undefined, u: UsageTotals) {
+  for (const target of [r, v]) {
+    if (!target) continue;
+    const t = target.usage ?? emptyUsage();
+    t.inputTokens += u.inputTokens;
+    t.outputTokens += u.outputTokens;
+    t.cacheReadTokens += u.cacheReadTokens;
+    t.cacheWriteTokens += u.cacheWriteTokens;
+    t.costUsd += u.costUsd;
+    t.calls += u.calls;
+    target.usage = t;
+  }
+}
+
 function progress(phase: RunProgress["phase"], done: number, total: number, message: string): RunProgress {
   return { phase, done, total, message };
 }
@@ -105,6 +125,9 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
     : Array.from({ length: r.n }, (_, i) => i);
   const targetIds = new Set(targets.map(variantId));
 
+  // Live runs show "Actual so far" from the first emit; demo runs report no usage.
+  if (r.mode === "live" && !r.usage) r.usage = emptyUsage();
+
   r.status = "generating";
   r.progress = progress("generating", 0, targets.length, onlyVariantIds ? `Regenerating ${targets.length} version${targets.length === 1 ? "" : "s"}` : `Generating ${targets.length} versions`);
   emit();
@@ -120,6 +143,9 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
         const existing = r.variants.find((v) => v.id === id);
         const prior = r.variants.filter((v) => v.id !== id && v.text && !v.error).map((v) => v.text);
         if (existing?.text) prior.push(existing.text);
+        // Usage for this variant's generation calls; merged into the variant record below.
+        const vUsage: UsageTotals = existing?.usage ? { ...existing.usage } : emptyUsage();
+        let vCalls = 0;
         try {
           const out = await provider.generateVariant({
             blueprint,
@@ -130,6 +156,17 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
             priorVariantTexts: prior,
             generatorModel: r.generatorModel,
             signal,
+            onUsage: (u) => {
+              vCalls += u.calls;
+              accumulateUsage(r, undefined, u);
+              const t = vUsage;
+              t.inputTokens += u.inputTokens;
+              t.outputTokens += u.outputTokens;
+              t.cacheReadTokens += u.cacheReadTokens;
+              t.cacheWriteTokens += u.cacheWriteTokens;
+              t.costUsd += u.costUsd;
+              t.calls += u.calls;
+            },
           });
           const base = metricsFrom(out.text, out.adaptedSolution, out.scaffold, r.mode);
           const v: Variant = {
@@ -145,12 +182,13 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
             generation: (existing?.generation ?? 0) + 1,
             scaffold: out.scaffold,
           };
+          if (vCalls > 0 || existing?.usage) v.usage = vUsage;
           upsertVariant(r, v);
         } catch (e) {
           if (isCancelled(signal, e)) return;
           anyError = true;
           const v: Variant = existing
-            ? { ...existing, error: (e as Error).message }
+            ? { ...existing, error: (e as Error).message, ...(vCalls > 0 || existing.usage ? { usage: vUsage } : {}) }
             : {
                 id,
                 runId: r.id,
@@ -163,6 +201,7 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
                 status: "draft",
                 generation: 1,
                 error: (e as Error).message,
+                ...(vCalls > 0 ? { usage: vUsage } : {}),
               };
           upsertVariant(r, v);
         }
@@ -197,6 +236,7 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
             judgeModel: r.judgeModel,
             samples: r.judgeSamples,
             signal,
+            onUsage: (u) => accumulateUsage(r, r.variants.find((x) => x.id === v.id), u),
           });
           const cur = r.variants.find((x) => x.id === v.id);
           if (cur) {

@@ -30,17 +30,8 @@ export type ThreatProfile = "high-stakes" | "copy-at-scale" | "manual";
 /** Exact Anthropic model ID strings. No date suffixes. */
 export type ModelId = string;
 
-export const GENERATOR_MODELS: { id: ModelId; label: string; note: string }[] = [
-  { id: "claude-opus-5", label: "Claude Opus 5", note: "default generator" },
-  { id: "claude-sonnet-5", label: "Claude Sonnet 5", note: "faster, cheaper" },
-  { id: "claude-opus-4-7", label: "Claude Opus 4.7", note: "pilot generator" },
-];
-
-export const JUDGE_MODELS: { id: ModelId; label: string; note: string }[] = [
-  { id: "claude-sonnet-5", label: "Claude Sonnet 5", note: "default judge" },
-  { id: "claude-sonnet-4-6", label: "Claude Sonnet 4.6", note: "pilot judge" },
-  { id: "claude-opus-5", label: "Claude Opus 5", note: "strongest, costlier" },
-];
+/** Derived from the model catalog in `./models` (same `{ id, label, note }` shape). */
+export { GENERATOR_MODELS, JUDGE_MODELS } from "./models";
 
 // ---------------------------------------------------------------------------
 // Course, roster
@@ -191,6 +182,8 @@ export interface Variant {
   generation: number;
   /** Strategy scaffold kept for debugging (structured CoT plan etc.) */
   scaffold?: unknown;
+  /** Actual usage for this variant's generation + judging */
+  usage?: UsageTotals;
   error?: string;
 }
 
@@ -275,6 +268,8 @@ export interface Run {
   release: Release | null;
   costEstimateUsd: number;
   estMinutes: number;
+  /** Actual usage accumulated from API responses (wave 1) */
+  usage?: UsageTotals;
   error?: string;
 }
 
@@ -459,6 +454,8 @@ export interface GenerateVariantInput {
   priorVariantTexts: string[];
   generatorModel: ModelId;
   signal?: AbortSignal;
+  /** Called once per API request this call makes (wave 1: real usage) */
+  onUsage?: (u: UsageTotals) => void;
 }
 
 export interface GenerateVariantOutput {
@@ -466,6 +463,8 @@ export interface GenerateVariantOutput {
   adaptedSolution: string;
   surfaceAssignment: SurfaceAssignment;
   scaffold?: unknown;
+  /** Sum of every request behind this output. Also reported via `onUsage`; consume one, not both. */
+  usage?: UsageTotals;
 }
 
 export interface JudgeInput {
@@ -474,6 +473,8 @@ export interface JudgeInput {
   judgeModel: ModelId;
   samples: number;
   signal?: AbortSignal;
+  /** Called once per judge sample request (wave 1: real usage) */
+  onUsage?: (u: UsageTotals) => void;
 }
 
 export interface ExtractInput {
@@ -482,6 +483,8 @@ export interface ExtractInput {
   rawText: string;
   course: Course;
   signal?: AbortSignal;
+  /** Called once per API request extraction makes (wave 1: real usage) */
+  onUsage?: (u: UsageTotals) => void;
 }
 
 export interface LlmProvider {
@@ -494,6 +497,26 @@ export interface LlmProvider {
   generateFewShotAnchors(blueprint: Blueprint): Promise<{ positive: string[]; negative: string[] }>;
   generateVariant(input: GenerateVariantInput): Promise<GenerateVariantOutput>;
   judgeVariant(input: JudgeInput): Promise<JudgeSample[]>;
+  /** Wave 4: suggest rubric levels for a submission. A suggestion only; the instructor decides. */
+  preScoreSubmission?(input: PreScoreInput): Promise<PreScoreOutput>;
+}
+
+export interface PreScoreInput {
+  blueprint: Blueprint;
+  variant: Pick<Variant, "id" | "text" | "adaptedSolution">;
+  submissionText: string;
+  judgeModel: ModelId;
+  signal?: AbortSignal;
+  onUsage?: (u: UsageTotals) => void;
+}
+
+export interface PreScoreOutput {
+  /** criterionId -> suggested level 0..3 */
+  scores: Record<string, LevelScore>;
+  /** criterionId -> one or two sentences citing the submission */
+  rationale: Record<string, string>;
+  /** Overall note for the instructor */
+  summary: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -733,4 +756,40 @@ export interface WorkSampleFields {
   skills: SkillTag[];
   challengeId: string | null;
   endorsementIds: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Real usage accounting (wave 1)
+// ---------------------------------------------------------------------------
+
+export interface UsageTotals {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  /** Computed from the model price table at the time of the call */
+  costUsd: number;
+  calls: number;
+}
+
+// ---------------------------------------------------------------------------
+// Sample assessments (wave 2)
+// ---------------------------------------------------------------------------
+
+export interface SampleAssessment {
+  id: string; // "lending-loan-default-audit"
+  industry: string; // "Lending"
+  organisation: string; // "Bayfront Regional Bank"
+  title: string; // "Audit our loan-default classifier"
+  /** One sentence for the samples panel */
+  summary: string;
+  course: { code: string; title: string };
+  /** Files served from /samples/<id>/… and parsed by the real ingest path */
+  files: { name: string; kind: SourceKind; path: string }[];
+  /** The employer challenge that this assessment is built from */
+  challenge: Omit<EmployerChallenge, "id" | "partnerId" | "contributedAt" | "status" | "blueprintIds">;
+  partner: Omit<EmployerPartner, "id" | "adoptedEvidenceRecords" | "adoptedAt" | "addedAt">;
+  skills: SkillTag[];
+  /** Real extraction output recorded with a live key; used when no key is present */
+  preExtracted?: { blueprint: BlueprintDraft; model: ModelId; recordedAt: string } | null;
 }

@@ -248,8 +248,9 @@ canonical solution rewritten into the variant's scenario. It is required: it fee
   models; the UI shows whatever the run record says.
 - Structured output: `client.messages.parse({ ..., output_config: { format: zodOutputFormat(S) } })`
   then guard `parsed_output === null` → throw a typed error.
-- `thinking: { type: "adaptive" }` on generation and extraction calls; omit on judge calls and use
-  `output_config: { effort: "low" }` there. **Never set `temperature`, `top_p`, `budget_tokens`**
+- Request shaping is per model in `src/lib/llm/shape.ts`: adaptive thinking on Opus/Sonnet (effort
+  high for generation/extraction, low for judge/short calls), no thinking key on Fable, budget
+  thinking and no effort on Haiku, fallbacks on Fable 5.1/5 and Opus 5. **Never set `temperature`, `top_p`, `budget_tokens`**
   on 5-family models (400). Self-consistency = five independent judge calls.
 - `max_tokens` 16000 for non-streaming calls. Use `client.messages.stream(...).finalMessage()` for
   variant generation. Never assistant-prefill.
@@ -358,6 +359,26 @@ Data model additions are in `types.ts`: `SkillTag`, `EmployerChallenge`, `Endors
 Rules: validation happens at the blueprint, once, and every variant inherits it. Evidence records
 carry `validationIds` at issue time and a SHA-256 over their canonical content. No student data is
 ever inside a review package (samples are stripped of student ids).
+
+## Making it real: waves 1–8 (started 2026-09-05)
+
+Principle: nothing in the app shows a number that was typed in. Demo fixtures become recorded
+outputs of the real pipeline. The app must still work with no key, populated by those recordings.
+
+| Wave | Scope | Owns |
+|---|---|---|
+| 1 · Models | `src/shared/models.ts` catalog (Fable 5.1/5, Opus 5/4.8/4.7/4.6, Sonnet 5/4.6, Haiku 4.5), per-model request shaping (Fable: no thinking key, fallbacks + refusal handling; Haiku: budget thinking, no effort), real usage + cost from `response.usage` on `Run.usage`/`Variant.usage`, Settings/Generate selects | `src/lib/llm/*`, `src/shared/models.ts` |
+| 2 · Samples | Five employer-sourced assessments as real files under `public/samples/<id>/` (assignment with rubric, model answer, roster CSV, employer brief, manifest), `src/shared/samples.ts`, `src/lib/store/samples.ts` loader through the real ingest path, local deterministic extractor for no-key mode, "Start from a sample" panel on Import | those files + Import.tsx panel |
+| 3 · Pipeline hardening | Resumable runs, extraction fixes found on the samples, delete `calibrateDemoReport` and every seeded metric override, fixture-recording script `scripts/record-samples.mjs` (runs each sample end to end with a real key and writes `src/lib/store/fixtures/<id>.json`) | store, llm, scripts |
+| 4 · Release + grading | Per-student task link (`/task/:variantId#pkg=`) carrying the version, "Download all versions" (one document per student + CSV map), submission upload with filename/column matching, optional AI pre-scoring against the rubric shown as a suggestion | Roster, Grade, new Task page, store |
+| 5 · Fixtures + cleanup | Run the recorder on all five samples; replace the demo workspace with recorded runs; remove the invented 63-set institution, seeded audit trail, tuned reading-ease values; QA asserts against recorded outputs | seed, console, QA |
+| 6 · QA | Live-mode end to end on every sample with a real key, then the no-key experience | scripts/qa.mjs |
+| 7 · Credential issuance | When a record is graded + employer-validated + endorsed: issue a signed Open Badges 3.0 `AchievementCredential` from the college and an `EndorsementCredential` from the employer; bundle both; college issuer key and issuer URL when available; Credly/Badgr-importable | badges, evidence, talent |
+| 8 · Social sharing | Browser-generated badge image (PNG), LinkedIn "Add to profile" prefilled link (name, issuer, date, credential id, URL), share intents for LinkedIn/X/email pointing at the verify page; rich previews need the durable record store | share, portfolio, verify |
+
+Order: 1 ∥ 2 → 3 ∥ 4 → 5 → 6 → 7 → 8. Wave 5 needs a real key for the recording run
+(roughly 150 generations plus judging; on the order of $10–20 with Opus 5 generating and Sonnet 5
+judging).
 
 ## Non-goals
 

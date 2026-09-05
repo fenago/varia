@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import type { LlmProvider, Mode, ModelId, Settings } from "@shared/types";
 import { createProvider } from "@lib/llm";
+import { DEFAULT_GENERATOR, DEFAULT_JUDGE } from "@shared/models";
 
 const LS_KEY = "varia.settings";
 const SESSION_KEY = "varia.session-key";
@@ -18,8 +19,8 @@ export interface SettingsState extends Settings {
 const DEFAULTS: Settings = {
   apiKey: null,
   rememberKey: false,
-  generatorModel: "claude-opus-5",
-  judgeModel: "claude-sonnet-5",
+  generatorModel: DEFAULT_GENERATOR,
+  judgeModel: DEFAULT_JUDGE,
   judgeSamples: 5,
   keyVerifiedAt: null,
 };

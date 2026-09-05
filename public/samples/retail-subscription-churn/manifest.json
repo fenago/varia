@@ -1,0 +1,88 @@
+{
+  "id": "retail-subscription-churn",
+  "industry": "Retail",
+  "organisation": "Palmetto Fresh",
+  "title": "Find the root cause of our meal-kit churn",
+  "summary": "A grocer's meal-kit subscription is losing customers in a pattern the retention team cannot explain. Choose the method, find the cause, and recommend what to do about it.",
+  "course": {
+    "code": "DAT 3200",
+    "title": "Applied Analytics"
+  },
+  "files": [
+    {
+      "name": "assignment.md",
+      "kind": "task+rubric",
+      "path": "assignment.md"
+    },
+    {
+      "name": "model-answer.md",
+      "kind": "solution",
+      "path": "model-answer.md"
+    },
+    {
+      "name": "employer-brief.md",
+      "kind": "task",
+      "path": "employer-brief.md"
+    },
+    {
+      "name": "roster.csv",
+      "kind": "roster",
+      "path": "roster.csv"
+    }
+  ],
+  "challenge": {
+    "organisation": "Palmetto Fresh",
+    "title": "Find the root cause of our meal-kit churn",
+    "brief": "Palmetto Fresh is a regional grocer. Two years ago we launched a meal-kit subscription: a weekly box, four plans, delivered from our own stores. It grew well for eighteen months. Since January, monthly churn has climbed from about 6 percent to about 11 percent, and the retention team cannot tell me why. They have tried a discount, which did not move the number, and a new recipe rotation, which did not either.\n\nWe have clean data: every subscriber's plan, start month, delivery zip, weekly order history, substitutions, delivery issues, and support tickets. We have a suspicion it has something to do with the switch to a third-party courier in two delivery zones, but the courier's own on-time numbers look fine.\n\nWhat I need is someone who can pick the right way to look at this, not just run a churn model. Tell me which subscribers are leaving, when in their tenure, what they experienced before they left, what the most likely cause is, how big it is, and what one thing you would do about it and how we would know it worked. If the courier is not the cause, I need to hear that too.\n\nThe skills are churn analysis, choosing the right statistical method for the question, root-cause thinking, and explaining the answer to a business owner.",
+    "domain": "Retail",
+    "stakeholderRole": "Growth director",
+    "deliverable": "A churn analysis that names the method, isolates the cause, quantifies its size, and recommends one intervention with a way to test it.",
+    "skillKeys": [
+      "churn-analysis",
+      "statistical-method-selection",
+      "root-cause-analysis",
+      "evidence-based-reasoning",
+      "stakeholder-communication"
+    ],
+    "contributedBy": "Jerome Baptiste"
+  },
+  "partner": {
+    "organisation": "Palmetto Fresh",
+    "sector": "Retail",
+    "contactName": "Jerome Baptiste",
+    "contactRole": "Director of Subscription Growth",
+    "contactEmail": "j.baptiste@palmettofresh.example"
+  },
+  "skills": [
+    {
+      "key": "churn-analysis",
+      "label": "Churn analysis",
+      "source": "employer",
+      "externalRef": "Palmetto Fresh GA-2 · Retention analytics"
+    },
+    {
+      "key": "statistical-method-selection",
+      "label": "Statistical method selection",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2041.00 · Method selection"
+    },
+    {
+      "key": "root-cause-analysis",
+      "label": "Root-cause analysis",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2041.00 · Statistical root-cause analysis"
+    },
+    {
+      "key": "evidence-based-reasoning",
+      "label": "Evidence-based reasoning",
+      "source": "instructor"
+    },
+    {
+      "key": "stakeholder-communication",
+      "label": "Stakeholder communication",
+      "source": "employer",
+      "externalRef": "Northline L2 · Executive communication"
+    }
+  ],
+  "preExtracted": null
+}

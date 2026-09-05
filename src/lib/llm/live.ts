@@ -1,5 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
+import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import type { AutoParseableBetaOutputFormat } from "@anthropic-ai/sdk/lib/beta-parser";
 import pLimit from "p-limit";
 import type {
   Blueprint,
@@ -16,10 +17,13 @@ import type {
   SourceFile,
   SurfaceDimension,
   ThresholdSet,
+  UsageTotals,
 } from "@shared/types";
 import { DEFAULT_THRESHOLDS } from "@shared/thresholds";
+import { costOf, modelSpec, type ModelSpec } from "@shared/models";
 import { makeClient } from "./client";
 import { LlmError, toLlmError, withRetry } from "./errors";
+import { shapeRequest, type RequestKind } from "./shape";
 import {
   AnchorsSchema,
   BlueprintDraftSchema,
@@ -36,11 +40,75 @@ import { buildExtractPrompt } from "./prompts/extract";
 import { buildJudgePrompt } from "./prompts/judge";
 import { buildGenerationPrompt } from "./prompts/strategies";
 
+export { shapeRequest } from "./shape";
+
 const MAX_TOKENS_LONG = 16000;
-const MAX_TOKENS_JUDGE = 2000;
+/** Room for a short adaptive/budget think plus the JSON. */
+const MAX_TOKENS_JUDGE = 4000;
+const MAX_TOKENS_VERIFY = 64;
 const JUDGE_CONCURRENCY = 4;
 
-type Parsed<T> = { stop_reason: string | null; parsed_output: T | null; stop_details?: unknown };
+type BetaMessage = Anthropic.Beta.Messages.BetaMessage;
+type Parsed<T> = BetaMessage & { parsed_output: T | null };
+
+/**
+ * Ids outside the catalog (a user-typed id, or a fallback model the server
+ * chose) are treated as a current-generation model: adaptive thinking, effort,
+ * no sampling, no fallback chain.
+ */
+function specFor(id: ModelId): ModelSpec {
+  return (
+    modelSpec(id) ?? {
+      id,
+      label: id,
+      family: "opus",
+      generation: "5",
+      roles: ["generator", "judge"],
+      thinking: "adaptive",
+      supportsEffort: true,
+      supportsSampling: false,
+      needsRefusalFallback: false,
+      contextTokens: 1_000_000,
+      maxOutputTokens: 128_000,
+      priceInPerM: 0,
+      priceOutPerM: 0,
+      priceCacheReadPerM: 0,
+      priceCacheWritePerM: 0,
+      note: "not in catalog",
+    }
+  );
+}
+
+export function emptyUsage(): UsageTotals {
+  return { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, calls: 0 };
+}
+
+export function addUsage(into: UsageTotals, u: UsageTotals): UsageTotals {
+  into.inputTokens += u.inputTokens;
+  into.outputTokens += u.outputTokens;
+  into.cacheReadTokens += u.cacheReadTokens;
+  into.cacheWriteTokens += u.cacheWriteTokens;
+  into.costUsd += u.costUsd;
+  into.calls += u.calls;
+  return into;
+}
+
+/**
+ * Real usage from a response. Priced on the model that actually answered when
+ * it is in the catalog (a server-side fallback bills at the fallback's rate),
+ * otherwise on the model we asked for.
+ */
+export function usageOf(msg: Pick<BetaMessage, "usage" | "model">, requestedModel: ModelId): UsageTotals {
+  const u = msg.usage;
+  const counts = {
+    inputTokens: u?.input_tokens ?? 0,
+    outputTokens: u?.output_tokens ?? 0,
+    cacheReadTokens: u?.cache_read_input_tokens ?? 0,
+    cacheWriteTokens: u?.cache_creation_input_tokens ?? 0,
+  };
+  const billed = msg.model && modelSpec(msg.model) ? msg.model : requestedModel;
+  return { ...counts, costUsd: costOf(billed, counts), calls: 1 };
+}
 
 /**
  * Turn a parsed message into its payload or throw the matching LlmError.
@@ -49,9 +117,9 @@ type Parsed<T> = { stop_reason: string | null; parsed_output: T | null; stop_det
 function payloadOf<T>(msg: Parsed<T>): T {
   if (msg.stop_reason === "refusal") {
     const details = msg.stop_details as { category?: string | null; explanation?: string | null } | null | undefined;
-    throw new LlmError("refusal", details?.explanation || "The model declined this request.", {
-      category: details?.category ?? null,
-    });
+    const category = details?.category ?? null;
+    const why = details?.explanation?.trim() || "The model declined this request.";
+    throw new LlmError("refusal", category ? `Declined (${category}): ${why}` : `Declined: ${why}`, { category });
   }
   if (msg.stop_reason === "max_tokens") {
     throw new LlmError("parse", "The response was cut off at max_tokens before the JSON was complete.");
@@ -64,6 +132,27 @@ function payloadOf<T>(msg: Parsed<T>): T {
 
 function requestOptions(signal?: AbortSignal): Anthropic.RequestOptions | undefined {
   return signal ? { signal } : undefined;
+}
+
+type BaseParams = {
+  model: ModelId;
+  max_tokens: number;
+  system: string;
+  messages: Anthropic.Beta.Messages.BetaMessageParam[];
+};
+
+type StructuredParams<T> = Anthropic.Beta.Messages.MessageCreateParamsNonStreaming & {
+  output_config: { format: AutoParseableBetaOutputFormat<T> };
+};
+
+/** Shape a structured-output request for the model, keeping the parser's type. */
+function structured<T>(kind: RequestKind, base: BaseParams, format: AutoParseableBetaOutputFormat<T>): StructuredParams<T> {
+  const shaped = shapeRequest(specFor(base.model), kind, { ...base });
+  return {
+    ...shaped,
+    messages: base.messages,
+    output_config: { ...(shaped.output_config ?? {}), format },
+  } as unknown as StructuredParams<T>;
 }
 
 function nowIso(): string {
@@ -183,6 +272,8 @@ function scoresToRecord(blueprint: Blueprint, scores: { dimension: string; score
   return out;
 }
 
+type OnUsage = ((u: UsageTotals) => void) | undefined;
+
 export function createLiveProvider(settings: Settings, thresholds: ThresholdSet = DEFAULT_THRESHOLDS): LlmProvider {
   if (!settings.apiKey) {
     throw new LlmError("auth", "No API key set. Paste your Anthropic key on the Settings page.");
@@ -194,49 +285,47 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
   /** Few-shot anchors generated on demand when the blueprint has none cached, once per blueprint id. */
   const anchorCache = new Map<string, Promise<{ positive: string[]; negative: string[] }>>();
 
+  /** Non-streaming structured call: shape, retry, report usage, unwrap. */
+  async function callParse<T>(kind: RequestKind, base: BaseParams, format: AutoParseableBetaOutputFormat<T>, signal?: AbortSignal, onUsage?: OnUsage): Promise<T> {
+    const params = structured(kind, base, format);
+    const msg = await withRetry(() => client.beta.messages.parse(params, requestOptions(signal)), {}, signal);
+    onUsage?.(usageOf(msg, base.model));
+    return payloadOf(msg as Parsed<T>);
+  }
+
+  /** Streaming structured call for long outputs (avoids HTTP timeouts). */
+  async function callStream<T>(kind: RequestKind, base: BaseParams, format: AutoParseableBetaOutputFormat<T>, signal?: AbortSignal, onUsage?: OnUsage): Promise<T> {
+    const params = structured(kind, base, format);
+    const msg = await withRetry(() => client.beta.messages.stream(params, requestOptions(signal)).finalMessage(), {}, signal);
+    onUsage?.(usageOf(msg, base.model));
+    return payloadOf(msg as Parsed<T>);
+  }
+
   async function draftCanonicalSolution(
     blueprint: Pick<Blueprint, "construct" | "taskPrompt" | "rubric">,
     signal?: AbortSignal,
+    onUsage?: OnUsage,
   ): Promise<string> {
     const { system, user } = buildCanonicalSolutionPrompt(blueprint);
-    const msg = await withRetry(
-      () =>
-        client.messages.parse(
-          {
-            model: generatorModel,
-            max_tokens: MAX_TOKENS_LONG,
-            thinking: { type: "adaptive" },
-            system,
-            messages: [{ role: "user", content: user }],
-            output_config: { format: zodOutputFormat(CanonicalSolutionSchema) },
-          },
-          requestOptions(signal),
-        ),
-      {},
+    const out = await callParse(
+      "generate",
+      { model: generatorModel, max_tokens: MAX_TOKENS_LONG, system, messages: [{ role: "user", content: user }] },
+      betaZodOutputFormat(CanonicalSolutionSchema),
       signal,
+      onUsage,
     );
-    return payloadOf(msg).solution.trim();
+    return out.solution.trim();
   }
 
-  async function generateFewShotAnchors(blueprint: Blueprint, signal?: AbortSignal) {
+  async function generateFewShotAnchors(blueprint: Blueprint, signal?: AbortSignal, onUsage?: OnUsage) {
     const { system, user } = buildFewShotAnchorsPrompt(blueprint, thresholds);
-    const msg = await withRetry(
-      () =>
-        client.messages.parse(
-          {
-            model: generatorModel,
-            max_tokens: MAX_TOKENS_LONG,
-            thinking: { type: "adaptive" },
-            system,
-            messages: [{ role: "user", content: user }],
-            output_config: { format: zodOutputFormat(FewShotAnchorsSchema) },
-          },
-          requestOptions(signal),
-        ),
-      {},
+    const out = await callParse(
+      "generate",
+      { model: generatorModel, max_tokens: MAX_TOKENS_LONG, system, messages: [{ role: "user", content: user }] },
+      betaZodOutputFormat(FewShotAnchorsSchema),
       signal,
+      onUsage,
     );
-    const out = payloadOf(msg);
     const positive = out.positive.map((s) => s.trim()).filter(Boolean).slice(0, 2);
     const negative = out.negative.map((s) => s.trim()).filter(Boolean).slice(0, 2);
     if (positive.length < 2 || negative.length < 2) {
@@ -250,12 +339,12 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
 
     async verifyKey() {
       try {
-        await client.messages.create({
+        const params = shapeRequest(specFor(judgeModel), "short", {
           model: judgeModel,
-          max_tokens: 16,
-          output_config: { effort: "low" },
+          max_tokens: MAX_TOKENS_VERIFY,
           messages: [{ role: "user", content: "Reply with OK." }],
-        });
+        }) as unknown as Anthropic.Beta.Messages.MessageCreateParamsNonStreaming;
+        await client.beta.messages.create(params);
         return { ok: true as const, model: judgeModel };
       } catch (e) {
         throw toLlmError(e);
@@ -265,25 +354,13 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
     async extractBlueprint(input: ExtractInput): Promise<BlueprintDraft> {
       const started = Date.now();
       const { system, user } = buildExtractPrompt(input);
-      const msg = await withRetry(
-        () =>
-          client.messages
-            .stream(
-              {
-                model: generatorModel,
-                max_tokens: MAX_TOKENS_LONG,
-                thinking: { type: "adaptive" },
-                system,
-                messages: [{ role: "user", content: user }],
-                output_config: { format: zodOutputFormat(BlueprintDraftSchema) },
-              },
-              requestOptions(input.signal),
-            )
-            .finalMessage(),
-        {},
+      const wire = await callStream(
+        "extract",
+        { model: generatorModel, max_tokens: MAX_TOKENS_LONG, system, messages: [{ role: "user", content: user }] },
+        betaZodOutputFormat(BlueprintDraftSchema),
         input.signal,
+        input.onUsage,
       );
-      const wire = payloadOf(msg);
 
       const rubric = normaliseRubric(wire.rubric);
       const constructDimensions = wire.constructDimensions.map((d) => d.trim()).filter(Boolean).slice(0, 5);
@@ -294,7 +371,7 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
       let canonicalSolution = found ? wire.canonicalSolution!.trim() : "";
       let canonicalSolutionSource: Blueprint["canonicalSolutionSource"] = found ? "found" : "drafted";
       if (!found) {
-        canonicalSolution = await draftCanonicalSolution({ construct, taskPrompt, rubric }, input.signal);
+        canonicalSolution = await draftCanonicalSolution({ construct, taskPrompt, rubric }, input.signal, input.onUsage);
         canonicalSolutionSource = "drafted";
       }
 
@@ -322,17 +399,12 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
 
     async draftAnchors(criterion, blueprint) {
       const { system, user } = buildDraftAnchorsPrompt(criterion, blueprint);
-      const msg = await withRetry(() =>
-        client.messages.parse({
-          model: generatorModel,
-          max_tokens: MAX_TOKENS_LONG,
-          thinking: { type: "adaptive" },
-          system,
-          messages: [{ role: "user", content: user }],
-          output_config: { format: zodOutputFormat(AnchorsSchema) },
-        }),
+      const out = await callParse(
+        "generate",
+        { model: generatorModel, max_tokens: MAX_TOKENS_LONG, system, messages: [{ role: "user", content: user }] },
+        betaZodOutputFormat(AnchorsSchema),
       );
-      const anchors = fourStrings(payloadOf(msg).anchors);
+      const anchors = fourStrings(out.anchors);
       if (!anchors) throw new LlmError("parse", "Expected exactly four level descriptions.");
       return anchors;
     },
@@ -347,13 +419,18 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
 
     async generateVariant(input: GenerateVariantInput): Promise<GenerateVariantOutput> {
       let blueprint = input.blueprint;
+      const total = emptyUsage();
+      const onUsage: OnUsage = (u) => {
+        addUsage(total, u);
+        input.onUsage?.(u);
+      };
 
       // Few-shot needs anchors. The orchestrator is expected to cache them on the
       // blueprint; if it did not, generate once per blueprint id and reuse in-memory.
       if (input.strategy === "few-shot" && !blueprint.fewShotAnchors?.positive?.length) {
         let pending = anchorCache.get(blueprint.id);
         if (!pending) {
-          pending = generateFewShotAnchors(blueprint, input.signal);
+          pending = generateFewShotAnchors(blueprint, input.signal, onUsage);
           anchorCache.set(blueprint.id, pending);
           pending.catch(() => anchorCache.delete(blueprint.id));
         }
@@ -362,79 +439,49 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
 
       const prompt = buildGenerationPrompt({ ...input, blueprint }, thresholds);
       const model = input.generatorModel || generatorModel;
-      const base = {
+      const base: BaseParams = {
         model,
         max_tokens: MAX_TOKENS_LONG,
-        thinking: { type: "adaptive" as const },
         system: prompt.system,
-        messages: [{ role: "user" as const, content: prompt.user }],
+        messages: [{ role: "user", content: prompt.user }],
       };
 
       if (prompt.schema === "structured-cot") {
-        const msg = await withRetry(
-          () =>
-            client.messages
-              .stream(
-                { ...base, output_config: { format: zodOutputFormat(StructuredCotSchema) } },
-                requestOptions(input.signal),
-              )
-              .finalMessage(),
-          {},
-          input.signal,
-        );
-        const out = payloadOf(msg);
+        const out = await callStream("generate", base, betaZodOutputFormat(StructuredCotSchema), input.signal, onUsage);
         return {
           text: out.final.trim(),
           adaptedSolution: out.adaptedSolution.trim(),
           surfaceAssignment: mergeAssignment(input, pairsToRecord(out.surfaceAssignment)),
           scaffold: { constructMap: out.constructMap, surfacePlan: out.surfacePlan, selfCheck: out.selfCheck },
+          usage: total,
         };
       }
 
-      const msg = await withRetry(
-        () =>
-          client.messages
-            .stream(
-              { ...base, output_config: { format: zodOutputFormat(VariantSchema) } },
-              requestOptions(input.signal),
-            )
-            .finalMessage(),
-        {},
-        input.signal,
-      );
-      const out = payloadOf(msg);
+      const out = await callStream("generate", base, betaZodOutputFormat(VariantSchema), input.signal, onUsage);
       return {
         text: out.text.trim(),
         adaptedSolution: out.adaptedSolution.trim(),
         surfaceAssignment: mergeAssignment(input, pairsToRecord(out.surfaceAssignment)),
+        usage: total,
       };
     },
 
     async judgeVariant(input: JudgeInput): Promise<JudgeSample[]> {
       const { system, user } = buildJudgePrompt(input.blueprint, input.variantText);
-      const format = zodOutputFormat(JudgeSchema);
+      const format = betaZodOutputFormat(JudgeSchema);
       const limit = pLimit(JUDGE_CONCURRENCY);
       const model = input.judgeModel || judgeModel;
       const samples = Math.max(1, Math.floor(input.samples));
 
       const runs = Array.from({ length: samples }, () =>
         limit(async () => {
-          const msg = await withRetry(
-            () =>
-              client.messages.parse(
-                {
-                  model,
-                  max_tokens: MAX_TOKENS_JUDGE,
-                  system,
-                  messages: [{ role: "user", content: user }],
-                  output_config: { effort: "low", format },
-                },
-                requestOptions(input.signal),
-              ),
-            {},
+          const out = await callParse(
+            "judge",
+            { model, max_tokens: MAX_TOKENS_JUDGE, system, messages: [{ role: "user", content: user }] },
+            format,
             input.signal,
+            input.onUsage,
           );
-          const out = payloadOf(msg);
           const sample: JudgeSample = {
             dimensionScores: scoresToRecord(input.blueprint, out.dimensionScores),
             rationale: out.rationale.trim(),

@@ -5,6 +5,8 @@ import { useWorkspace } from "@lib/store/workspace";
 import { getProvider } from "@lib/store/settings";
 import { extractionSummary } from "@lib/store/selectors";
 import { parseFiles, parsePastedText } from "@lib/ingest";
+import { loadSample } from "@lib/store/samples";
+import { SAMPLES } from "@shared/samples";
 import { LlmError } from "@lib/llm";
 import type { BlueprintDraft, Criterion, SourceFile } from "@shared/types";
 
@@ -110,6 +112,38 @@ export default function Import() {
     }
   }
 
+  const [sampleNote, setSampleNote] = useState<string | null>(null);
+  const [loadingSample, setLoadingSample] = useState<string | null>(null);
+
+  async function handleSample(id: string) {
+    setError(null);
+    setSampleNote(null);
+    setLoadingSample(id);
+    setPhase("reading");
+    try {
+      const result = await loadSample(id, {
+        provider: getProvider(),
+        ws,
+        actions: { addPartner: ws.addPartner, addChallenge: ws.addChallenge, addSkill: ws.addSkill, setRoster: ws.setRoster },
+        onPhase: (ph, msg) => {
+          setPhase(ph === "extracting" ? "extracting" : "reading");
+          setMessage(msg);
+        },
+      });
+      setSources(result.parsed.sources);
+      setReadSeconds(result.parsed.readSeconds);
+      ws.setPendingDraft({ ...result.draft, challengeIds: [result.challenge.id] });
+      const by = result.extractedBy === "claude" ? "Claude" : result.extractedBy === "recorded" ? `a recorded ${result.extractionModel} extraction` : "the local parser";
+      setSampleNote(`Loaded from the ${result.sample.organisation} sample · extracted by ${by}`);
+      setPhase("ready");
+      setMessage("");
+    } catch (e) {
+      showError(e);
+    } finally {
+      setLoadingSample(null);
+    }
+  }
+
   async function handlePaste() {
     if (!pasteText.trim()) return;
     setError(null);
@@ -168,6 +202,30 @@ export default function Import() {
   return (
     <div className="va-split" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 360px", gap: 28, alignItems: "start", maxWidth: 1180 }}>
       <div className="va-stack" style={{ gap: 22 }}>
+        <Blueprint style={{ padding: "18px 20px" }}>
+          <div className="va-row-flex" style={{ alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+            <h6 style={{ margin: 0 }}>Start from a sample</h6>
+            <span className="text-muted" style={{ fontSize: 12 }}>Five real assignments, each built from an employer's own problem. Loading one runs the same file parsing and extraction as an upload.</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {SAMPLES.map((sm) => (
+              <div key={sm.id} style={{ display: "grid", gridTemplateColumns: "92px minmax(0,1fr) auto", gap: 14, alignItems: "center", padding: "10px 0", borderTop: "1px solid var(--color-divider)" }}>
+                <span className="tag tag-outline" style={{ justifySelf: "start" }}>{sm.industry}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: "var(--font-heading)", fontSize: 15, lineHeight: 1.2 }}>
+                    {sm.organisation} · {sm.title}
+                  </div>
+                  <div className="text-muted" style={{ fontSize: 12.5, lineHeight: 1.45 }}>{sm.summary}</div>
+                  <div className="text-muted" style={{ fontSize: 11.5 }}>{sm.course.code} · {sm.course.title}</div>
+                </div>
+                <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => handleSample(sm.id)} aria-label={`Load the ${sm.organisation} sample`}>
+                  {loadingSample === sm.id ? "Loading…" : "Load"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </Blueprint>
+
         <FileDrop
           onFiles={handleFiles}
           disabled={busy}
@@ -231,7 +289,7 @@ export default function Import() {
               <div className="va-row-flex" style={{ marginBottom: 12 }}>
                 <h6 style={{ margin: 0 }}>Uploaded</h6>
                 <span className="text-muted" style={{ fontSize: 12 }}>
-                  {sources.length} file{sources.length === 1 ? "" : "s"}{readSeconds != null ? ` · read in ${readSeconds} second${readSeconds === 1 ? "" : "s"}` : ""}
+                  {sources.length} file{sources.length === 1 ? "" : "s"}{readSeconds != null ? ` · read in ${readSeconds} second${readSeconds === 1 ? "" : "s"}` : ""}{sampleNote ? ` · ${sampleNote}` : ""}
                 </span>
               </div>
               <table className="table">

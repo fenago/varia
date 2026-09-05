@@ -1,0 +1,95 @@
+{
+  "id": "lending-loan-default-audit",
+  "industry": "Lending",
+  "organisation": "Bayfront Regional Bank",
+  "title": "Audit our loan-default classifier",
+  "summary": "A regional bank's default model is declining applicants in two lending regions at a rate underwriting cannot explain. Audit it from the partial model card.",
+  "course": {
+    "code": "DAT 4100",
+    "title": "Applied AI and Data Analytics"
+  },
+  "files": [
+    {
+      "name": "assignment.md",
+      "kind": "task+rubric",
+      "path": "assignment.md"
+    },
+    {
+      "name": "model-answer.md",
+      "kind": "solution",
+      "path": "model-answer.md"
+    },
+    {
+      "name": "employer-brief.md",
+      "kind": "task",
+      "path": "employer-brief.md"
+    },
+    {
+      "name": "roster.csv",
+      "kind": "roster",
+      "path": "roster.csv"
+    }
+  ],
+  "challenge": {
+    "organisation": "Bayfront Regional Bank",
+    "title": "Audit our loan-default classifier",
+    "brief": "We put a loan-default classifier into production in March across our three lending regions. In August the underwriting team in the Southwest and Coastal regions raised a complaint: applicants there are being declined at a rate that does not match what underwriters see in the files. The model vendor gave us a partial model card. It reports an aggregate accuracy of 0.91 and says \"no disparate impact detected,\" but it does not break anything down by region, income band, or the age of the credit file.\n\nWhat we want back is not a rebuild. We want an audit a model risk committee can read in one sitting: what the card proves, what it leaves out, where the model is likely to be fragile when the applicant mix changes, and which three things we should fix first and why. If the card cannot support the \"no disparate impact\" claim, say so plainly and tell us what evidence would.\n\nThe skills this exercises are the ones we hire for in our model risk group: fairness analysis, robustness evaluation, technical documentation review, and risk prioritisation. Whoever does this well would be someone we want to meet.",
+    "domain": "Lending",
+    "stakeholderRole": "Risk officer",
+    "deliverable": "A structured audit identifying fairness, robustness and documentation gaps, with prioritised recommendations the model risk committee can act on.",
+    "skillKeys": [
+      "fairness-analysis",
+      "robustness-evaluation",
+      "documentation-review",
+      "risk-prioritisation",
+      "model-auditing",
+      "evidence-based-reasoning"
+    ],
+    "contributedBy": "Marisol Quintero"
+  },
+  "partner": {
+    "organisation": "Bayfront Regional Bank",
+    "sector": "Lending",
+    "contactName": "Marisol Quintero",
+    "contactRole": "Chief Risk Officer",
+    "contactEmail": "m.quintero@bayfront.example"
+  },
+  "skills": [
+    {
+      "key": "fairness-analysis",
+      "label": "Fairness analysis",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2051.01 · Fairness assessment of models"
+    },
+    {
+      "key": "robustness-evaluation",
+      "label": "Robustness evaluation",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2051.01 · Model validation"
+    },
+    {
+      "key": "documentation-review",
+      "label": "Technical documentation review",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-1299.08 · Technical documentation"
+    },
+    {
+      "key": "risk-prioritisation",
+      "label": "Risk prioritisation",
+      "source": "taxonomy",
+      "externalRef": "O*NET 13-2054.00 · Risk assessment"
+    },
+    {
+      "key": "model-auditing",
+      "label": "Model auditing",
+      "source": "employer",
+      "externalRef": "Bayfront MRM-C3 · Model risk audit"
+    },
+    {
+      "key": "evidence-based-reasoning",
+      "label": "Evidence-based reasoning",
+      "source": "instructor"
+    }
+  ],
+  "preExtracted": null
+}

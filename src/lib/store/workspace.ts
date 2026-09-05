@@ -237,7 +237,12 @@ export const useWorkspace = create<WorkspaceState>()(
           pendingDraft: null,
           audit: [auditEvent("run", `Blueprint "${bp.name}" created from ${bp.source.files.length || "pasted"} file${bp.source.files.length === 1 ? "" : "s"}`, ws.course.instructor.name), ...ws.audit],
         });
-        return bp;
+        // A draft loaded from a sample carries the employer challenge it was built from:
+        // link both ways and pull the challenge's domain/stakeholder/scenario into the bank.
+        for (const cid of draft.challengeIds ?? []) {
+          if ((get().challenges ?? []).some((c) => c.id === cid)) get().linkChallengeToBlueprint(cid, bp.id);
+        }
+        return get().blueprints.find((b) => b.id === bp.id) ?? bp;
       },
 
       addBlueprint: (bp) => set((ws) => ({ blueprints: [...ws.blueprints, bp] })),

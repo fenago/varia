@@ -1,0 +1,95 @@
+{
+  "id": "healthcare-sepsis-model-incident",
+  "industry": "Healthcare",
+  "organisation": "Coral Health Network",
+  "title": "Explain why our sepsis-risk model degraded",
+  "summary": "A sepsis early-warning model started missing cases in two units after an EHR upgrade. Write the incident analysis and the one-page memo clinical leadership will read.",
+  "course": {
+    "code": "DAT 4100",
+    "title": "Applied AI and Data Analytics"
+  },
+  "files": [
+    {
+      "name": "assignment.md",
+      "kind": "task+rubric",
+      "path": "assignment.md"
+    },
+    {
+      "name": "model-answer.md",
+      "kind": "solution",
+      "path": "model-answer.md"
+    },
+    {
+      "name": "employer-brief.md",
+      "kind": "task",
+      "path": "employer-brief.md"
+    },
+    {
+      "name": "roster.csv",
+      "kind": "roster",
+      "path": "roster.csv"
+    }
+  ],
+  "challenge": {
+    "organisation": "Coral Health Network",
+    "title": "Explain why our sepsis-risk model degraded",
+    "brief": "We run a sepsis early-warning model on two medical-surgical units and one step-down unit. It fires an alert when a patient's risk score crosses a threshold, and the nursing team escalates. In the first week of June, nurses on the two med-surg units told us the model had \"gone quiet.\" Our own retrospective check confirmed it: sensitivity on those two units fell from about 0.78 in April to 0.52 in June, while the step-down unit stayed flat. The week before the drop, our EHR vendor pushed an upgrade that changed how lactate results and some vital-sign fields are recorded.\n\nWe think we know what happened, but we need someone outside the team to work it through from the data description and tell us, in an order a clinical leadership committee can act on, what broke, what it means for patients, and what monitoring would have caught it in a day instead of a month.\n\nWe want two things back: a root-cause incident analysis with the evidence laid out, and a one-page memo to the chief nursing officer and the chief medical officer that a non-technical reader can act on. The skills are the ones our informatics team lives on: root-cause analysis, robustness thinking about data pipelines, and writing an incident up so that a clinician trusts it.",
+    "domain": "Healthcare",
+    "stakeholderRole": "Clinical lead",
+    "deliverable": "A root-cause incident analysis and a one-page memo for clinical leadership, with a monitoring recommendation.",
+    "skillKeys": [
+      "root-cause-analysis",
+      "robustness-evaluation",
+      "incident-communication",
+      "stakeholder-communication",
+      "risk-prioritisation",
+      "evidence-based-reasoning"
+    ],
+    "contributedBy": "Dr. Renata Okafor"
+  },
+  "partner": {
+    "organisation": "Coral Health Network",
+    "sector": "Healthcare",
+    "contactName": "Dr. Renata Okafor",
+    "contactRole": "Chief Clinical Informatics Officer",
+    "contactEmail": "r.okafor@coralhealth.example"
+  },
+  "skills": [
+    {
+      "key": "root-cause-analysis",
+      "label": "Root-cause analysis",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2041.00 · Statistical root-cause analysis"
+    },
+    {
+      "key": "robustness-evaluation",
+      "label": "Robustness evaluation",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2051.01 · Model validation"
+    },
+    {
+      "key": "incident-communication",
+      "label": "Incident communication",
+      "source": "employer",
+      "externalRef": "Coral Health CQ-7 · Clinical incident write-up"
+    },
+    {
+      "key": "stakeholder-communication",
+      "label": "Stakeholder communication",
+      "source": "employer",
+      "externalRef": "Northline L2 · Executive communication"
+    },
+    {
+      "key": "risk-prioritisation",
+      "label": "Risk prioritisation",
+      "source": "taxonomy",
+      "externalRef": "O*NET 13-2054.00 · Risk assessment"
+    },
+    {
+      "key": "evidence-based-reasoning",
+      "label": "Evidence-based reasoning",
+      "source": "instructor"
+    }
+  ],
+  "preExtracted": null
+}

@@ -45,6 +45,9 @@ function regeneratedMetrics(index: number) {
   return { ...base, fleschEase: ease, solutionFleschEase: ease - 0.8, judgeSamples: demoJudgeSamples(0), equivalence: null };
 }
 
+/** Demo mode makes no API calls, so every output reports zero usage. */
+const ZERO_USAGE = () => ({ inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, calls: 0 });
+
 export function createDemoProvider(): LlmProvider {
   const seedTexts = SEED_SCENARIOS.map(seedVariantText);
 
@@ -109,6 +112,7 @@ export function createDemoProvider(): LlmProvider {
         const m = regeneratedMetrics(idx);
         if (alt) {
           return {
+            usage: ZERO_USAGE(),
             text: alt.text,
             adaptedSolution: alt.adaptedSolution,
             surfaceAssignment: { ...seedSurfaceAssignment(scenario), jargon: "plain" },
@@ -116,6 +120,7 @@ export function createDemoProvider(): LlmProvider {
           };
         }
         return {
+          usage: ZERO_USAGE(),
           text: seedText.replace(/^/, "Revised version. ").replace(/technical|methodological/g, "plain"),
           adaptedSolution: seedAdaptedSolution(scenario),
           surfaceAssignment: { ...seedSurfaceAssignment(scenario), jargon: "plain" },
@@ -124,6 +129,7 @@ export function createDemoProvider(): LlmProvider {
       }
       const m = demoMetricsForScenario(idx);
       return {
+        usage: ZERO_USAGE(),
         text: seedText,
         adaptedSolution: seedAdaptedSolution(scenario),
         surfaceAssignment: seedSurfaceAssignment(scenario),

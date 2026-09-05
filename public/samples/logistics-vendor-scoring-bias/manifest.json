@@ -1,0 +1,89 @@
+{
+  "id": "logistics-vendor-scoring-bias",
+  "industry": "Logistics",
+  "organisation": "Gulfstream Last Mile",
+  "title": "Find why our vendor-scoring model flags the wrong accounts",
+  "summary": "A delivery carrier's vendor-risk model keeps flagging reliable contractors and clearing unreliable ones. Trace the bias through the data pipeline and recommend a fix.",
+  "course": {
+    "code": "DAT 3200",
+    "title": "Applied Analytics"
+  },
+  "files": [
+    {
+      "name": "assignment.md",
+      "kind": "task+rubric",
+      "path": "assignment.md"
+    },
+    {
+      "name": "model-answer.md",
+      "kind": "solution",
+      "path": "model-answer.md"
+    },
+    {
+      "name": "employer-brief.md",
+      "kind": "task",
+      "path": "employer-brief.md"
+    },
+    {
+      "name": "roster.csv",
+      "kind": "roster",
+      "path": "roster.csv"
+    }
+  ],
+  "challenge": {
+    "organisation": "Gulfstream Last Mile",
+    "title": "Find why our vendor-scoring model flags the wrong accounts",
+    "brief": "Gulfstream contracts about 340 independent delivery vendors across South Florida. Every month a scoring model rates each vendor on reliability, and the bottom decile gets a performance review and can lose routes. Since we rebuilt the scoring pipeline last fall, our route managers say the model is flagging vendors they consider reliable and clearing ones they consider problems. Two of the flagged vendors have been with us for six years with clean records; one that was cleared had three route abandonments in a quarter.\n\nThe model itself has not changed. What changed is the pipeline that feeds it: we moved from a nightly batch to a streaming feed, added a new scan-event source from the handheld devices, and started filling gaps in delivery timestamps with an estimate.\n\nI need someone to trace the bias from the pipeline into the scores. Where does it enter, which vendors does it hurt and help, how much does it move a score, and what is the fix. I also need a plan to validate the fix before we act on scores again, because we have route managers who no longer trust the number and vendors who may have been wrongly reviewed.\n\nThe skills: data pipeline diagnosis, fairness thinking applied to a scoring system, root-cause analysis, and prioritising what to fix first when several things are wrong.",
+    "domain": "Logistics",
+    "stakeholderRole": "Operations lead",
+    "deliverable": "A pipeline diagnosis that locates where the bias enters, shows its effect on scores, and recommends a fix with a validation plan.",
+    "skillKeys": [
+      "data-pipeline-diagnosis",
+      "fairness-analysis",
+      "root-cause-analysis",
+      "robustness-evaluation",
+      "risk-prioritisation"
+    ],
+    "contributedBy": "Dana Whitlock"
+  },
+  "partner": {
+    "organisation": "Gulfstream Last Mile",
+    "sector": "Logistics",
+    "contactName": "Dana Whitlock",
+    "contactRole": "VP Network Operations",
+    "contactEmail": "d.whitlock@gulfstreamlm.example"
+  },
+  "skills": [
+    {
+      "key": "data-pipeline-diagnosis",
+      "label": "Data pipeline diagnosis",
+      "source": "employer",
+      "externalRef": "Gulfstream DE-4 · Pipeline quality review"
+    },
+    {
+      "key": "fairness-analysis",
+      "label": "Fairness analysis",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2051.01 · Fairness assessment of models"
+    },
+    {
+      "key": "root-cause-analysis",
+      "label": "Root-cause analysis",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2041.00 · Statistical root-cause analysis"
+    },
+    {
+      "key": "robustness-evaluation",
+      "label": "Robustness evaluation",
+      "source": "taxonomy",
+      "externalRef": "O*NET 15-2051.01 · Model validation"
+    },
+    {
+      "key": "risk-prioritisation",
+      "label": "Risk prioritisation",
+      "source": "taxonomy",
+      "externalRef": "O*NET 13-2054.00 · Risk assessment"
+    }
+  ],
+  "preExtracted": null
+}
