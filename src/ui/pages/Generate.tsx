@@ -77,7 +77,8 @@ export default function Generate() {
   const [worry, setWorry] = useState<Worry>(settings.preset === "formative" ? "copying" : "fairness");
   const [manual, setManual] = useState<Strategy>("zero-shot");
   // Start small: a first run of 5 shows what you get for a few dollars. "All my students" is one click.
-  const [n, setN] = useState<number>(Math.max(2, Math.min(nMax, 5)));
+  const [n, setNState] = useState<number>(Math.max(2, Math.min(nMax, ws.versionCount ?? 3)));
+  const setN = (v: number) => { setNState(v); ws.setVersionCount(v); };
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -265,7 +266,7 @@ export default function Generate() {
                 aria-describedby="versionCountHint"
               />
               <div className="va-btn-row" style={{ gap: 6 }}>
-                {[5, 10].filter((k) => k <= nMax).map((k) => (
+                {[3, 5, 10].filter((k) => k <= nMax).map((k) => (
                   <button key={k} type="button" className={`btn ${n === k ? "btn-secondary" : "btn-ghost"}`} onClick={() => setN(k)}>{k}</button>
                 ))}
                 {rosterSize > 0 && rosterSize <= nMax && (

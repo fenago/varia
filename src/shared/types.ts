@@ -489,6 +489,8 @@ export interface Workspace {
   /** Draft produced by Import, not yet saved as a blueprint */
   pendingDraft: BlueprintDraft | null;
   seededAt: string;
+  /** How many versions the instructor wants to make next (chosen on Load, used on Make). null = not chosen yet. */
+  versionCount?: number | null;
   /** Employer-outcomes bridge (added in workspace schema v1.1; older persisted states get defaults) */
   employerPartners: EmployerPartner[];
   employerValidations: EmployerValidation[];

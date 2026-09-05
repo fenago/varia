@@ -72,6 +72,7 @@ export interface WorkspaceActions {
   importJson: (json: string) => void;
 
   setRoster: (roster: Roster) => void;
+  setVersionCount: (n: number | null) => void;
   setCourse: (patch: Partial<Course>) => void;
   setPendingDraft: (draft: BlueprintDraft | null) => void;
   saveDraftAsBlueprint: () => Blueprint;
@@ -243,6 +244,7 @@ export const useWorkspace = create<WorkspaceState>()(
       },
 
       setRoster: (roster) => set({ roster }),
+      setVersionCount: (n) => set({ versionCount: n == null ? null : Math.max(2, Math.min(200, Math.floor(n))) }),
       setCourse: (patch) => set((ws) => ({ course: { ...ws.course, ...patch, instructor: ws.course.instructor } })),
 
       setPendingDraft: (draft) => set({ pendingDraft: draft }),

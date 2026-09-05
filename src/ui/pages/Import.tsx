@@ -497,10 +497,31 @@ export default function Import() {
               </div>
               <div>
                 <div className="va-heading-15" style={{ marginBottom: 4 }}>
-                  Your class <Info term="roster" />
+                  How many versions to make <Info term="version" />
                 </div>
-                <p style={{ margin: 0, fontSize: 13.5 }}>
-                  {rosterCount ? <span style={{ color: GREEN }}>✓ {rosterCount} students</span> : <span style={{ color: AMBER }}>! No class list yet. You can add one later; versions can still be made.</span>}
+                <div className="va-row-flex" style={{ alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <input
+                    id="versionCountLoad"
+                    className="input"
+                    type="number"
+                    min={2}
+                    max={200}
+                    value={ws.versionCount ?? 3}
+                    onChange={(e) => ws.setVersionCount(Number(e.target.value) || 2)}
+                    style={{ width: 80 }}
+                    aria-label="How many versions to make"
+                  />
+                  {[3, 5].map((k) => (
+                    <button key={k} type="button" className={`btn ${(ws.versionCount ?? 3) === k ? "btn-secondary" : "btn-ghost"}`} onClick={() => ws.setVersionCount(k)}>{k}</button>
+                  ))}
+                  {rosterCount > 0 && (
+                    <button type="button" className={`btn ${ws.versionCount === rosterCount ? "btn-secondary" : "btn-ghost"}`} onClick={() => ws.setVersionCount(rosterCount)}>
+                      All {rosterCount} students
+                    </button>
+                  )}
+                </div>
+                <p className="text-muted" style={{ margin: "6px 0 0", fontSize: 12.5 }}>
+                  {rosterCount ? `Start with a few to see what you get. Your class list has ${rosterCount} students; you can make one for each later.` : "No class list yet; you can add one later."}
                 </p>
               </div>
             </div>
