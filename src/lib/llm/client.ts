@@ -8,11 +8,13 @@ import Anthropic from "@anthropic-ai/sdk";
  * `maxRetries: 0` because `withRetry` in errors.ts owns retry policy.
  * `timeout` is in milliseconds in the TypeScript SDK.
  */
-export function makeClient(apiKey: string): Anthropic {
+export function makeClient(apiKey: string, workspaceId?: string | null): Anthropic {
+  const ws = workspaceId?.trim();
   return new Anthropic({
     apiKey,
     dangerouslyAllowBrowser: true,
     maxRetries: 0,
     timeout: 10 * 60 * 1000,
+    ...(ws ? { defaultHeaders: { "anthropic-workspace-id": ws } } : {}),
   });
 }

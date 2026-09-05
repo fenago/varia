@@ -396,6 +396,8 @@ export interface InstitutionSet {
 export interface Settings {
   /** Pasted by the user. Never bundled, never sent anywhere but api.anthropic.com. */
   apiKey: string | null;
+  /** Anthropic workspace id ("wrkspc_…"). Required only when the key is organisation-level. */
+  workspaceId?: string | null;
   /** true = localStorage, false = sessionStorage (cleared when the tab closes) */
   rememberKey: boolean;
   generatorModel: ModelId;

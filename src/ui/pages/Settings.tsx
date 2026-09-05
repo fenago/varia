@@ -183,6 +183,18 @@ export default function Settings() {
           <span className="va-muted-115">— otherwise the key is forgotten when this tab closes</span>
         </label>
 
+        <Field label="Workspace ID" hint="Only needed if Anthropic says your key is not scoped to a workspace. Find it in the Anthropic Console under Settings → Workspaces; it starts with wrkspc_.">
+          <input
+            className="input"
+            type="text"
+            placeholder="wrkspc_…"
+            defaultValue={s.workspaceId ?? ""}
+            onBlur={(e) => s.setWorkspaceId(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+          />
+        </Field>
+
         <div className="va-btn-row">
           <BlueprintButton onClick={saveKey} disabled={!dirty && keyDraft.trim().length === 0}>
             Save key

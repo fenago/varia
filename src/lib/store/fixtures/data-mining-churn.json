@@ -1,7 +1,7 @@
 {
   "version": 1,
   "sampleId": "data-mining-churn",
-  "recordedAt": "2026-09-05T17:23:12.943Z",
+  "recordedAt": "2026-09-05T17:27:20.033Z",
   "recordedWith": "demo-provider",
   "models": {
     "generator": "claude-opus-5",
@@ -194,15 +194,15 @@
           "status": "read"
         }
       ],
-      "extractedAt": "2026-09-05T17:23:08.320Z",
+      "extractedAt": "2026-09-05T17:27:15.413Z",
       "extractionConfidence": "medium"
     },
     "fewShotAnchors": null,
     "lastUsed": null,
     "id": "bp-data-mining-churn",
     "courseId": "course-cap4767",
-    "createdAt": "2026-09-05T17:23:08.321Z",
-    "updatedAt": "2026-09-05T17:23:08.321Z",
+    "createdAt": "2026-09-05T17:27:15.414Z",
+    "updatedAt": "2026-09-05T17:27:15.414Z",
     "challengeIds": []
   },
   "roster": {
@@ -376,8 +376,8 @@
       "total": 1,
       "message": "28 versions generated, judged and scored"
     },
-    "startedAt": "2026-09-05T17:23:08.321Z",
-    "finishedAt": "2026-09-05T17:23:12.942Z",
+    "startedAt": "2026-09-05T17:27:15.414Z",
+    "finishedAt": "2026-09-05T17:27:20.032Z",
     "variants": [
       {
         "id": "v-01",
@@ -2986,7 +2986,7 @@
     ],
     "report": {
       "runId": "run-data-mining-churn",
-      "computedAt": "2026-09-05T17:23:12.942Z",
+      "computedAt": "2026-09-05T17:27:20.032Z",
       "thresholdsVersion": 2,
       "cosineMean": 0.095,
       "ngramOverlapMean": 0.088,

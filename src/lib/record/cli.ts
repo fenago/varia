@@ -47,7 +47,8 @@ async function main() {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set. Export it for this script only, or pass --dry-run.");
     const { createLiveProvider } = await import("@lib/llm/live");
-    provider = createLiveProvider({ apiKey, rememberKey: false, generatorModel: generator, judgeModel: judge, judgeSamples, keyVerifiedAt: null });
+    const workspaceId = process.env.ANTHROPIC_WORKSPACE_ID ?? null;
+    provider = createLiveProvider({ apiKey, workspaceId, rememberKey: false, generatorModel: generator, judgeModel: judge, judgeSamples, keyVerifiedAt: null });
     await provider.verifyKey();
     console.log(`Key verified. Generator ${generator}, judge ${judge} × ${judgeSamples}, strategy ${strategy}.`);
   }

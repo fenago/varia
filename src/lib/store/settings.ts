@@ -10,6 +10,7 @@ const SESSION_KEY = "varia.session-key";
 export interface SettingsState extends Settings {
   mode: Mode;
   setApiKey: (key: string | null, remember: boolean) => void;
+  setWorkspaceId: (id: string | null) => void;
   setModels: (m: { generatorModel?: ModelId; judgeModel?: ModelId }) => void;
   setJudgeSamples: (n: number) => void;
   markVerified: (model: ModelId) => void;
@@ -18,6 +19,7 @@ export interface SettingsState extends Settings {
 
 const DEFAULTS: Settings = {
   apiKey: null,
+  workspaceId: null,
   rememberKey: false,
   generatorModel: DEFAULT_GENERATOR,
   judgeModel: DEFAULT_JUDGE,
@@ -119,6 +121,7 @@ export const useSettings = create<SettingsState>()(
           judgeModel: m.judgeModel ?? s.judgeModel,
         })),
       setJudgeSamples: (n) => set({ judgeSamples: Math.max(1, Math.min(9, Math.round(n))) }),
+      setWorkspaceId: (id) => set({ workspaceId: id && id.trim().length ? id.trim() : null, keyVerifiedAt: null }),
       markVerified: (_model) => set({ keyVerifiedAt: new Date().toISOString() }),
       forgetKey: () => set({ apiKey: null, mode: "demo", keyVerifiedAt: null }),
     }),

@@ -278,7 +278,7 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
   if (!settings.apiKey) {
     throw new LlmError("auth", "No API key set. Paste your Anthropic key on the Settings page.");
   }
-  const client = makeClient(settings.apiKey);
+  const client = makeClient(settings.apiKey, settings.workspaceId ?? null);
   const generatorModel: ModelId = settings.generatorModel;
   const judgeModel: ModelId = settings.judgeModel;
 
