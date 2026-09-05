@@ -41,7 +41,7 @@ function writeHidden(key: string, hidden: boolean) {
 export function StepIntro({ step, title, what, doThis, next, learn = [], storageKey }: StepIntroProps) {
   const key = `varia.intro.${storageKey ?? step}`;
   const [hidden, setHidden] = useState(() => readHidden(key));
-  const kicker = `Step ${step + 1} of ${STEP_COUNT} · what this step does`;
+  const kicker = `Step ${step} of ${STEP_COUNT} · what this step does`;
 
   if (hidden) {
     return (

@@ -410,7 +410,7 @@ export default function Report() {
                   <button type="button" className="btn btn-secondary" onClick={() => ws.sendToReviewer(run.id)}>Send to reviewer</button>
                 </div>
               </div>
-              <svg viewBox="0 0 1060 250" style={{ width: "100%", height: 250, display: "block" }} role="img" aria-label="Every version plotted on the four checks">
+              <svg viewBox="0 0 1060 250" style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label="Every version plotted on the four checks">
                 <g className="va-ax">
                   {AXES.map((x) => <line key={x} x1={x} y1={30} x2={x} y2={210} />)}
                 </g>

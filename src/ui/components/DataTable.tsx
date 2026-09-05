@@ -33,6 +33,7 @@ export function DataTable<Row>({
   style,
 }: DataTableProps<Row>) {
   return (
+    <div className="va-table-scroll">
     <table className={["table", className].filter(Boolean).join(" ")} style={style}>
       <thead>
         <tr>
@@ -82,5 +83,6 @@ export function DataTable<Row>({
         )}
       </tbody>
     </table>
+    </div>
   );
 }

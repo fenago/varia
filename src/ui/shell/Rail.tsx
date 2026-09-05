@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { X } from "lucide-react";
 import { useWorkspace } from "@lib/store/workspace";
 import { journeyState, JOURNEY_LABELS } from "@lib/store/journey";
 
@@ -40,12 +41,17 @@ const SECTIONS: { heading: string; items: RailItem[] }[] = [
   },
 ];
 
-export function Rail() {
+export function Rail({ open = false, onClose, id = "va-rail" }: { open?: boolean; onClose?: () => void; id?: string } = {}) {
   const ws = useWorkspace();
   const journey = journeyState(ws);
   const stepFor = (to: string) => journey.steps.find((st) => st.path === to);
   return (
-    <aside className="va-rail" aria-label="Navigation">
+    <aside id={id} className={`va-rail${open ? " is-open" : ""}`} aria-label="Navigation">
+      {onClose ? (
+        <button type="button" className="va-rail-close" onClick={onClose} aria-label="Close navigation">
+          <X size={20} strokeWidth={1.5} />
+        </button>
+      ) : null}
       <div className="va-rail-brand">
         <div className="va-rail-logo">
           <img
