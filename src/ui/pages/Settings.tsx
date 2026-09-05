@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
-import { Blueprint, BlueprintButton, Dialog, Field, Pill } from "@ui/components";
+import { Blueprint, BlueprintButton, Dialog, Field, Pill, SegChoice } from "@ui/components";
 import { useSettings, getProvider } from "@lib/store/settings";
 import { useWorkspace } from "@lib/store/workspace";
 import { fixturesAreReal, listFixtures } from "@lib/store/fixtures";
 import { LlmError } from "@lib/llm";
 import { GENERATOR_MODELS, JUDGE_MODELS } from "@shared/types";
-import { modelCaveat, modelOptionText, modelsByFamily, type ModelRole } from "@shared/models";
+import { PRESET_ORDER, RUN_PRESETS, modelCaveat, modelOptionText, modelsByFamily, presetDescription, type ModelRole, type RunPreset } from "@shared/models";
 
 const RED = "#8d4a3c";
 const WORKSPACE_KEY = "varia.workspace.v1";
@@ -224,8 +224,20 @@ export default function Settings() {
       <Blueprint style={{ padding: "20px 22px" }}>
         <h6 style={{ margin: "0 0 4px" }}>Models</h6>
         <p className="va-muted-125" style={{ margin: "0 0 14px" }}>
-          The generator writes the versions; the judge scores construct equivalence and is held fixed across a run.
+          The generator writes the versions and extracts blueprints on Import; the judge scores construct equivalence and is held fixed across a run.
         </p>
+        <div style={{ marginBottom: 14 }}>
+          <div className="va-muted-12" style={{ marginBottom: 6 }}>Preset</div>
+          <SegChoice<RunPreset>
+            name="settings-preset"
+            value={s.preset}
+            onChange={(id) => s.setPreset(id)}
+            options={PRESET_ORDER.map((id) => ({ value: id, label: id === "custom" ? "Custom" : RUN_PRESETS[id].label }))}
+          />
+          <div className="va-muted-12" style={{ marginTop: 6, lineHeight: 1.5 }}>
+            {presetDescription(s.preset, { generator: s.generatorModel, judge: s.judgeModel, judgeSamples: s.judgeSamples, strategy: "structured-cot" })}
+          </div>
+        </div>
         <div className="va-two" style={{ gap: 16 }}>
           <Field label="Generator" htmlFor="genModel">
             <select id="genModel" className="input" value={s.generatorModel} onChange={(e) => s.setModels({ generatorModel: e.target.value })}>
