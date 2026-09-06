@@ -52,3 +52,4 @@ export { BadgePreview, badgeOptionsFor } from "./BadgePreview";
 export type { BadgePreviewProps, BadgeState } from "./BadgePreview";
 export { LinkedInCardMock } from "./LinkedInCardMock";
 export type { LinkedInCardMockProps } from "./LinkedInCardMock";
+export { NumbersSwitch, QuantitiesTable, QuantitiesSummary, useBlueprintQuantities, varyOn, changingQuantities, asWritten, rangeText, policyWord, formulaCheck, defaultRangeFor, newQuantity } from "./Quantities";

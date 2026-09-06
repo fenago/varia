@@ -23,6 +23,10 @@ import { maxPairJaccard4, pairwiseJaccard4Mean } from "./ngram";
 import { pairwiseCosineMean } from "./cosine";
 import { stripSharedBoilerplate } from "./boilerplate";
 import { clamp01, mean, median, stddev } from "./stats";
+import { quantitiesSummary } from "@lib/quantities";
+
+/** Above this spread of the numeric-difficulty proxy the P4 note carries an advisory (never a gate). */
+export const QUANTITY_COMPLEXITY_SIGMA_ADVISORY = 2;
 
 /** Bar geometry: the x-axis span each metric is drawn against. */
 const BAR_SPAN = { cosine: 0.6, fleschSigma: 25 } as const;
@@ -85,6 +89,8 @@ export interface ReportOptions {
   outlierMinNamed?: number;
   /** Step count of the canonical solution, for the P3 step-mismatch advisory */
   canonicalStepCount?: number | null;
+  /** Wave 11: whether this run drew its own figures per version (from the blueprint's switch) */
+  quantitiesVaried?: boolean;
 }
 
 /**
@@ -133,6 +139,8 @@ export interface CheckInputs {
   stepMismatch?: number;
   /** Wave 6c (v3): shared lines removed before P1 metrics */
   boilerplateLinesRemoved?: number;
+  /** Wave 11: controlled figures summary, when any version carried them */
+  quantities?: IntegrityReport["quantities"];
 }
 
 const fmt = (x: number, d: number) => (Number.isFinite(x) ? x.toFixed(d) : "—");
@@ -160,6 +168,12 @@ export function buildChecks(inputs: CheckInputs, thresholds: ThresholdSet): Reco
     const outlierMean = mean(inputs.p4Outliers.map((v) => v.metrics.fleschEase));
     const g = Math.max(1, Math.round((fleschMean - outlierMean) / 10));
     p4Note = `${k} versions read ${g} grade levels above the rest. Regenerate those ${k}, or loosen the jargon register.`;
+  }
+  // Advisory only: the numbers' spread of arithmetic difficulty is not part of the P4 gate.
+  const q = inputs.quantities;
+  if (q && q.varied && q.checked >= 2 && q.complexitySigma > QUANTITY_COMPLEXITY_SIGMA_ADVISORY) {
+    const advisory = `Numeric difficulty also varies across versions (σ ${fmt(q.complexitySigma, 1)} on the arithmetic proxy). Tighten the ranges or decimals on "Check what we found" if the numbers should be equally hard.`;
+    p4Note = p4Note ? `${p4Note} ${advisory}` : advisory;
   }
 
   return {
@@ -258,6 +272,13 @@ export function computeReport(run: Run, thresholds: ThresholdSet, opts: ReportOp
       ? 0
       : scorable.filter((v) => Math.abs(v.metrics.stepCount - (opts.canonicalStepCount as number)) > 2).length;
   const texts = stripped.texts;
+  const withQuantities = scorable.filter((v) => v.quantities);
+  const quantities: IntegrityReport["quantities"] = withQuantities.length
+    ? quantitiesSummary(
+        withQuantities.map((v) => v.quantities),
+        opts.quantitiesVaried ?? valuesDiffer(withQuantities.map((v) => v.quantities!.values)),
+      )
+    : null;
 
   const cosineMean = pairwiseCosineMean(texts);
   const ngramOverlapMean = pairwiseJaccard4Mean(texts);
@@ -300,6 +321,7 @@ export function computeReport(run: Run, thresholds: ThresholdSet, opts: ReportOp
       p2Outliers: p2Ids,
       stepMismatch,
       boilerplateLinesRemoved,
+      quantities,
     },
     thresholds,
   );
@@ -322,6 +344,7 @@ export function computeReport(run: Run, thresholds: ThresholdSet, opts: ReportOp
     joint,
     failure,
     checks,
+    quantities,
     outliers,
     releasable: checks.p1.gate === "pass" && checks.p2.gate === "pass" && checks.p4.gate === "pass",
   };
@@ -349,4 +372,15 @@ export function applyFlags(variants: Variant[], report: IntegrityReport, opts: P
     ...v,
     flags: { p4Outlier: p4Set.has(v.id), p2Low: p2Set.has(v.id) },
   }));
+}
+
+/** True when any key takes more than one value across the versions. */
+function valuesDiffer(sets: Record<string, number>[]): boolean {
+  if (sets.length < 2) return false;
+  const keys = new Set(sets.flatMap((v) => Object.keys(v)));
+  for (const k of keys) {
+    const seen = new Set(sets.map((v) => v[k]).filter((x) => x !== undefined));
+    if (seen.size > 1) return true;
+  }
+  return false;
 }

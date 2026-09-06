@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 /* type-scale: applied */
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Blueprint as Frame, BlueprintButton, EmptyState, Field, Info, StepIntro } from "@ui/components";
+import { Blueprint as Frame, BlueprintButton, EmptyState, Field, Info, StepIntro, NumbersSwitch, QuantitiesTable, changingQuantities, newQuantity, useBlueprintQuantities, varyOn } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
 import { getProvider } from "@lib/store/settings";
 import { activeBlueprint, blueprintLibrary, readinessOf } from "@lib/store/selectors";
 import { parseFiles } from "@lib/ingest";
 import { LlmError } from "@lib/llm";
-import type { Criterion } from "@shared/types";
+import type { Criterion, Quantity } from "@shared/types";
 
 const RED = "#8d4a3c";
 const GREEN = "#3d6b4d";
@@ -90,6 +90,33 @@ export default function BlueprintPage() {
   const varies = bp.surfaceDimensions.filter((d) => !d.locked && d.enabled);
   const fixed = bp.surfaceDimensions.filter((d) => d.locked || !d.enabled);
   const totalPoints = bp.rubric.reduce((s, c) => s + c.points, 0);
+  const { quantities, fromParser } = useBlueprintQuantities(bp);
+  const changing = changingQuantities(quantities);
+  const vary = varyOn(bp);
+
+  /** First edit persists the parser's list, so later patches have something to patch. */
+  function ensureQuantities(): Quantity[] {
+    if (bp && fromParser) ws.setQuantities(bp.id, quantities);
+    return quantities;
+  }
+  function patchQuantity(id: string, patch: Partial<Quantity>) {
+    if (!bp) return;
+    ensureQuantities();
+    ws.patchQuantity(bp.id, id, patch);
+  }
+  function removeQuantity(id: string) {
+    if (!bp) return;
+    ws.setQuantities(bp.id, ensureQuantities().filter((q) => q.id !== id));
+  }
+  function addQuantity() {
+    if (!bp) return;
+    const list = ensureQuantities();
+    ws.setQuantities(bp.id, [...list, newQuantity(list)]);
+  }
+  function resetQuantities() {
+    if (!bp) return;
+    ws.updateBlueprint(bp.id, { quantities: undefined });
+  }
 
   function fail(e: unknown) {
     if (e instanceof LlmError && e.kind === "auth") {
@@ -178,7 +205,7 @@ export default function BlueprintPage() {
         what="This is the blueprint: the skill, the rubric and your model answer. It is what stays the same for every student."
         doThis="Read it. Fix anything that is wrong. The rubric here is what will grade every version."
         next="We make one version per student from it."
-        learn={["blueprint", "construct", "rubric", "anchors"]}
+        learn={["blueprint", "construct", "rubric", "anchors", "quantities", "vary-numbers"]}
       />
 
       {/* Readiness as sentences, always visible */}
@@ -262,6 +289,21 @@ export default function BlueprintPage() {
                   </div>
                 </div>
               )}
+            </div>
+
+            <div data-walk="numbers">
+              <div className="va-heading-15" style={{ marginBottom: 4 }}>
+                Numbers in this assignment <Info term="quantities" />
+              </div>
+              <p className="va-muted-125" style={{ margin: "0 0 8px", maxWidth: "70ch" }}>
+                {quantities.length
+                  ? `We found ${quantities.length} figure${quantities.length === 1 ? "" : "s"}. ${changing.length ? `${changing.length} of them can change from student to student; the rest stay as written.` : "All of them stay as written."} Each version gets its own figures, chosen by code, so students cannot share worked answers.`
+                  : "We found no figures in this assignment."}
+              </p>
+              <QuantitiesTable quantities={quantities} fromParser={fromParser} />
+              <div style={{ marginTop: 10 }}>
+                <NumbersSwitch on={vary} onChange={(on) => ws.setVaryQuantities(bp.id, on)} count={changing.length} />
+              </div>
             </div>
 
             <div className="va-two" style={{ gap: 16 }}>
@@ -457,6 +499,28 @@ export default function BlueprintPage() {
                 {error}
               </div>
             )}
+          </Frame>
+
+          <Frame style={{ padding: "20px 22px" }}>
+            <div className="va-row-flex" style={{ marginBottom: 8, flexWrap: "wrap" }}>
+              <h6 style={{ margin: 0 }}>
+                Numbers in this assignment <Info term="quantities" />
+              </h6>
+              <span className="text-muted" style={{ fontSize: 14 }}>{quantities.length} figure{quantities.length === 1 ? "" : "s"} · {changing.length} change per student</span>
+              <div className="va-btn-row" style={{ marginLeft: "auto", gap: 6 }}>
+                <button type="button" className="btn btn-ghost" onClick={addQuantity}>+ Add a figure</button>
+                {!fromParser && (
+                  <button type="button" className="btn btn-ghost" onClick={resetQuantities} title="Throw away your edits and read the numbers from the assignment again">Read them again</button>
+                )}
+              </div>
+            </div>
+            <p className="card-body" style={{ margin: "0 0 12px", maxWidth: "70ch" }}>
+              For each figure choose what happens per student: it stays as written, it varies within a range you set, or it is worked out from the others by a formula <Info term="derived-number" />. Dates and pass marks usually stay; measurements and money usually vary.
+            </p>
+            <QuantitiesTable quantities={quantities} fromParser={fromParser} onPatch={patchQuantity} onRemove={removeQuantity} />
+            <div style={{ marginTop: 12 }}>
+              <NumbersSwitch on={vary} onChange={(on) => ws.setVaryQuantities(bp.id, on)} count={changing.length} id="varyQuantitiesEdit" />
+            </div>
           </Frame>
 
           <Frame style={{ padding: "20px 22px" }}>

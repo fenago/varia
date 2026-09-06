@@ -20,7 +20,8 @@ import type {
   VariantMetrics,
 } from "@shared/types";
 import { aggregateJudge, applyFlags, computeReport, computeVariantMetrics, stepCount } from "@lib/metrics";
-import { DEFAULT_ADVANCED } from "@shared/types";
+import { checkConsistency, parseQuantities, sampleQuantities } from "@lib/quantities";
+import { DEFAULT_ADVANCED, type Quantity, type QuantityOutcome } from "@shared/types";
 import { nowIso, variantId, variantIndex } from "./ids";
 import { progressStart, progressUpdate } from "./progress";
 
@@ -88,6 +89,49 @@ export function buildAssignments(dims: SurfaceDimension[], n: number, _strategy:
   return out;
 }
 
+/**
+ * Controlled figures for a run (wave 11). The blueprint's quantities, or the
+ * built-in parser's read of the task prompt when the instructor has not
+ * reviewed them (the UI shows the same fallback). Replayed recordings carry
+ * their own numbers, so the demo provider gets none.
+ */
+export function quantityPlan(blueprint: Blueprint, providerMode: LlmProvider["mode"]): { quantities: Quantity[]; vary: boolean } {
+  if (providerMode === "demo") return { quantities: [], vary: false };
+  const qs = blueprint.quantities ?? (blueprint.taskPrompt ? parseQuantities(blueprint.taskPrompt) : []);
+  const vary = blueprint.varyQuantities !== false && qs.some((q) => q.policy === "vary");
+  return { quantities: qs, vary };
+}
+
+/**
+ * The figures version `index` is built on: the originals when numbers are not
+ * varied, otherwise a seeded draw (same run + index → same numbers, so a
+ * resume or a regeneration keeps a student's figures) distinct from every
+ * other version's. A draw that cannot satisfy a constraint falls back to the
+ * originals rather than failing the version.
+ */
+export function chooseQuantityValues(
+  plan: { quantities: Quantity[]; vary: boolean },
+  runId: string,
+  index: number,
+  distinctFrom: Record<string, number>[],
+): Record<string, number> | undefined {
+  if (!plan.quantities.length) return undefined;
+  const asKept = plan.quantities.map((q) => (q.policy === "vary" ? { ...q, policy: "keep" as const } : q));
+  const originals = () => {
+    try {
+      return sampleQuantities(asKept, { seed: `${runId}:${index}` });
+    } catch {
+      return Object.fromEntries(plan.quantities.map((q) => [q.key, q.value]));
+    }
+  };
+  if (!plan.vary) return originals();
+  try {
+    return sampleQuantities(plan.quantities, { seed: `${runId}:${index}`, distinctFrom });
+  } catch {
+    return originals();
+  }
+}
+
 function emptyUsage(): UsageTotals {
   return { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, costUsd: 0, calls: 0 };
 }
@@ -148,6 +192,7 @@ function reportOpts(r: Run, blueprint: Blueprint) {
     outlierSigma: adv.outlierSigma,
     outlierMinNamed: adv.outlierMinNamed,
     canonicalStepCount: blueprint.canonicalSolution ? stepCount(blueprint.canonicalSolution) : null,
+    quantitiesVaried: quantityPlan(blueprint, r.mode === "demo" ? "demo" : "live").vary,
   };
 }
 
@@ -181,6 +226,7 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
 
   const enabled = blueprint.surfaceDimensions.filter((d) => r.enabledDimensions.includes(d.key) || d.locked);
   const assignments = buildAssignments(enabled, r.n, r.strategy);
+  const qPlan = quantityPlan(blueprint, provider.mode);
 
   const all = Array.from({ length: r.n }, (_, i) => i);
   const targets: number[] = onlyVariantIds?.length
@@ -233,29 +279,59 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
         // Usage for this variant's generation calls; merged into the variant record below.
         const vUsage: UsageTotals = existing?.usage ? { ...existing.usage } : emptyUsage();
         let vCalls = 0;
+        // Controlled figures: a regeneration keeps the numbers the student already had.
+        const otherValues = r.variants.filter((v) => v.id !== id && v.quantities?.values).map((v) => v.quantities!.values);
+        const quantityValues = existing?.quantities?.values ?? chooseQuantityValues(qPlan, r.id, i, otherValues);
         try {
-          const out = await provider.generateVariant({
-            blueprint,
-            strategy: r.strategy,
-            index: i,
-            n: r.n,
-            surfaceAssignment: assignments[i] ?? {},
-            priorVariantTexts: prior,
-            generatorModel: r.generatorModel,
-            signal,
-            advanced: adv,
-            onUsage: (u) => {
-              vCalls += u.calls;
-              accumulateUsage(r, undefined, u);
-              const t = vUsage;
-              t.inputTokens += u.inputTokens;
-              t.outputTokens += u.outputTokens;
-              t.cacheReadTokens += u.cacheReadTokens;
-              t.cacheWriteTokens += u.cacheWriteTokens;
-              t.costUsd += u.costUsd;
-              t.calls += u.calls;
-            },
-          });
+          const onUsage = (u: UsageTotals) => {
+            vCalls += u.calls;
+            accumulateUsage(r, undefined, u);
+            const t = vUsage;
+            t.inputTokens += u.inputTokens;
+            t.outputTokens += u.outputTokens;
+            t.cacheReadTokens += u.cacheReadTokens;
+            t.cacheWriteTokens += u.cacheWriteTokens;
+            t.costUsd += u.costUsd;
+            t.calls += u.calls;
+          };
+          const generate = (retryNote?: string) =>
+            provider.generateVariant({
+              blueprint,
+              strategy: r.strategy,
+              index: i,
+              n: r.n,
+              surfaceAssignment: assignments[i] ?? {},
+              priorVariantTexts: prior,
+              generatorModel: r.generatorModel,
+              signal,
+              advanced: adv,
+              onUsage,
+              ...(quantityValues ? { quantityValues } : {}),
+              ...(retryNote ? { retryNote } : {}),
+            });
+          let out = await generate();
+          // Consistency: every controlled figure must appear in the text and the model answer.
+          // One retry that names what was left out; after that the version is kept and flagged.
+          let outcome: QuantityOutcome | undefined;
+          if (quantityValues) {
+            outcome = checkConsistency(qPlan.quantities, quantityValues, [out.text, out.adaptedSolution]);
+            if (!outcome.consistent && !signal.aborted) {
+              const missingLabels = outcome.missing.map((k) => qPlan.quantities.find((q) => q.key === k)?.label ?? k);
+              r.progress = progressUpdate(r.progress, { current: `${id} · rewriting: ${missingLabels.length} figure${missingLabels.length === 1 ? "" : "s"} missing` });
+              emit();
+              const retry = await generate(
+                `It did not use these required figures in both the text and the adapted solution: ${missingLabels.join("; ")}. Write each listed figure exactly as given, at least once in the text and once in the adapted solution.`,
+              );
+              const retryOutcome = checkConsistency(qPlan.quantities, quantityValues, [retry.text, retry.adaptedSolution]);
+              if (retryOutcome.consistent || retryOutcome.missing.length <= outcome.missing.length) {
+                out = retry;
+                outcome = retryOutcome;
+              }
+              if (!outcome.consistent) {
+                r.progress = progressUpdate(r.progress, { warning: `${id}: ${outcome.missing.length} figure${outcome.missing.length === 1 ? "" : "s"} still missing after one rewrite (${missingLabels.slice(0, 3).join(", ")})` });
+              }
+            }
+          }
           const base = metricsFrom(out.text, out.adaptedSolution, out.scaffold, r.mode);
           const v: Variant = {
             id,
@@ -269,6 +345,7 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
             status: existing ? "regenerated" : "draft",
             generation: (existing?.generation ?? 0) + 1,
             scaffold: out.scaffold,
+            ...(outcome ? { quantities: outcome } : {}),
           };
           if (vCalls > 0 || existing?.usage) v.usage = vUsage;
           upsertVariant(r, v);
@@ -322,6 +399,7 @@ export async function runGeneration(args: RunGenerationArgs): Promise<Run> {
             variantText: v.text,
             judgeModel: r.judgeModel,
             samples: r.judgeSamples,
+            ...(v.quantities?.values && qPlan.quantities.length ? { quantityValues: v.quantities.values } : {}),
             signal,
             onUsage: (u) => accumulateUsage(r, r.variants.find((x) => x.id === v.id), u),
           });

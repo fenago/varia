@@ -1,4 +1,5 @@
-import { DEFAULT_ADVANCED, type GenerateVariantInput, type ThresholdSet } from "@shared/types";
+import { DEFAULT_ADVANCED, type GenerateVariantInput, type Quantity, type ThresholdSet } from "@shared/types";
+import { formatQuantity } from "@lib/quantities";
 import {
   formatAssignment,
   formatBlueprint,
@@ -51,6 +52,12 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
     `- surfaceAssignment: the value you actually used for each enabled surface dimension.`,
     `- Locked dimensions are never varied: ${lockedDims.map((d) => d.label.toLowerCase()).join(", ") || "reading level, step count"} must match the original task.`,
   ];
+  if ((blueprint.quantities ?? []).length) {
+    systemParts.push(
+      ``,
+      `CONTROLLED FIGURES. The numbers in this assessment are variables. The app, not you, chooses each version's values and lists them under "FIGURES FOR THIS VERSION". Build the scenario and the model answer around exactly those figures: write every listed figure at least once in the text, in one of the forms shown, and use the same figures in the adapted solution. Do not round, rescale, convert or replace a listed figure, and do not add other headline numbers that would change the finding. Figures marked "keep" are the original's and stay as written; figures marked "derived" are already computed from the others, so state them as given rather than recomputing them.`,
+    );
+  }
 
   // Stable per run: the blueprint and the strategy's per-run material (anchors, enabled dimensions).
   const stableParts: string[] = [formatBlueprint(blueprint), ``];
@@ -150,6 +157,12 @@ export function buildGenerationPrompt(input: GenerateVariantInput, thresholds: T
     }
   }
 
+  const figures = formatFigures(blueprint.quantities ?? [], input.quantityValues);
+  if (figures) {
+    volatileParts.push(``, `FIGURES FOR THIS VERSION (mandatory; use exactly these, each at least once, in the text and in the adapted solution):`, figures);
+  }
+  if (input.retryNote) volatileParts.push(``, `NOTE ON YOUR PREVIOUS ATTEMPT: ${input.retryNote}`);
+
   volatileParts.push(
     ``,
     `VERSIONS ALREADY GENERATED IN THIS SET (first 200 characters of each). This version must differ in scenario from all of these:`,
@@ -177,4 +190,25 @@ function wordCount(s: string): number {
 function countSteps(s: string): number {
   const n = s.split(/\r?\n/).filter((line) => /^\s*(\d+[.)]|[-*•])\s+/.test(line)).length;
   return n > 0 ? n : Math.max(1, s.split(/\n\s*\n/).filter((p) => p.trim()).length);
+}
+
+/**
+ * One line per controlled figure: label, key, the value in its preferred form,
+ * the other accepted renderings, the policy and any constraint. Empty when the
+ * run passes no values (no quantities, or a replayed recording).
+ */
+export function formatFigures(quantities: Quantity[], values?: Record<string, number>): string {
+  if (!values) return "";
+  const lines: string[] = [];
+  for (const q of quantities) {
+    const v = values[q.key];
+    if (v === undefined || !Number.isFinite(v)) continue;
+    const forms = formatQuantity(q, v);
+    const shown = forms[0] ?? String(v);
+    const alt = forms.slice(1, 4);
+    const tags = [q.policy === "keep" ? "keep: as in the original" : q.policy === "derived" ? `derived${q.formula ? ` = ${q.formula}` : ""}` : "chosen for this version"];
+    if (q.constraint) tags.push(q.constraint);
+    lines.push(`- ${q.label} (${q.key}): ${shown}${alt.length ? ` (also acceptable: ${alt.join(", ")})` : ""} — ${tags.join("; ")}`);
+  }
+  return lines.join("\n");
 }

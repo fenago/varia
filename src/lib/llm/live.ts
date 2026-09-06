@@ -17,7 +17,11 @@ import type {
   SourceFile,
   SurfaceDimension,
   ThresholdSet,
-  UsageTotals, PreScoreInput, PreScoreOutput } from "@shared/types";
+  UsageTotals,
+  PreScoreInput,
+  PreScoreOutput,
+  Quantity,
+} from "@shared/types";
 import { DEFAULT_THRESHOLDS } from "@shared/thresholds";
 import { costOf, modelSpec, type ModelSpec } from "@shared/models";
 import { makeClient } from "./client";
@@ -26,6 +30,7 @@ import { shapeRequest, type RequestKind } from "./shape";
 import {
   AnchorsSchema,
   BlueprintDraftSchema,
+  type QuantityDraftWire,
   CanonicalSolutionSchema,
   FewShotAnchorsSchema,
   JudgeSchema,
@@ -37,7 +42,7 @@ import {
 } from "./schemas";
 import { buildDraftAnchorsPrompt, buildCanonicalSolutionPrompt, buildFewShotAnchorsPrompt } from "./prompts/anchors";
 import { buildExtractPrompt } from "./prompts/extract";
-import { buildJudgePrompt } from "./prompts/judge";
+import { buildJudgePrompt, SOLVABILITY_DIMENSION } from "./prompts/judge";
 import { PreScoreSchema, buildPreScorePrompt, preScoreToOutput } from "./prompts/prescore";
 import { buildGenerationPrompt, type GenerationSchemaKind } from "./prompts/strategies";
 import type { CacheablePrompt } from "./prompts/shared";
@@ -181,8 +186,8 @@ export function buildGenerationRequest(
 }
 
 /** One judge sample's request (every sample of a variant sends the same bytes). */
-export function buildJudgeRequest(input: Pick<JudgeInput, "blueprint" | "variantText">, model: ModelId): BaseParams {
-  const prompt = buildJudgePrompt(input.blueprint, input.variantText);
+export function buildJudgeRequest(input: Pick<JudgeInput, "blueprint" | "variantText" | "quantityValues">, model: ModelId): BaseParams {
+  const prompt = buildJudgePrompt(input.blueprint, input.variantText, input.quantityValues);
   return { model, max_tokens: MAX_TOKENS_JUDGE, system: prompt.system, messages: [cachedUserMessage(prompt)] };
 }
 
@@ -301,6 +306,47 @@ function normaliseRubric(wire: BlueprintDraftWire["rubric"]): Criterion[] {
       anchorsConfidence: anchors ? (c.anchorsConfidence === "missing" ? "draft" : c.anchorsConfidence) : "missing",
     };
   });
+}
+
+/**
+ * Wire quantities → Quantity[]: unique snake_case keys, the model's suggested
+ * policy, a formula only for derived entries. Ranges are left to the guard
+ * (extractGuard merges the deterministic parser's ranges in).
+ */
+export function normaliseQuantities(wire: QuantityDraftWire[]): Quantity[] {
+  const out: Quantity[] = [];
+  const seen = new Set<string>();
+  for (const q of wire) {
+    if (!Number.isFinite(q.value)) continue;
+    const base =
+      q.key
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .replace(/^(\d)/, "q$1") || "value";
+    let key = base;
+    for (let n = 2; seen.has(key); n++) key = `${base}_${n}`;
+    seen.add(key);
+    const policy: Quantity["policy"] = q.suggestedPolicy === "derived" && q.formula?.trim() ? "derived" : q.suggestedPolicy === "keep" ? "keep" : "vary";
+    const item: Quantity = {
+      id: `q-${out.length + 1}`,
+      key,
+      label: q.label.trim() || key.replace(/_/g, " "),
+      value: q.value,
+      kind: q.kind,
+      policy,
+    };
+    const unit = q.unit?.trim();
+    if (unit) item.unit = unit;
+    if (policy === "derived") item.formula = q.formula!.trim();
+    const context = q.context?.trim();
+    if (context) item.context = context.slice(0, 200);
+    const constraint = q.constraint?.trim();
+    if (constraint) item.constraint = constraint.slice(0, 200);
+    out.push(item);
+  }
+  return out;
 }
 
 function stripText(files: SourceFile[]): SourceFile[] {
@@ -454,6 +500,7 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
         },
         fewShotAnchors: null,
         lastUsed: null,
+        quantities: normaliseQuantities(wire.quantities ?? []),
       };
       return draft;
     },
@@ -541,10 +588,13 @@ export function createLiveProvider(settings: Settings, thresholds: ThresholdSet 
       const runs = Array.from({ length: samples }, () =>
         limit(async () => {
           const out = await callParse("judge", base, format, input.signal, input.onUsage);
-          const sample: JudgeSample = {
-            dimensionScores: scoresToRecord(input.blueprint, out.dimensionScores),
-            rationale: out.rationale.trim(),
-          };
+          const dimensionScores = scoresToRecord(input.blueprint, out.dimensionScores);
+          // Solvability is scored only for versions that carried controlled figures; it then
+          // counts toward equivalence like any dimension (see SOLVABILITY_DIMENSION).
+          if (input.quantityValues && Object.keys(input.quantityValues).length && out.solvability != null && Number.isFinite(out.solvability)) {
+            dimensionScores[SOLVABILITY_DIMENSION] = Math.min(5, Math.max(1, Math.round(out.solvability)));
+          }
+          const sample: JudgeSample = { dimensionScores, rationale: out.rationale.trim() };
           return sample;
         }),
       );

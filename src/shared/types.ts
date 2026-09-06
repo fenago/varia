@@ -138,6 +138,10 @@ export interface Blueprint {
   lastUsed?: { term: string; joint: number } | null;
   /** Employer challenges this blueprint draws scenarios from */
   challengeIds?: string[];
+  /** Numbers found in the assignment and the policy for each (instructor-controlled) */
+  quantities?: Quantity[];
+  /** Whether versions get their own numbers (default true when any quantity is "vary") */
+  varyQuantities?: boolean;
   /** Set when the blueprint came from one of the five sample assessments */
   sampleId?: string | null;
   /** True when a recorded run exists for this sample, so "Make the versions" can replay it for free */
@@ -192,6 +196,8 @@ export interface Variant {
   scaffold?: unknown;
   /** Actual usage for this variant's generation + judging */
   usage?: UsageTotals;
+  /** The numbers this version was built on, and whether they came through intact */
+  quantities?: QuantityOutcome;
   error?: string;
 }
 
@@ -237,6 +243,8 @@ export interface IntegrityReport {
   checks: Record<Property, Check>;
   /** The most similar pair of versions by 4-gram overlap */
   mostSimilarPair?: { a: string; b: string; overlap: number } | null;
+  /** Numbers: how many versions carried every controlled value intact, and the spread of numeric difficulty */
+  quantities?: { checked: number; consistent: number; complexitySigma: number; varied: boolean } | null;
   /** Variant IDs named by a failing check */
   outliers: string[];
   /** P1, P2, P4 all pass */
@@ -530,6 +538,10 @@ export interface GenerateVariantInput {
   n: number;
   /** Pre-chosen assignment for dimension-preserving; hint for the others */
   surfaceAssignment: SurfaceAssignment;
+  /** Controlled numbers for this version (key -> value), chosen by code; the model must use exactly these */
+  quantityValues?: Record<string, number>;
+  /** Set on the one retry after a consistency failure: which figures the previous attempt left out */
+  retryNote?: string;
   /** Texts of variants already generated in this run (for diversity nudging) */
   priorVariantTexts: string[];
   generatorModel: ModelId;
@@ -554,6 +566,8 @@ export interface JudgeInput {
   variantText: string;
   judgeModel: ModelId;
   samples: number;
+  /** The controlled figures this version was built on; when present the judge also scores solvability */
+  quantityValues?: Record<string, number>;
   signal?: AbortSignal;
   /** Called once per judge sample request (wave 1: real usage) */
   onUsage?: (u: UsageTotals) => void;
@@ -904,4 +918,48 @@ export interface IssuedCredential {
   signedWithKid: string;
   revokedAt: string | null;
   revocationReason?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Controlled quantities (numbers as variables, chosen by code, not invented)
+// ---------------------------------------------------------------------------
+
+export type QuantityKind = "rate" | "count" | "money" | "measure" | "date" | "threshold" | "score" | "other";
+export type QuantityPolicy = "keep" | "vary" | "derived";
+
+export interface QuantityRange {
+  min: number;
+  max: number;
+  /** Rounding step, e.g. 0.01 for a rate, 1 for a count, 100 for money */
+  step?: number;
+  decimals?: number;
+}
+
+export interface Quantity {
+  id: string;
+  /** Short identifier usable in formulas, e.g. "accuracy", "default_rate_north" */
+  key: string;
+  /** Plain-words label, e.g. "Overall accuracy on the holdout" */
+  label: string;
+  value: number;
+  unit?: string; // "%", "$", "days", ""
+  kind: QuantityKind;
+  policy: QuantityPolicy;
+  range?: QuantityRange;
+  /** For derived: an arithmetic expression over other keys, e.g. "north_rate - south_rate" */
+  formula?: string;
+  /** Where it appears in the source text (a short snippet), for the instructor's confidence */
+  context?: string;
+  /** What the intended finding needs from this number, if anything, e.g. "must stay above 0.85" */
+  constraint?: string;
+}
+
+/** Per-version numeric result and its checks. */
+export interface QuantityOutcome {
+  values: Record<string, number>;
+  /** Every controlled value appears in the version text and its model answer */
+  consistent: boolean;
+  missing: string[];
+  /** Proxy for numeric difficulty: quantities used, decimals, derived steps */
+  complexity: number;
 }

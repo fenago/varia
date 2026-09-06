@@ -12,6 +12,7 @@ import type {
   Blueprint,
   BlueprintDraft,
   Criterion,
+  Quantity,
   EmployerPartner,
   EmployerValidation,
   EvidenceRecord,
@@ -88,6 +89,10 @@ export interface WorkspaceActions {
   patchCriterion: (bpId: string, critId: string, patch: Partial<Criterion>) => void;
   addCriterion: (bpId: string) => Criterion;
   removeCriterion: (bpId: string, critId: string) => void;
+  /** Controlled numbers: replace the list, patch one, or flip the per-run switch. */
+  setQuantities: (bpId: string, quantities: Quantity[]) => void;
+  patchQuantity: (bpId: string, quantityId: string, patch: Partial<Quantity>) => void;
+  setVaryQuantities: (bpId: string, on: boolean) => void;
 
   startRun: (opts: StartRunOptions) => Promise<string>;
   cancelRun: () => void;
@@ -306,6 +311,25 @@ export const useWorkspace = create<WorkspaceState>()(
               ? { ...b, updatedAt: nowIso(), rubric: b.rubric.map((c) => (c.id === critId ? { ...c, ...patch } : c)) }
               : b,
           ),
+        })),
+
+      setQuantities: (bpId, quantities) =>
+        set((ws) => ({
+          blueprints: ws.blueprints.map((b) => (b.id === bpId ? { ...b, updatedAt: nowIso(), quantities } : b)),
+        })),
+
+      patchQuantity: (bpId, quantityId, patch) =>
+        set((ws) => ({
+          blueprints: ws.blueprints.map((b) =>
+            b.id === bpId
+              ? { ...b, updatedAt: nowIso(), quantities: (b.quantities ?? []).map((q) => (q.id === quantityId ? { ...q, ...patch } : q)) }
+              : b,
+          ),
+        })),
+
+      setVaryQuantities: (bpId, on) =>
+        set((ws) => ({
+          blueprints: ws.blueprints.map((b) => (b.id === bpId ? { ...b, updatedAt: nowIso(), varyQuantities: on } : b)),
         })),
 
       addCriterion: (bpId) => {

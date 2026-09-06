@@ -108,6 +108,27 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     plain: "The paper's word for a version. The app says \"version\" everywhere an instructor reads it.",
     group: M,
   },
+  quantities: {
+    term: "Numbers in the assignment",
+    plain: "The figures a student has to work with: an accuracy of 0.91, a default rate of 18%, a budget of $12,000. VARIA finds them and asks you which ones may change from student to student and which must stay as written.",
+    more: "Each number is either kept, varied within a range you set, or derived from the others by a formula so that it always stays consistent with them.",
+    paper: "Controlled variables: numeric parameters of the task, sampled by code rather than written by the model.",
+    group: M,
+  },
+  "vary-numbers": {
+    term: "Numbers change per student",
+    plain: "When this is on, every version gets its own figures, chosen by code inside the ranges you approved, so students cannot share worked answers. When it is off, every version keeps the original figures.",
+    more: "The figures are chosen before the AI writes anything, then checked afterwards to make sure each one appears in the version and its model answer.",
+    paper: "Per-run switch over the blueprint's quantity policies.",
+    group: M,
+  },
+  "derived-number": {
+    term: "Derived number",
+    plain: "A figure that is worked out from the others rather than chosen on its own, such as the gap between two approval rates. Deriving it keeps every version's numbers consistent with each other.",
+    more: "You write a small formula over the other numbers' names, for example north_rate - south_rate, and VARIA computes it for every version.",
+    paper: "Derived quantity: an arithmetic expression over the sampled quantities.",
+    group: M,
+  },
   "surface-dimension": {
     term: "What changes between versions",
     plain: "The details that are allowed to differ from student to student: the industry, who the deliverable is for, the situation, and how technical the language is. Reading level and the number of steps are locked so the versions stay equally hard.",
@@ -247,6 +268,13 @@ export const GLOSSARY: Record<string, GlossaryEntry> = {
     term: "One rubric grades them all",
     plain: "Your criteria should fit every scenario. This check is advisory for now, because the full test in the paper is planned but not built; spot-check three versions by hand.",
     paper: "P3, rubric stability, measured by a proxy in the pilot.",
+    group: C,
+  },
+  "numbers-check": {
+    term: "Figures check",
+    plain: "After the versions are written, VARIA looks for every controlled figure in each version and its model answer. A version that lost or changed a figure is named so you can fix it before release.",
+    more: "The check also compares how much numeric work each version asks for, so that no student gets a materially harder calculation.",
+    paper: "Consistency: every sampled value present in variant and solution; numeric complexity parity.",
     group: C,
   },
   p4: {

@@ -1,7 +1,7 @@
 import { Fragment, useMemo, useState } from "react";
 /* type-scale: applied */
 import { useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, Dialog, EmptyState, Pill, ProgressBlock, Stamp } from "@ui/components";
+import { Blueprint, BlueprintButton, Dialog, EmptyState, Pill, ProgressBlock, Stamp, asWritten } from "@ui/components";
 import { Info, Term } from "@ui/components/Info";
 import { StepIntro } from "@ui/components/StepIntro";
 import { Verdict } from "@ui/components/Verdict";
@@ -11,7 +11,7 @@ import { activeRun, currentThresholds, studentById } from "@lib/store/selectors"
 import { runCompletion } from "@lib/store/orchestrator";
 import { cosine, isScorable, tfidfVectors } from "@lib/metrics";
 import { FRONTIER_BAND, STRATEGY_LABELS } from "@shared/thresholds";
-import type { Check, Property, Run, Variant } from "@shared/types";
+import type { Check, Property, Quantity, Run, Variant } from "@shared/types";
 
 const RED = "#8d4a3c";
 const ORDER: Property[] = ["p1", "p2", "p3", "p4"];
@@ -89,13 +89,15 @@ function buildLines(run: Run): Line[] {
 
 function csvFor(run: Run, nameOf: (v: Variant) => string): string {
   const esc = (s: string | number | boolean | null | undefined) => `"${String(s ?? "").replace(/"/g, '""')}"`;
-  const head = ["id", "student", "domain", "stakeholder", "fleschEase", "lexicalComplexity", "stepCount", "solutionFleschEase", "equivalence", "judgeRationale", "p4Outlier", "p2Low", "status"];
+  const head = ["id", "student", "domain", "stakeholder", "figures", "figuresIntact", "fleschEase", "lexicalComplexity", "stepCount", "solutionFleschEase", "equivalence", "judgeRationale", "p4Outlier", "p2Low", "status"];
   const rows = run.variants.map((v) =>
     [
       v.id,
       nameOf(v),
       v.surfaceAssignment.domain ?? "",
       v.surfaceAssignment.stakeholder ?? "",
+      v.quantities ? Object.entries(v.quantities.values).map(([k, n]) => `${k}=${n}`).join("; ") : "",
+      v.quantities ? v.quantities.consistent : "",
       v.metrics.fleschEase.toFixed(1),
       v.metrics.lexicalComplexity.toFixed(3),
       v.metrics.stepCount,
@@ -163,7 +165,7 @@ export default function Report() {
       what="Before anyone sees a version, VARIA checks four things: the versions look different, they measure the same skill, one rubric still fits, and they are equally hard to read."
       doThis="Read the verdict. If something failed, the report names the versions and offers a fix."
       next="Release the versions to your students."
-      learn={["four-checks", "release", "over-threshold"]}
+      learn={["four-checks", "numbers-check", "release", "over-threshold"]}
     />
   );
 
@@ -216,6 +218,28 @@ export default function Report() {
   const scorable = run.variants.filter(isScorable).length;
   const released = !!run.release;
   const nameOf = (v: Variant) => studentById(ws, v.studentId)?.name ?? "";
+
+  // ---- Controlled numbers: what each version was given, and whether it kept them ----------
+  const rq = report.quantities ?? null;
+  const hasFigures = run.variants.some((v) => v.quantities && Object.keys(v.quantities.values).length > 0);
+  const bpQuantities: Quantity[] = ws.blueprints.find((b) => b.id === run.blueprintId)?.quantities ?? [];
+  const qByKey = new Map(bpQuantities.map((q) => [q.key, q]));
+  const figuresOf = (v: Variant): string => {
+    if (!v.quantities) return "—";
+    const entries = Object.entries(v.quantities.values);
+    if (!entries.length) return "—";
+    return entries
+      .map(([k, val]) => {
+        const q = qByKey.get(k);
+        return `${q?.label ?? k}: ${q ? asWritten(q, val) : String(val)}`;
+      })
+      .join(" · ");
+  };
+  const figuresLine = rq && rq.varied
+    ? `Each version used its own figures; ${rq.consistent} of ${rq.checked} versions carried every figure through intact.`
+    : rq && !rq.varied && bpQuantities.length
+      ? "Every version kept the original figures."
+      : null;
 
   function exportCsv() {
     if (!run) return;
@@ -341,6 +365,12 @@ export default function Report() {
       {intro}
 
       <div data-walk="release">{verdict}</div>
+      {figuresLine && (
+        <div className="va-muted-125" style={{ marginTop: -8 }} data-walk="figures">
+          {figuresLine} <Info term="numbers-check" />
+          {rq && rq.varied && rq.consistent < rq.checked ? <span style={{ color: RED }}> The versions that lost a figure are marked below under the evidence.</span> : null}
+        </div>
+      )}
 
       {!inFlight && !released && !report.releasable && fixIsJargon && (
         <div className="va-muted-125" style={{ marginTop: -8 }}>
@@ -398,6 +428,7 @@ export default function Report() {
               {report.metricsVersion ? <> · metrics v{report.metricsVersion}</> : null}
               {run.usage ? <> · actual cost ${run.usage.costUsd.toFixed(2)} in {run.usage.calls} call{run.usage.calls === 1 ? "" : "s"} <Info term="actual-cost" /></> : null}
               {report.boilerplateLinesRemoved ? <> · {report.boilerplateLinesRemoved} line{report.boilerplateLinesRemoved === 1 ? "" : "s"} shared by most versions removed before scoring</> : null}
+              {rq && rq.varied ? <> · figures varied per student, numeric-difficulty spread {rq.complexitySigma.toFixed(2)} <Info term="numbers-check" /></> : null}
             </div>
 
             <div>
@@ -443,7 +474,7 @@ export default function Report() {
               </div>
               <table className="table">
                 <thead>
-                  <tr><th>Version</th><th>Student</th><th>Setting</th><th>Reading ease</th><th>Vocabulary</th><th>Steps</th><th>Same skill</th><th>Why</th></tr>
+                  <tr><th>Version</th><th>Student</th><th>Setting</th>{hasFigures && <th>Figures</th>}<th>Reading ease</th><th>Vocabulary</th><th>Steps</th><th>Same skill</th><th>Why</th></tr>
                 </thead>
                 <tbody>
                   {run.variants.map((v) => (
@@ -452,6 +483,21 @@ export default function Report() {
                         <td>{v.id}{v.error ? " · failed" : ""}</td>
                         <td>{nameOf(v) || "—"}</td>
                         <td>{[v.surfaceAssignment.domain, v.surfaceAssignment.stakeholder].filter(Boolean).join(" · ") || "—"}</td>
+                        {hasFigures && (
+                          <td style={{ fontSize: 14, lineHeight: 1.5, minWidth: 180 }}>
+                            {v.quantities ? (
+                              <>
+                                <div style={{ marginBottom: 4 }}>
+                                  <Stamp gate={v.quantities.consistent ? "pass" : "fail"}>{v.quantities.consistent ? "Figures intact" : "Figure missing"}</Stamp>
+                                </div>
+                                <div>{figuresOf(v)}</div>
+                                {!v.quantities.consistent && v.quantities.missing.length ? (
+                                  <div style={{ color: RED }}>Missing: {v.quantities.missing.map((k) => qByKey.get(k)?.label ?? k).join(", ")}</div>
+                                ) : null}
+                              </>
+                            ) : "—"}
+                          </td>
+                        )}
                         <td>{v.metrics.fleschEase.toFixed(1)}</td>
                         <td>{v.metrics.lexicalComplexity.toFixed(2)}</td>
                         <td>{v.metrics.stepCount}</td>
@@ -466,7 +512,7 @@ export default function Report() {
                       </tr>
                       {openWhy === v.id && (
                         <tr>
-                          <td colSpan={8} style={{ fontSize: 14, lineHeight: 1.5 }}>
+                          <td colSpan={hasFigures ? 9 : 8} style={{ fontSize: 14, lineHeight: 1.5 }}>
                             {v.metrics.judgeSamples.map((s, i) => (
                               <div key={i} style={{ marginBottom: 6 }}>
                                 <span className="va-kicker">Judge sample {i + 1}</span> {Object.entries(s.dimensionScores).map(([d, n]) => `${d}: ${n}`).join(" · ")}

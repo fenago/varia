@@ -46,6 +46,24 @@ export const SurfaceDimensionDraftSchema = z.object({
   note: z.string().describe("'4 found', '12 drafted' or 'held constant'"),
 });
 
+/**
+ * A number the extractor found in the task (wave 11: controlled quantities).
+ * The app, not the model, chooses each version's values; here the model only
+ * names the numbers, says what each one is, and suggests whether it may vary.
+ */
+export const QuantityDraftSchema = z.object({
+  key: z.string().describe("Short snake_case identifier usable in formulas, e.g. accuracy, north_default_rate"),
+  label: z.string().describe("Plain-words label, e.g. Overall accuracy on the holdout"),
+  value: z.number().describe("The number as it appears in the task"),
+  unit: z.string().nullable().describe("%, $, days, records … or null"),
+  kind: z.enum(["rate", "count", "money", "measure", "date", "threshold", "score", "other"]),
+  suggestedPolicy: z.enum(["keep", "vary", "derived"]).describe("keep = must stay as written; vary = a version may have its own value; derived = computed from other keys by formula"),
+  formula: z.string().nullable().describe("For derived only: arithmetic over other keys, e.g. north_rate - south_rate; else null"),
+  context: z.string().nullable().describe("The phrase in the task where the number appears"),
+  constraint: z.string().nullable().describe("What the intended finding needs from this number, e.g. must stay below the 0.80 fairness threshold; else null"),
+});
+export type QuantityDraftWire = z.infer<typeof QuantityDraftSchema>;
+
 export const BlueprintDraftSchema = z.object({
   construct: z
     .string()
@@ -64,6 +82,7 @@ export const BlueprintDraftSchema = z.object({
   taskPrompt: z.string().describe("The student-facing task prompt, verbatim where possible"),
   surfaceDimensions: z.array(SurfaceDimensionDraftSchema),
   extractionConfidence: z.enum(["high", "medium", "low"]),
+  quantities: z.array(QuantityDraftSchema).describe("Every number in the task prompt that a version could carry differently; empty when the task has none"),
 });
 export type BlueprintDraftWire = z.infer<typeof BlueprintDraftSchema>;
 
@@ -123,6 +142,10 @@ export const DimensionScoreSchema = z.object({
 export const JudgeSchema = z.object({
   dimensionScores: z.array(DimensionScoreSchema).describe("One entry per construct dimension, in the order given"),
   rationale: z.string().describe("Two sentences"),
+  solvability: z
+    .number()
+    .nullable()
+    .describe("Only when the candidate lists figures for this version: 1–5, whether the task is still well-posed and solvable with exactly those figures; else null"),
 });
 export type JudgeWire = z.infer<typeof JudgeSchema>;
 

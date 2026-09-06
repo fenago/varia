@@ -104,7 +104,8 @@ describe("orchestrator usage accumulation", () => {
     let sawUsageWhileGenerating = false;
     const run = await runGeneration({
       run: makeRun(n, "live"),
-      blueprint: lendingBlueprint(),
+      // No controlled figures: the stub does not write them, and a consistency retry would add calls.
+      blueprint: { ...lendingBlueprint(), quantities: [] },
       provider: stubLiveProvider(),
       thresholds: DEFAULT_THRESHOLDS,
       signal: new AbortController().signal,

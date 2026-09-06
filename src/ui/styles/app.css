@@ -811,3 +811,16 @@ h2, h3 { text-wrap: balance; }
 .va-walk-pill { position: fixed; right: 20px; bottom: 20px; z-index: 60; background: var(--color-bg); border-color: var(--color-accent); box-shadow: var(--shadow-md); padding: 8px 10px 8px 14px; display: flex; align-items: center; gap: 10px; }
 .va-walk-pill.va-walk-left { right: auto; left: 20px; }
 @media (max-width: 720px) { .va-walk-pill, .va-walk-pill.va-walk-left { left: 0; right: 0; bottom: 0; justify-content: space-between; border-left: 0; border-right: 0; } }
+
+/* Controlled numbers: the per-run switch and the figures table */
+.va-switch-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.va-switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-family: var(--font-heading); font-size: 16px; }
+.va-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.va-switch-track { position: relative; width: 40px; height: 22px; border-radius: 11px; background: var(--color-divider); border: 1px solid var(--color-border, var(--color-divider)); transition: background .15s; flex: none; }
+.va-switch-thumb { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--color-surface, #fff); box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: left .15s; }
+.va-switch input:checked + .va-switch-track { background: var(--color-accent-700, #3d6b4d); }
+.va-switch input:checked + .va-switch-track .va-switch-thumb { left: 20px; }
+.va-switch input:focus-visible + .va-switch-track { outline: 2px solid var(--color-accent-700, #3d6b4d); outline-offset: 2px; }
+.va-switch input:disabled + .va-switch-track { opacity: .45; }
+.va-quantities td { vertical-align: top; }
+.va-quantities code { font-size: 13px; }

@@ -51,8 +51,11 @@ describe("structured-output schemas", () => {
 
   it("JudgeSchema validates a well-formed sample and rejects a bad one", () => {
     const fmt = zodOutputFormat(JudgeSchema);
-    const ok = fmt.parse(JSON.stringify({ dimensionScores: [{ dimension: "A", score: 4 }], rationale: "x. y." }));
+    const ok = fmt.parse(JSON.stringify({ dimensionScores: [{ dimension: "A", score: 4 }], rationale: "x. y.", solvability: null }));
     expect(ok.dimensionScores[0].score).toBe(4);
+    expect(ok.solvability).toBeNull();
+    // Wave 11: the judge must always answer the solvability field (null when no figures were listed).
+    expect(() => fmt.parse(JSON.stringify({ dimensionScores: [{ dimension: "A", score: 4 }], rationale: "x. y." }))).toThrow();
     expect(() => fmt.parse(JSON.stringify({ dimensionScores: [{ dimension: "A", score: "high" }] }))).toThrow();
   });
 

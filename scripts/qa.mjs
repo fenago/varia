@@ -210,6 +210,46 @@ await check("deep-link hard reload on /roster", async () => {
 });
 await check("no console errors so far", async () => { assert(consoleErrors.length === 0, consoleErrors.join(" | ")); });
 
+console.log("\n1b. Numbers in the assignment (controlled quantities) on /blueprint");
+await check("numbers card renders from the local parser for the flagship sample; switch and edit work", async () => {
+  await resetDemo();
+  await go("/blueprint");
+  const t = await snapshotText("/blueprint-numbers");
+  assert(t.includes("Numbers in this assignment"), "card heading");
+  assert(t.includes("Found by the local parser; confirm on edit."), "parser provenance line");
+  const rows = await page.locator("[data-walk=numbers] tr[data-quantity]").count();
+  assert(rows >= 1, `expected at least one figure row, got ${rows}`);
+  assert(/\d+ figures? will differ from student to student|every version keeps the original/.test(t), "switch detail sentence");
+  const sw = page.locator("#varyQuantities");
+  assert(await sw.count() === 1, "switch present");
+  assert(await sw.isChecked(), "switch defaults to on");
+  await page.locator("label.va-switch[for=varyQuantities]").click();
+  await page.waitForTimeout(100);
+  assert(!(await sw.isChecked()), "switch turned off");
+  let st = await wsState();
+  const bp = st.blueprints.find((b) => b.id === st.activeBlueprintId);
+  assert(bp.varyQuantities === false, "varyQuantities persisted false");
+  await page.locator("label.va-switch[for=varyQuantities]").click();
+  // Edit mode: first policy change persists the parser's list
+  await page.getByRole("button", { name: /^Edit$/ }).click();
+  await page.getByText("Numbers in this assignment").first().waitFor();
+  const select = page.locator("select[aria-label='What happens per student']").first();
+  await select.selectOption("keep");
+  await page.waitForTimeout(150);
+  st = await wsState();
+  const bp2 = st.blueprints.find((b) => b.id === st.activeBlueprintId);
+  assert(Array.isArray(bp2.quantities) && bp2.quantities.length === rows, `quantities persisted (${bp2.quantities?.length} vs ${rows})`);
+  assert(bp2.quantities[0].policy === "keep", "first figure now kept");
+  await shot("blueprint_numbers_edit");
+  await page.getByRole("button", { name: /Done editing/ }).click();
+  const t2 = await snapshotText("/blueprint-numbers-after");
+  assert(!t2.includes("Found by the local parser; confirm on edit."), "provenance line gone once confirmed");
+  await go("/generate");
+  const g = await snapshotText("/generate-numbers");
+  assert(g.includes("Numbers change per student"), "generate switch present");
+  return `${rows} figures found`;
+});
+
 console.log("\n2. Header chip");
 await check("header shows no chip without a key", async () => {
   await go("/");

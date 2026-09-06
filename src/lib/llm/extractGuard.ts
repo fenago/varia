@@ -3,8 +3,9 @@
  * from the source text (rubric section, model answer) so a thin or partial
  * model output never reaches the Blueprint page half-empty.
  */
-import type { BlueprintDraft, Criterion, SampleAssessment, SourceFile, SurfaceDimension } from "@shared/types";
+import type { BlueprintDraft, Criterion, Quantity, QuantityRange, SampleAssessment, SourceFile, SurfaceDimension } from "@shared/types";
 import { findSource, localExtract, parseRubric } from "@lib/ingest/localExtract";
+import { formulaIdentifiers, parseQuantities } from "@lib/quantities";
 
 export interface GuardResult {
   draft: BlueprintDraft;
@@ -173,10 +174,146 @@ export function guardDraft(draft: BlueprintDraft, files: SourceFile[], sample?: 
     }
   }
 
+  // Controlled quantities: the model's list, completed from the deterministic parser ------
+  {
+    const merged = mergeQuantities(d.quantities, d.taskPrompt ?? "");
+    d.quantities = merged.quantities;
+    if (merged.repair) repairs.push(merged.repair);
+    if (d.varyQuantities === undefined) d.varyQuantities = merged.quantities.some((q) => q.policy === "vary");
+  }
+
   if (!d.source) d.source = { files: files.map(({ text: _t, ...rest }) => rest), extractedAt: new Date().toISOString(), extractionConfidence: "medium" };
   if (repairs.length && d.source.extractionConfidence === "high") d.source.extractionConfidence = "medium";
   if (d.fewShotAnchors === undefined) d.fewShotAnchors = null;
   if (d.lastUsed === undefined) d.lastUsed = null;
 
   return { draft: d, repairs, unresolved };
+}
+
+const MAX_QUANTITIES = 30;
+
+/** The parser's default span for a value the model named without a range: ±25%, kind-aware bounds. */
+export function fallbackRange(q: Pick<Quantity, "value" | "kind" | "unit">): QuantityRange {
+  const v = q.value;
+  const decimalsOfValue = (String(v).split(".")[1] ?? "").length;
+  let min = Math.min(v * 0.75, v * 1.25);
+  let max = Math.max(v * 0.75, v * 1.25);
+  let decimals = decimalsOfValue;
+  let step: number | undefined;
+  if (q.kind === "rate" || q.kind === "score" || q.kind === "threshold") {
+    if (q.unit === "%" || v > 1) {
+      min = Math.max(0, min);
+      max = Math.min(100, max);
+      step = decimals > 0 ? 10 ** -decimals : 1;
+    } else {
+      min = Math.max(0, min);
+      max = Math.min(1, max);
+      decimals = Math.max(decimals, 2);
+      step = 10 ** -decimals;
+    }
+  } else if (q.kind === "count") {
+    min = Math.max(0, Math.floor(min));
+    max = Math.max(min + 1, Math.ceil(max));
+    step = 1;
+    decimals = 0;
+  } else if (q.kind === "money") {
+    step = Math.abs(v) >= 10_000 ? 100 : Math.abs(v) >= 100 ? 10 : 1;
+    min = Math.max(0, Math.floor(min / step) * step);
+    max = Math.ceil(max / step) * step;
+    decimals = 0;
+  } else {
+    step = decimals > 0 ? 10 ** -decimals : 1;
+  }
+  if (max <= min) max = min + (step ?? 1);
+  const r = (n: number) => Math.round(n * 10 ** decimals) / 10 ** decimals;
+  return { min: r(min), max: r(max), step, decimals };
+}
+
+const slug = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/^(\d)/, "q$1") || "value";
+
+/**
+ * Merge the model's quantities with the deterministic parser's over the task
+ * prompt. The model's entries lead (better labels, kinds and policies); the
+ * parser supplies ranges for entries that lack one and adds any number the
+ * model did not name. Derived entries whose formula refers to unknown keys
+ * fall back to "vary". Keys stay unique; ids are reassigned in order.
+ */
+export function mergeQuantities(fromModel: Quantity[] | undefined, taskPrompt: string): { quantities: Quantity[]; repair: string | null } {
+  const parsed = taskPrompt.trim() ? parseQuantities(taskPrompt) : [];
+  const model = (fromModel ?? []).filter((q) => q && Number.isFinite(q.value));
+  const out: Quantity[] = [];
+  const keys = new Set<string>();
+  const uniqueKey = (want: string) => {
+    const base = slug(want);
+    let k = base;
+    for (let n = 2; keys.has(k); n++) k = `${base}_${n}`;
+    keys.add(k);
+    return k;
+  };
+  const sameValue = (a: number, b: number) => Math.abs(a - b) <= Math.max(1e-9, Math.abs(a) * 1e-9);
+  const usedParsed = new Set<number>();
+  const matchParsed = (q: Quantity) => {
+    const i = parsed.findIndex((p, idx) => !usedParsed.has(idx) && sameValue(p.value, q.value) && (!q.unit || !p.unit || p.unit === q.unit));
+    if (i < 0) return null;
+    usedParsed.add(i);
+    return parsed[i];
+  };
+
+  for (const q of model) {
+    if (out.length >= MAX_QUANTITIES) break;
+    const hit = matchParsed(q);
+    const policy: Quantity["policy"] = q.policy === "derived" && q.formula?.trim() ? "derived" : q.policy === "keep" ? "keep" : "vary";
+    const item: Quantity = {
+      id: "",
+      key: uniqueKey(q.key || q.label),
+      label: (q.label || "").trim() || hit?.label || q.key,
+      value: q.value,
+      kind: q.kind ?? hit?.kind ?? "other",
+      policy,
+    };
+    const unit = (q.unit ?? hit?.unit)?.trim();
+    if (unit) item.unit = unit;
+    if (policy === "derived") item.formula = q.formula!.trim();
+    if (q.context?.trim()) item.context = q.context.trim();
+    else if (hit?.context) item.context = hit.context;
+    if (q.constraint?.trim()) item.constraint = q.constraint.trim();
+    if (policy === "vary") item.range = q.range ?? hit?.range ?? fallbackRange(item);
+    out.push(item);
+  }
+
+  let added = 0;
+  parsed.forEach((p, idx) => {
+    if (usedParsed.has(idx) || out.length >= MAX_QUANTITIES) return;
+    if (out.some((q) => sameValue(q.value, p.value) && (!q.unit || !p.unit || q.unit === p.unit))) return;
+    const item: Quantity = { ...p, id: "", key: uniqueKey(p.key) };
+    if (item.policy === "vary" && !item.range) item.range = fallbackRange(item);
+    out.push(item);
+    added++;
+  });
+
+  // Derived formulas must resolve to other keys in the set; otherwise the number varies on its own.
+  let demoted = 0;
+  for (const q of out) {
+    if (q.policy !== "derived") continue;
+    const ids = q.formula ? formulaIdentifiers(q.formula) : [];
+    const ok = ids.length > 0 && ids.every((id) => id !== q.key && out.some((o) => o.key === id));
+    if (!ok) {
+      q.policy = "vary";
+      delete q.formula;
+      q.range = q.range ?? fallbackRange(q);
+      demoted++;
+    }
+  }
+
+  out.forEach((q, i) => (q.id = `q-${i + 1}`));
+  const notes: string[] = [];
+  if (!model.length && out.length) notes.push(`${out.length} number${out.length === 1 ? "" : "s"} in the task found by the built-in parser`);
+  else if (added) notes.push(`${added} number${added === 1 ? "" : "s"} the extraction did not name added from the task text`);
+  if (demoted) notes.push(`${demoted} derived number${demoted === 1 ? "" : "s"} set to vary because the formula referred to unknown keys`);
+  return { quantities: out, repair: notes.length ? notes.join("; ") : null };
 }

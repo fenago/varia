@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 /* type-scale: applied */
 import { Link, useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, EmptyState, Field, Info, ProgressBlock, SegChoice, StepIntro, Dialog } from "@ui/components";
+import { Blueprint, BlueprintButton, EmptyState, Field, Info, ProgressBlock, SegChoice, StepIntro, Dialog, NumbersSwitch, QuantitiesSummary, changingQuantities, useBlueprintQuantities, varyOn } from "@ui/components";
 import { useWorkspace } from "@lib/store/workspace";
 import { useSettings } from "@lib/store/settings";
 import { activeBlueprint, activeRun } from "@lib/store/selectors";
@@ -92,6 +92,7 @@ export default function Generate() {
   const [judgeSamples, setJudgeSamplesLocal] = useState<number>(Math.max(3, Math.min(9, settings.judgeSamples)));
   const adv: AdvancedRunOptions = settings.advancedDefaults;
   const thresholds = currentThresholds(ws);
+  const { quantities, fromParser } = useBlueprintQuantities(bp);
 
   const threat: ThreatProfile = worry === "manual" ? "manual" : worry === "copying" ? "copy-at-scale" : "high-stakes";
   const strategy: Strategy = worry === "manual" ? manual : THREAT_TO_STRATEGY[threat as Exclude<ThreatProfile, "manual">];
@@ -119,6 +120,8 @@ export default function Generate() {
   }
 
   const enabledDims = bp.surfaceDimensions.filter((d) => !d.locked && d.enabled).map((d) => d.key);
+  const changing = changingQuantities(quantities);
+  const vary = varyOn(bp);
 
   /** Choosing a worry picks the preset (models, judge samples) and the strategy. */
   function chooseWorry(w: Worry) {
@@ -195,7 +198,7 @@ export default function Generate() {
         what="Every student gets a different version of the same task. The versions are checked before anyone sees them."
         doThis="Answer one question and press the button."
         next="You get a report saying whether the versions are fair enough to release."
-        learn={["version", "strategy", "four-checks"]}
+        learn={["version", "strategy", "vary-numbers", "four-checks"]}
       />
 
       {run && !inFlight && run.blueprintId === bp.id && runCompletion(run).resumable && (
@@ -286,6 +289,15 @@ export default function Generate() {
               <span id="versionCountHint" className="text-muted" style={{ fontSize: 14 }}>
                 {source === "recorded" && recordedCount > 0 ? `Recorded walkthrough: up to ${recordedCount} versions, free.` : "Start with a few to see what you get; you can make more later. Cost grows with the count."}
               </span>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <NumbersSwitch
+                on={vary}
+                onChange={(on) => ws.setVaryQuantities(bp.id, on)}
+                disabled={inFlight}
+                count={changing.length}
+                note={source === "recorded" && changing.length > 0 ? "The recorded versions keep the figures they were written with; this applies when you run for real." : undefined}
+              />
             </div>
             <p style={{ margin: "0 0 12px", fontSize: 16 }}>
               {facts} <Info term="generator" />
@@ -419,6 +431,13 @@ export default function Generate() {
                     ),
                   )}
                 </div>
+              </div>
+
+              <div>
+                <div className="va-heading-15" style={{ marginBottom: 6 }}>
+                  Numbers that change per student <Info term="quantities" />
+                </div>
+                <QuantitiesSummary quantities={quantities} fromParser={fromParser} />
               </div>
 
               <details className="blueprint" style={{ padding: "12px 16px" }}>

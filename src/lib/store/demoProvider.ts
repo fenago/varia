@@ -119,6 +119,8 @@ export function createDemoProvider(): LlmProvider {
       };
     },
 
+    // Controlled figures (wave 11) pass straight through: a recording carries the numbers it was
+    // generated with, so the orchestrator draws none for demo runs and `quantityValues` is ignored.
     async generateVariant(input: GenerateVariantInput): Promise<GenerateVariantOutput> {
       await wait(GENERATE_MS, input.signal);
       const f = fixtureFor(input.blueprint) ?? firstFixture();
