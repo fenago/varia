@@ -301,7 +301,7 @@ export default function Roster() {
               {busy === "md" ? "Packaging…" : "Plain text instead"}
             </button>
           </div>
-          <div className="va-muted-12" style={{ marginTop: 10 }}>One student at a time: click a name below to copy just their link.</div>
+          <div className="va-muted-12" style={{ marginTop: 10 }}>One student at a time: click a name below to get their link, then open it or copy it.</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
             {rows.slice(0, showAll ? rows.length : 12).map((r) => (
               <button key={r.variant.id} type="button" className="btn btn-ghost" style={{ padding: "2px 8px", fontSize: 14 }} onClick={() => copyLink(r.variant.id)}>
@@ -311,8 +311,11 @@ export default function Roster() {
             {!showAll && rows.length > 12 && <span className="va-muted-12" style={{ alignSelf: "center" }}>+{rows.length - 12} more (Show all below)</span>}
           </div>
           {linkFor && (
-            <div style={{ marginTop: 10 }}>
+            <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 10, alignItems: "end" }} className="va-split">
               <CopyField label={`Student link · ${linkFor.variantId}`} value={linkFor.link} />
+              <a className="btn btn-primary blueprint" href={linkFor.link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", whiteSpace: "nowrap" }} data-walk="open-task">
+                Open this student's version
+              </a>
             </div>
           )}
         </Blueprint>

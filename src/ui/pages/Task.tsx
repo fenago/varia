@@ -45,7 +45,7 @@ export default function Task() {
     return variantId ? buildTaskPackage(ws, variantId) : null;
   }, [fromLink, ws, variantId]);
 
-  usePageTitle(pkg ? pkg.blueprintName : "Your task", pkg ? `${pkg.course.code} · ${pkg.course.term}` : "Task");
+  usePageTitle(pkg ? pkg.blueprintName : "Your task", "Your task");
 
   if (fromLink === "loading") return <p className="text-muted">Opening your task…</p>;
   if (fromLink === "error" && !pkg) {
