@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import Summary from "./pages/Summary";
 import Research from "./pages/Research";
 import Glossary from "./pages/Glossary";
+import Journey from "./pages/Journey";
 import Task from "./pages/Task";
 import Notes from "./pages/Notes";
 import About from "./pages/About";
@@ -53,6 +54,7 @@ export type PageKey =
   | "credential"
   | "share"
   | "for"
+  | "journey"
   | "portfolio"
   | "task"
   | "talent";
@@ -83,6 +85,7 @@ export const PAGES: Record<PageKey, { crumb: string; title: string; path: string
   share: { crumb: "Your record", title: "Share your evidence record", path: "/share" },
   task: { crumb: "Task", title: "Your task", path: "/task" },
   for: { crumb: "Orientation", title: "Who VARIA is for", path: "/for" },
+  journey: { crumb: "Orientation", title: "VARIA, in one picture", path: "/journey" },
   portfolio: { crumb: "Portfolio", title: "Your verified work", path: "/portfolio" },
   talent: { crumb: "Talent view", title: "Candidates who did your work", path: "/talent" },
 };
@@ -106,6 +109,7 @@ export function App() {
           <Route path="/summary" element={<Summary />} />
           <Route path="/research" element={<Research />} />
           <Route path="/glossary" element={<Glossary />} />
+          <Route path="/journey" element={<Journey />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/about" element={<About />} />
           <Route path="/import" element={<Import />} />

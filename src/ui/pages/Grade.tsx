@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 /* type-scale: applied */
-import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { Blueprint, BlueprintButton, Dialog, EmptyState, Pill, SegScale, StepProgressBlock, type StepProgress } from "@ui/components";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Blueprint, BlueprintButton, Dialog, EmptyState, Pill, SegScale, StepProgressBlock, type StepProgress, BadgePreview, badgeOptionsFor } from "@ui/components";
 import { Info } from "@ui/components/Info";
 import { StepIntro } from "@ui/components/StepIntro";
 import { useWorkspace } from "@lib/store/workspace";
+import { CREDENTIAL_STORY } from "@shared/credential-story";
 import {
   activeRun,
   domainStakeholderLabel,
@@ -14,6 +15,8 @@ import {
   rosterRows,
   studentById,
   evidenceForVariant,
+  credentialEligibilityForVariant,
+  skillsForBlueprint,
   submissionForVariant,
   variantById,
 } from "@lib/store/selectors";
@@ -374,6 +377,24 @@ function GradeView({ variantId }: { variantId: string }) {
             </div>
           )}
 
+          {submission?.grade && blueprint && (
+            <Blueprint style={{ padding: "14px 16px", marginTop: 12 }}>
+              <div className="va-heading-16">{CREDENTIAL_STORY.gradeBecomes.title}</div>
+              <p className="text-muted" style={{ margin: "4px 0 10px", fontSize: 14, lineHeight: 1.5 }}>{CREDENTIAL_STORY.gradeBecomes.body}</p>
+              <BadgePreview
+                shape="card"
+                state="preview"
+                opts={badgeOptionsFor({ achievementName: blueprint.name, record: evidence, skills: skillsForBlueprint(ws, blueprint), endorsedBy: [] })}
+              />
+              <ul style={{ margin: "10px 0 0", paddingLeft: 18, fontSize: 14, lineHeight: 1.6 }}>
+                {credentialEligibilityForVariant(ws, variant.id).missing.map((m) => (
+                  <li key={m}>
+                    {m} {/employer validat/i.test(m) ? <Link to="/employer">→ Employer validation</Link> : /endors/i.test(m) ? <Link to="/talent">→ Talent view</Link> : null}
+                  </li>
+                ))}
+              </ul>
+            </Blueprint>
+          )}
           {submission?.grade && (
             <div style={{ marginTop: 12 }}>
               {evidence ? (

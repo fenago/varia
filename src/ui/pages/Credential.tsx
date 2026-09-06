@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 /* type-scale: applied */
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Blueprint, BlueprintButton, CopyField, Dialog, EmptyState, SkillTags, Stamp, ShareCredential } from "@ui/components";
+import { Blueprint, BlueprintButton, CopyField, Dialog, EmptyState, SkillTags, Stamp, ShareCredential, BadgePreview, badgeOptionsFor } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
 import { credentialEligibility, credentialForRecord, endorsementsForRecord, evidenceView } from "@lib/store/selectors";
@@ -123,6 +123,13 @@ export default function Credential() {
           <div><div className="va-kicker">Issued</div><div style={{ color: "#fff" }}>{fmt(cred.issuedAt)} · {cred.issuedBy}</div></div>
           <div><div className="va-kicker">Credential id</div><div style={{ color: "#fff", fontFamily: "ui-monospace, monospace" }}>{cred.id}</div></div>
           <div><div className="va-kicker">Course</div><div style={{ color: "#fff" }}>{view.course.code} · {view.course.term}</div></div>
+        </div>
+        <div style={{ marginTop: 18 }}>
+          <BadgePreview
+            shape="card"
+            state={revoked ? "preview" : "issued"}
+            opts={badgeOptionsFor({ achievementName: view.blueprint.name, record, credential: cred, endorsedBy: endorsements.map((e) => e.organisation), skills: skills.map((k) => k.label), learnerLabel: asLearner ? view.student.name : null })}
+          />
         </div>
         {revoked && <p style={{ margin: "12px 0 0", color: "#f2c4b8", fontSize: 15 }}>Revoked {fmt(cred.revokedAt!)}: {cred.revocationReason}</p>}
       </Blueprint>

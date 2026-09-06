@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 /* type-scale: applied */
 import { Link, Navigate, useParams } from "react-router-dom";
-import { Blueprint, EmptyState, Funnel, OutcomeStamps, SegScale, SkillTags, Stamp } from "@ui/components";
+import { Blueprint, EmptyState, Funnel, OutcomeStamps, SegScale, SkillTags, Stamp, BadgePreview, badgeOptionsFor } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
+import { CREDENTIAL_STORY } from "@shared/credential-story";
 import { challengesForPartner, credentialEligibility, credentialForRecord, employerFunnel, partnerById, talentRows, type TalentRow } from "@lib/store/selectors";
 import type { EmployerPartner, OutcomeKind } from "@shared/types";
 
@@ -163,6 +164,20 @@ function CandidateCard({ row, partner }: { row: TalentRow; partner: EmployerPart
         </div>
       </div>
 
+      {!ownEndorsement && (
+        <div className="va-row-flex" style={{ gap: 14, alignItems: "center", margin: "10px 0 4px", flexWrap: "wrap" }}>
+          <BadgePreview
+            shape="square"
+            state="preview"
+            width={120}
+            opts={badgeOptionsFor({ achievementName: view.blueprint.name, record, endorsedBy: [partner.organisation], skills })}
+          />
+          <div style={{ fontSize: 14, lineHeight: 1.5, maxWidth: "40ch" }}>
+            <div className="va-heading-16">{CREDENTIAL_STORY.talentCaption}</div>
+            <span className="text-muted">Endorse it and the student's credential carries {partner.organisation}'s name.</span>
+          </div>
+        </div>
+      )}
       <div className="va-worksample-actions">
         {ownEndorsement ? (
           <span className="va-muted-12">

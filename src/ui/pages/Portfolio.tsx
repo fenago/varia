@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 /* type-scale: applied */
 import { Link, Navigate, useParams } from "react-router-dom";
-import { Blueprint, CopyField, EmptyState, OutcomeStamps, SkillTags, Stamp } from "@ui/components";
+import { Blueprint, CopyField, EmptyState, OutcomeStamps, SkillTags, Stamp, BadgePreview, badgeOptionsFor } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
 import { credentialForRecord, learnersWithRecords, portfolioFor, type PortfolioItem } from "@lib/store/selectors";
@@ -89,6 +89,20 @@ function WorkSampleCard({ item, learnerId }: { item: PortfolioItem; learnerId: s
 
   return (
     <Blueprint className="va-worksample">
+      {(() => {
+        const cred = credentialForRecord(ws, record.id);
+        const live = !!cred && !cred.revokedAt;
+        return (
+          <BadgePreview
+            shape="square"
+            state={live ? "issued" : "preview"}
+            width="min(100%, 220px)"
+            style={{ marginBottom: 12 }}
+            caption={live ? undefined : "Preview: becomes a credential once an employer validates the rubric and endorses this work"}
+            opts={badgeOptionsFor({ achievementName: view.blueprint.name, record, credential: live ? cred : null, endorsedBy: endorsements.filter((e) => e.meetsBar).map((e) => e.organisation), skills, learnerLabel: null })}
+          />
+        );
+      })()}
       <div className="va-worksample-head">
         <div>
           <div className="va-worksample-title">{view.blueprint.name}</div>
@@ -163,7 +177,10 @@ function WorkSampleCard({ item, learnerId }: { item: PortfolioItem; learnerId: s
                 View credential
               </Link>
               <Link className="btn btn-ghost" to={`/credential/${record.id}?as=learner#share`} style={{ textDecoration: "none" }}>
-                Share
+                Share the badge
+              </Link>
+              <Link className="btn btn-ghost" to={`/credential/${record.id}?as=learner#share`} style={{ textDecoration: "none" }}>
+                Add to LinkedIn
               </Link>
             </>
           ) : null;
@@ -283,7 +300,22 @@ export default function Portfolio() {
 
   if (!learnerId) {
     if (learners.length === 0) {
-      return <EmptyState heading="No verified work yet" text="A portfolio appears once an evidence record has been issued for a graded submission." />;
+      return (
+        <div className="va-stack" style={{ gap: 18 }}>
+          <EmptyState heading="No verified work yet" text="A portfolio appears once a graded submission has been made into an evidence record. Grade a submission, then press “Make this a verified record” on the Grade page." />
+          <Blueprint className="va-badge-side" style={{ padding: "18px 20px" }}>
+            <BadgePreview
+              shape="card"
+              state="illustrative"
+              opts={badgeOptionsFor({ achievementName: "Classifier audit for a lending risk committee", endorsedBy: ["Bayfront Regional Bank"], skills: ["Fairness analysis", "Robustness evaluation", "Documentation review", "Risk prioritisation"] })}
+            />
+            <div style={{ fontSize: 15, lineHeight: 1.55 }}>
+              <div className="va-heading-16">What appears here</div>
+              <span className="text-muted">Each graded piece of work becomes a badge like this: the skill, the result, the employer's endorsement, and a verify link. The student chooses who sees it, adds it to LinkedIn, or downloads the image.</span>
+            </div>
+          </Blueprint>
+        </div>
+      );
     }
     return <Navigate to={`/portfolio/${learners[0].learnerId}`} replace />;
   }

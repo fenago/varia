@@ -5,7 +5,7 @@ import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 const BASE = process.env.QA_BASE ?? "http://localhost:4173";
 const SHOTS = "qa/screenshots"; mkdirSync(SHOTS, { recursive: true });
-const ROUTES = ["/", "/for", "/for/employers", "/start", "/import", "/blueprint", "/generate", "/report", "/roster", "/grade", "/console", "/employer", "/talent", "/portfolio", "/settings", "/about", "/research", "/glossary"];
+const ROUTES = ["/", "/for", "/journey", "/for/employers", "/start", "/import", "/blueprint", "/generate", "/report", "/roster", "/grade", "/console", "/employer", "/talent", "/portfolio", "/settings", "/about", "/research", "/glossary"];
 const SIZES = [[360, 740], [390, 844], [768, 1024], [1440, 900]];
 const browser = await chromium.launch();
 const results = []; let consoleErrors = [];

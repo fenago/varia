@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 /* type-scale: applied */
 import { Link, useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, Stamp, SkillTags, OutcomeStamps, WalkthroughButton } from "@ui/components";
+import { Blueprint, BlueprintButton, Stamp, SkillTags, OutcomeStamps, WalkthroughButton, JourneyInfographic, BadgePreview, LinkedInCardMock, badgeOptionsFor } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
 import {
@@ -11,8 +11,11 @@ import {
   endorsementsForRecord,
   outcomesForRecord,
   employerFunnel,
+  evidenceRows,
+  skillsForBlueprint,
 } from "@lib/store/selectors";
 import { BOTTOM_LINE, NORTH_STAR, PATH_STEPS, SHIFTS, TRUST } from "@shared/home";
+import { CREDENTIAL_STORY } from "@shared/credential-story";
 import type { Workspace } from "@shared/types";
 
 /** The version the path follows: a graded one if any exists, else the first usable version of the active run. */
@@ -128,6 +131,11 @@ export default function Home() {
         </div>
       </Blueprint>
 
+      {/* The journey, in one picture */}
+      <div data-walk="journey">
+        <JourneyInfographic compact />
+      </div>
+
       {/* 2. One student's path, with the real records */}
       <div id="path">
         <div className="va-row-flex" style={{ alignItems: "baseline", gap: 12, marginBottom: 14 }}>
@@ -208,6 +216,49 @@ export default function Home() {
           ))}
         </div>
       </div>
+
+      {/* Credential: what the student walks away with */}
+      {(() => {
+        const row = evidenceRows(ws)[0] ?? null;
+        const v = row ? evidenceView(ws, row.record.variantId) : null;
+        const name = v?.blueprint.name ?? activeRun(ws)?.blueprintName ?? "Verified work sample";
+        const skills = v ? skillsForBlueprint(ws, v.blueprint) : [];
+        const opts = badgeOptionsFor({ achievementName: name, record: v?.record ?? null, endorsedBy: v?.partnerNames?.length ? v.partnerNames.slice(0, 1) : ["Bayfront Regional Bank"], skills, issuedAt: v?.record?.issuedAt ?? null });
+        return (
+          <Blueprint style={{ padding: "22px 24px" }}>
+            <div className="va-kicker">{CREDENTIAL_STORY.homeKicker}</div>
+            <h3 style={{ margin: "6px 0 6px", maxWidth: "30ch" }}>{CREDENTIAL_STORY.homeTitle}</h3>
+            <p style={{ margin: "0 0 16px", fontSize: 16, lineHeight: 1.55, maxWidth: "76ch" }}>{CREDENTIAL_STORY.homeLine}</p>
+            <div className="va-badge-row">
+              <div>
+                <BadgePreview opts={opts} shape="card" state="illustrative" />
+                <div className="va-heading-16" style={{ marginTop: 10 }}>{CREDENTIAL_STORY.badge.title}</div>
+                <p className="text-muted" style={{ margin: "4px 0 0", fontSize: 14, lineHeight: 1.5 }}>{CREDENTIAL_STORY.badge.body}</p>
+              </div>
+              <div>
+                <LinkedInCardMock achievementName={name} credentialId="CR-2026-0001" issued="Sep 2026" />
+                <div className="va-heading-16" style={{ marginTop: 10 }}>{CREDENTIAL_STORY.linkedin.title}</div>
+                <p className="text-muted" style={{ margin: "4px 0 0", fontSize: 14, lineHeight: 1.5 }}>{CREDENTIAL_STORY.linkedin.body}</p>
+              </div>
+              <div>
+                <div className="va-verify-mock">
+                  <div className="va-kicker" style={{ marginBottom: 8 }}>varia.cloud/verify/{v?.record?.id ?? "VR-2026-0001"}</div>
+                  <Stamp gate="pass">Record verified</Stamp>
+                  <div style={{ marginTop: 10, fontSize: 14 }}>Hash recomputed · signature confirmed · issued by Miami Dade College</div>
+                  <code style={{ display: "block", marginTop: 8 }}>{v?.record?.hash ? `${v.record.hash.slice(0, 24)}…` : "sha-256 · appears here once a record is issued"}</code>
+                  <div className="text-muted" style={{ marginTop: 8, fontSize: 13 }}>No name shown unless the student chose to share it.</div>
+                </div>
+                <div className="va-heading-16" style={{ marginTop: 10 }}>{CREDENTIAL_STORY.verify.title}</div>
+                <p className="text-muted" style={{ margin: "4px 0 0", fontSize: 14, lineHeight: 1.5 }}>{CREDENTIAL_STORY.verify.body}</p>
+              </div>
+            </div>
+            <div className="va-btn-row" style={{ marginTop: 16 }}>
+              <BlueprintButton onClick={() => nav("/portfolio")}>See the portfolio</BlueprintButton>
+              <button type="button" className="btn btn-secondary" onClick={() => nav("/talent")}>See the employer's view</button>
+            </div>
+          </Blueprint>
+        );
+      })()}
 
       {/* 5. Trust */}
       <Blueprint style={{ padding: "20px 24px", display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 18, alignItems: "center" }} className="va-split">

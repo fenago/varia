@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 /* type-scale: applied */
 import { useLocation, useNavigate } from "react-router-dom";
-import { Blueprint, BlueprintButton, CopyField, DataTable, Field, Funnel, Pill, SkillTags, Stamp, StatTile, type Column, type PillGate, type StatColor, Info } from "@ui/components";
+import { Blueprint, BlueprintButton, CopyField, DataTable, Field, Funnel, Pill, SkillTags, Stamp, StatTile, type Column, type PillGate, type StatColor, Info, BadgePreview, badgeOptionsFor } from "@ui/components";
 import { Link } from "react-router-dom";
 import { glossaryTerm } from "@shared/glossary";
 import { useWorkspace } from "@lib/store/workspace";
+import { CREDENTIAL_STORY } from "@shared/credential-story";
 import { activeBlueprint, blueprintRowsForEmployer, employerFunnel, employerStats, evidenceRows, skillByKey, type BlueprintValidationStatus, type EmployerBlueprintRow, type EvidenceRow } from "@lib/store/selectors";
 import { decodePackage, downloadJson, readFragmentParam, readJsonFile, reviewLink } from "@lib/share";
 import type { EmployerChallenge, EmployerPartner, EmployerValidation, ReviewResult } from "@shared/types";
@@ -411,6 +412,24 @@ export default function Employer() {
 
   return (
     <div className="va-page">
+      <Blueprint style={{ padding: "18px 22px" }}>
+        <div className="va-kicker" style={{ marginBottom: 10 }}>{CREDENTIAL_STORY.employerChain.kicker}</div>
+        <div className="va-chain">
+          {CREDENTIAL_STORY.employerChain.steps.map((st, i) => (
+            <div key={st.title} className="va-chain-step">
+              <div className="va-heading-16">{i + 1}. {st.title}</div>
+              <div className="text-muted" style={{ fontSize: 14, lineHeight: 1.5 }}>{st.body}</div>
+            </div>
+          ))}
+          <BadgePreview
+            shape="square"
+            state="illustrative"
+            width={120}
+            caption=""
+            opts={badgeOptionsFor({ achievementName: activeBlueprint(ws)?.name ?? "Verified work sample", endorsedBy: [ws.employerPartners[0]?.organisation ?? "Your organisation"], skills: [] })}
+          />
+        </div>
+      </Blueprint>
       <div>
         <div className="va-row-flex" style={{ alignItems: "baseline", marginBottom: 10 }}>
           <p style={{ margin: 0, fontSize: 17, lineHeight: 1.5 }}>From an employer's problem to a hire, in six measurable steps.</p>

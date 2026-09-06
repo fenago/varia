@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 /* type-scale: applied */
-import { AudienceCard, Blueprint, BlueprintButton, PipelineStrip } from "@ui/components";
+import { AudienceCard, Blueprint, BlueprintButton, PipelineStrip, BadgePreview, badgeOptionsFor } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { AUDIENCES, AUDIENCE_OVERVIEW, type AudienceContent, type AudienceKey } from "@shared/audiences";
 
@@ -56,10 +56,25 @@ function AudienceDetail({ a }: { a: AudienceContent }) {
 
   return (
     <div className="va-page va-page-narrow" style={{ gap: 26 }}>
-      <Blueprint className="va-dark" style={{ padding: "26px 28px" }}>
-        <div className="va-kicker">For {noun}</div>
-        <h3 style={{ margin: "6px 0 10px", maxWidth: "26ch" }}>{a.promise}</h3>
-        <p style={{ margin: 0, maxWidth: "68ch", fontSize: 17, lineHeight: 1.6, textWrap: "pretty" }}>{a.lede}</p>
+      <Blueprint className={`va-dark${noun === "students" || noun === "employers" ? " va-badge-side" : ""}`} style={{ padding: "26px 28px" }}>
+        <div>
+          <div className="va-kicker">For {noun}</div>
+          <h3 style={{ margin: "6px 0 10px", maxWidth: "26ch" }}>{a.promise}</h3>
+          <p style={{ margin: 0, maxWidth: "68ch", fontSize: 17, lineHeight: 1.6, textWrap: "pretty" }}>{a.lede}</p>
+        </div>
+        {(noun === "students" || noun === "employers") && (
+          <BadgePreview
+            shape="square"
+            state="illustrative"
+            width="min(100%, 300px)"
+            style={{ justifySelf: "end" }}
+            opts={badgeOptionsFor({
+              achievementName: "Classifier audit for a lending risk committee",
+              endorsedBy: ["Bayfront Regional Bank"],
+              skills: ["Fairness analysis", "Robustness evaluation", "Documentation review", "Risk prioritisation"],
+            })}
+          />
+        )}
       </Blueprint>
 
       <div>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 /* type-scale: applied */
 import { useNavigate, useParams } from "react-router-dom";
-import { Blueprint, BlueprintButton, CopyField, Dialog, EmptyState, OutcomeStamps, SkillTags, Stamp } from "@ui/components";
+import { Blueprint, BlueprintButton, CopyField, Dialog, EmptyState, OutcomeStamps, SkillTags, Stamp, BadgePreview, badgeOptionsFor } from "@ui/components";
 import { usePageTitle } from "@ui/shell/PageTitleContext";
 import { useWorkspace } from "@lib/store/workspace";
 import { challengeById, credentialEligibility, credentialForRecord, endorsementsForRecord, evidenceView, outcomesForRecord, skillsForBlueprint } from "@lib/store/selectors";
@@ -145,6 +145,37 @@ export default function Evidence() {
       <div className="va-print-header">
         {record ? record.id : "Draft evidence record"} · {student.name} · {course.code} {course.term}
       </div>
+
+      {/* The badge this record is or becomes */}
+      {(() => {
+        const cred = record ? credentialForRecord(ws, record.id) : null;
+        const elig = record ? credentialEligibility(ws, record.id) : { eligible: false, missing: [] as string[] };
+        const live = !!cred && !cred.revokedAt;
+        return (
+          <Blueprint className="va-badge-side va-no-print" style={{ padding: "18px 20px" }}>
+            <BadgePreview
+              shape="card"
+              state={live ? "issued" : "preview"}
+              opts={badgeOptionsFor({ achievementName: blueprint.name, record, credential: live ? cred : null, endorsedBy: endorsements.filter((e) => e.meetsBar).map((e) => e.organisation), skills })}
+            />
+            <div>
+              <div className="va-heading-16">{live ? `Credential ${cred!.id}` : "The credential this record becomes"}</div>
+              <p className="text-muted" style={{ margin: "4px 0 10px", fontSize: 14, lineHeight: 1.5 }}>
+                {live
+                  ? "Signed by the college and endorsed by the employer. The student can add it to LinkedIn or share the image."
+                  : elig.missing.length
+                    ? `Still needed: ${elig.missing.join("; ")}.`
+                    : "Everything needed is in place."}
+              </p>
+              {record && (
+                <Link className={`btn ${live || elig.eligible ? "btn-primary blueprint" : "btn-secondary"}`} to={`/credential/${record.id}`} style={{ textDecoration: "none" }}>
+                  {live ? "Open the credential" : elig.eligible ? "Issue the credential" : "See what is missing"}
+                </Link>
+              )}
+            </div>
+          </Blueprint>
+        );
+      })()}
 
       {/* Header block */}
       <Blueprint className="va-print-block" style={{ padding: "22px 24px" }} data-walk="record">

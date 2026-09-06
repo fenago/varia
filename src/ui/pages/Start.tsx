@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 /* type-scale: applied */
-import { AudienceCard, Blueprint, BlueprintButton, Pill, WalkthroughButton } from "@ui/components";
+import { AudienceCard, Blueprint, BlueprintButton, Pill, WalkthroughButton, JourneyInfographic } from "@ui/components";
 import { AUDIENCES } from "@shared/audiences";
 import { useWorkspace } from "@lib/store/workspace";
 import { activeRun, studentById } from "@lib/store/selectors";
@@ -84,6 +84,8 @@ export default function Start() {
           ))}
         </div>
       </div>
+
+      <JourneyInfographic compact />
 
       <div>
         <h6 style={{ margin: "0 0 16px" }}>The whole thing, in six steps</h6>
