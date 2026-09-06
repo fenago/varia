@@ -152,7 +152,7 @@ export default function Evidence() {
         const elig = record ? credentialEligibility(ws, record.id) : { eligible: false, missing: [] as string[] };
         const live = !!cred && !cred.revokedAt;
         return (
-          <Blueprint className="va-badge-side va-no-print" style={{ padding: "18px 20px" }}>
+          <Blueprint className="va-badge-side va-no-print" style={{ padding: "18px 20px" }} data-walk="badge">
             <BadgePreview
               shape="card"
               state={live ? "issued" : "preview"}

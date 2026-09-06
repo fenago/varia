@@ -165,7 +165,7 @@ function CandidateCard({ row, partner }: { row: TalentRow; partner: EmployerPart
       </div>
 
       {!ownEndorsement && (
-        <div className="va-row-flex" style={{ gap: 14, alignItems: "center", margin: "10px 0 4px", flexWrap: "wrap" }}>
+        <div className="va-row-flex" style={{ gap: 14, alignItems: "center", margin: "10px 0 4px", flexWrap: "wrap" }} data-walk="endorse">
           <BadgePreview
             shape="square"
             state="preview"

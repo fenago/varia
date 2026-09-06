@@ -2,13 +2,18 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Workspace } from "@shared/types";
 import { WALKTHROUGH, WALK_SAMPLE_ID, type WalkStop } from "@shared/walkthrough";
-import { activeRun, rosterRows } from "./selectors";
+import { activeRun, credentialForRecord, evidenceForVariant, rosterRows } from "./selectors";
 
 export interface WalkthroughState {
   active: boolean;
   stepIndex: number;
   sampleId: string;
   startedAt: string | null;
+  /** Panel side; the panel never moves on its own */
+  side: "right" | "left";
+  minimised: boolean;
+  setSide: (side: "right" | "left") => void;
+  setMinimised: (m: boolean) => void;
   start: (sampleId?: string) => void;
   next: () => void;
   back: () => void;
@@ -23,7 +28,11 @@ export const useWalkthrough = create<WalkthroughState>()(
       stepIndex: 0,
       sampleId: WALK_SAMPLE_ID,
       startedAt: null,
-      start: (sampleId) => set({ active: true, stepIndex: 0, sampleId: sampleId ?? WALK_SAMPLE_ID, startedAt: new Date().toISOString() }),
+      side: "right",
+      minimised: false,
+      setSide: (side) => set({ side }),
+      setMinimised: (minimised) => set({ minimised }),
+      start: (sampleId) => set({ active: true, stepIndex: 0, minimised: false, sampleId: sampleId ?? WALK_SAMPLE_ID, startedAt: new Date().toISOString() }),
       next: () => set({ stepIndex: Math.min(WALKTHROUGH.length - 1, get().stepIndex + 1) }),
       back: () => set({ stepIndex: Math.max(0, get().stepIndex - 1) }),
       goTo: (i) => set({ stepIndex: Math.max(0, Math.min(WALKTHROUGH.length - 1, i)) }),
@@ -63,6 +72,18 @@ export function resolveRoute(stop: WalkStop, ws: Workspace, sampleId: string): s
       const rows = rosterRows(ws, run.id);
       const graded = rows.find((x) => x.submission?.grade) ?? rows.find((x) => x.submission?.text) ?? rows[0];
       if (graded) return `/evidence/${graded.variant.id}`;
+    }
+    return "/evidence";
+  }
+  if (r.kind === "credential") {
+    if (run) {
+      const rows = rosterRows(ws, run.id);
+      const graded = rows.find((x) => x.submission?.grade) ?? rows.find((x) => x.submission?.text) ?? rows[0];
+      if (graded) {
+        const rec = evidenceForVariant(ws, graded.variant.id);
+        const cred = rec ? credentialForRecord(ws, rec.id) : null;
+        return cred ? `/credential/${rec!.id}` : `/evidence/${graded.variant.id}`;
+      }
     }
     return "/evidence";
   }

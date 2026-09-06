@@ -12,6 +12,7 @@ export type WalkRoute =
   | { kind: "report" }
   | { kind: "grade" }
   | { kind: "evidence" }
+  | { kind: "credential" }
   | { kind: "talent" };
 
 export type WalkAction =
@@ -35,6 +36,8 @@ export interface WalkStop {
   doNow: string;
   /** data-walk value to highlight on the page */
   target: string;
+  /** Highlighted instead when `target` is not on the page (e.g. nothing shared yet) */
+  fallbackTarget?: string;
   /** How the stop advances */
   advance: "button" | "manual";
   action: WalkAction;
@@ -164,6 +167,17 @@ export const WALKTHROUGH: WalkStop[] = [
     action: "none",
   },
   {
+    key: "badge",
+    route: { kind: "credential" },
+    title: "After grading · what the student walks away with",
+    happened: "The record is on its way to becoming a credential the student can carry.",
+    why: "The grade becomes a signed record. Once an employer endorses it, it becomes a credential the student adds to LinkedIn and shares: the college signs it, the employer endorses it, and anyone can verify it in seconds. That is what a student walks away with instead of a letter grade.",
+    doNow: "Look at the badge preview, then press Next.",
+    target: "badge",
+    advance: "manual",
+    action: "none",
+  },
+  {
     key: "talent",
     route: { kind: "talent" },
     title: "What the employer sees",
@@ -171,6 +185,18 @@ export const WALKTHROUGH: WalkStop[] = [
     why: "Sharing is the student's choice, from their record or portfolio; nothing appears here until they say so. When they do, the employer reads real work on their own problem, checks it in seconds, and can endorse it or invite the student to interview. That is how coursework turns into a job lead, and why an employer keeps sending problems.",
     doNow: "Have a look at the employer's side, then press Next.",
     target: "candidates",
+    advance: "manual",
+    action: "none",
+  },
+  {
+    key: "endorse",
+    route: { kind: "talent" },
+    title: "What the employer sees · the endorsement",
+    happened: "Beside each shared sample the employer sees the credential their endorsement would complete.",
+    why: "Twenty minutes of an employer's time, validating the rubric once and endorsing the work they like, puts their name on a student's credential and tells every future student that this employer's problems are worth doing well. That is the return on the brief they sent you.",
+    doNow: "Have a look, then press Next.",
+    target: "endorse",
+    fallbackTarget: "candidates",
     advance: "manual",
     action: "none",
   },

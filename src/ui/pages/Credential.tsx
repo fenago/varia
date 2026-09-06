@@ -124,7 +124,7 @@ export default function Credential() {
           <div><div className="va-kicker">Credential id</div><div style={{ color: "#fff", fontFamily: "ui-monospace, monospace" }}>{cred.id}</div></div>
           <div><div className="va-kicker">Course</div><div style={{ color: "#fff" }}>{view.course.code} · {view.course.term}</div></div>
         </div>
-        <div style={{ marginTop: 18 }}>
+        <div style={{ marginTop: 18 }} data-walk="badge">
           <BadgePreview
             shape="card"
             state={revoked ? "preview" : "issued"}

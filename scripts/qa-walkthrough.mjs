@@ -30,11 +30,20 @@ await check("Home has the walkthrough button", async () => {
 });
 
 const N = await total();
+await check("panel controls: minimise/show and move remember", async () => {
+  await page.getByRole("button", { name: /^Minimise$/ }).click();
+  assert((await page.locator("[data-walk-minimised]").count()) === 1, "pill shown");
+  await page.getByRole("button", { name: /^Show$/ }).click();
+  await page.getByRole("button", { name: /^Move$/ }).click();
+  const cls = await panel().getAttribute("class");
+  assert(/va-walk-left/.test(cls || ""), "moved left");
+  await page.getByRole("button", { name: /^Move$/ }).click();
+});
 let guard = 0;
 while ((await stopNo()) < N && guard++ < 40) {
   const before = await stopNo();
-  const text = await panel().innerText();
-  await check(`stop ${before}: target highlighted · ${text.split("\n")[2] || ""}`.slice(0, 90), async () => {
+  const title = await page.locator(".va-walk-title").first().innerText().catch(() => "");
+  await check(`stop ${before}: target highlighted · ${title}`.slice(0, 90), async () => {
     const hi = page.locator(".va-walk-target");
     await hi.first().waitFor({ timeout: 15000 });
     assert((await hi.count()) >= 1, "no highlighted target");

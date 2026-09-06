@@ -805,3 +805,9 @@ h2, h3 { text-wrap: balance; }
   .va-jg-list { display: none !important; }
   .va-jg-art-wrap { border: 0; }
 }
+
+.va-walk-controls { display: flex; gap: 2px; }
+.va-walk-ctl { padding: 2px 6px; font-size: 12px; }
+.va-walk-pill { position: fixed; right: 20px; bottom: 20px; z-index: 60; background: var(--color-bg); border-color: var(--color-accent); box-shadow: var(--shadow-md); padding: 8px 10px 8px 14px; display: flex; align-items: center; gap: 10px; }
+.va-walk-pill.va-walk-left { right: auto; left: 20px; }
+@media (max-width: 720px) { .va-walk-pill, .va-walk-pill.va-walk-left { left: 0; right: 0; bottom: 0; justify-content: space-between; border-left: 0; border-right: 0; } }
