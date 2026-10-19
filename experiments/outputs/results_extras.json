@@ -1,0 +1,1490 @@
+[
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "claude_opus_4_7",
+    "strategy": "dpcg",
+    "generation_seconds": 38.3271222114563,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.032389889335014535,
+      "p95": 0.06392419876705795,
+      "max": 0.07962622303303121,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.0005849566216265601,
+      "p95": 0.004421356421356421
+    },
+    "readability": {
+      "flesch_mean": 41.44539664183969,
+      "flesch_std": 25.780071518629025,
+      "word_count_mean": 117.4,
+      "word_count_std": 3.6110940170535577
+    },
+    "construct_equivalence_judge": {
+      "score": 0.82,
+      "rationale": "All six variants consistently require the same four core competencies: technical model evaluation (disparate-impact analysis using zip-code/census proxies), ethical risk identification (protected-class harm), stakeholder communication (translating findings for non-technical decision-makers), and documented reasoning with a go/constrain/stop recommendation. The canonical methodology maps cleanly across all variants despite surface differences in industry, protected attribute, and regulatory frame. Minor construct drift exists in Variant 2 (casual tone and slide-deck format may reduce rigor expectations) and Variant 5 (plain-language briefing note lowers the bar for technical depth), but the underlying competency demands remain substantially equivalent across the set."
+    },
+    "variants_sample": [
+      {
+        "id": "v1",
+        "scenario": "BloomLend, an online consumer credit startup, deployed a gradient-boosted model that approves personal loans within 90 seconds. Leadership reports a 12% lift in quarterly origination revenue since launch. However, community advocates have filed complaints alleging that approval rates in majority-minority neighborhoods appear depressed. As the incoming Head of Model Risk, you have been granted full access to the training data, decision logs, and applicant zip codes. The CEO wants a defensible answer before the next board meeting in three weeks: should we keep the model live, constrain it, or pull it? Use census data and standard fair-lending tests to support your conclusion.",
+        "deliverable": "A board-ready memo recommending continue, constrain, or pause, with quantified revenue impact and legal exposure."
+      },
+      {
+        "id": "v2",
+        "scenario": "u run analytics at QuickCart, an online retailer. last quarter the team shipped a pricing bot that nudges checkout prices up or down per shopper. revenue per visitor jumped 8%. but a reporter just emailed asking why shoppers in certain zip codes seem to pay more for the same stuff. ur boss wants answers fast and doesnt want a PR mess. u have the logs, the model, and census data by zip. figure out if the bot is treating people unfairly, whether the revenue is worth the risk, and what to do next. write it up so non-tech folks get it.",
+        "deliverable": "A short slide deck for the founder explaining the risk tradeoff and a go/slow/stop recommendation."
+      },
+      {
+        "id": "v3",
+        "scenario": "MercyPath Health operates a patient outreach platform that uses a propensity model to decide which discharged patients receive follow-up nurse calls. Administrators credit the system with a 15% reduction in 30-day readmissions and significant reimbursement gains. The compliance committee has raised concerns that patients from lower-income zip codes receive fewer outreach calls. As clinical informatics director, you must evaluate the model using held-out outcome data, census-linked demographics, and call-routing logs. Hospital counsel wants your honest read on whether the system creates discrimination liability under Section 1557 of the Affordable Care Act before the next accreditation cycle begins.",
+        "deliverable": "A written audit report for hospital counsel containing a go/constrain/halt recommendation."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "claude_opus_4_7",
+    "strategy": "no_cmap_cot",
+    "generation_seconds": 45.265032052993774,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.08802276617551225,
+      "p95": 0.13325269015759733,
+      "max": 0.17130243091587924,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.022483233015212493,
+      "p95": 0.06033112582781454
+    },
+    "readability": {
+      "flesch_mean": 18.42186332639344,
+      "flesch_std": 8.642351987287586,
+      "word_count_mean": 156.8,
+      "word_count_std": 8.340263784797216
+    },
+    "construct_equivalence_judge": {
+      "score": 0.97,
+      "rationale": "All six variants require the identical five-step analytical process: time-split holdout evaluation, zip-code-proxied disparate-impact ratio computation, threshold sensitivity analysis, quantified business-value-versus-legal-exposure framing, and a continue/pause/constrain recommendation with documented reasoning. The competencies tested\u2014technical evaluation quality, ethical risk identification, stakeholder communication, and documented reasoning\u2014are uniformly demanded across every variant at the same cognitive level. Surface differences (industry domain: insurance, lending, hiring, housing, healthcare, education) alter context but not construct, as the proxy methodology, analytical depth, and deliverable structure remain structurally identical."
+    },
+    "variants_sample": [
+      {
+        "id": 1,
+        "scenario": "RegionalSure, a mid-sized auto insurance company, has deployed a machine learning model that sets premium quotes for new customers. Leadership credits the model with a 12% lift in underwriting margin over the past year. A customer advocacy group has filed a complaint alleging that quotes systematically vary by neighborhood in ways that may track race. The CEO has hired you as an independent auditor and given you access to the training data, the model artifact, six months of quote logs with zip codes, and the company's financial KPIs.",
+        "deliverable": "Produce a written audit report for the executive team that (a) evaluates the model's predictive performance using an appropriate out-of-time holdout, (b) tests for disparate impact using zip-code-linked census demographics as a protected-attribute proxy, (c) analyzes how sensitive both accuracy and fairness metrics are to the pricing threshold cutoffs, (d) translates findings into a quantified revenue-versus-legal-exposure tradeoff, and (e) recommends whether to continue, pause, or constrain the deployment with monitoring. Show your reasoning."
+      },
+      {
+        "id": 2,
+        "scenario": "Heartland Federal Credit Union uses an in-house ML model to auto-approve or deny small personal loans. Management reports the model has reduced default losses by 9% year-over-year. A board member has raised concerns after noticing that approval rates appear uneven across branch service areas. You have been retained as an external reviewer with access to historical applications, decisions, repayment outcomes, applicant zip codes, and the scoring code.",
+        "deliverable": "Deliver an audit memo to the board that (a) establishes a baseline of approval accuracy and loss prediction using a time-split holdout sample, (b) computes a disparate impact ratio across applicants grouped by census-derived demographic composition of their zip codes, (c) performs sensitivity analysis on the approval score cutoff, (d) frames the results as a quantified profit-versus-fair-lending-risk tradeoff, and (e) recommends a path forward (continue, pause, or limited rollout with controls). Document your reasoning at each step."
+      },
+      {
+        "id": 3,
+        "scenario": "TalentBridge, a staffing agency, has rolled out an AI resume screener that ranks applicants for warehouse and logistics roles across the country. The vendor claims a 20% reduction in time-to-hire and improved retention. Several rejected applicants have organized publicly, alleging the tool disadvantages candidates from certain communities. The COO has commissioned an audit. You have access to a year of resumes, screener scores, hiring outcomes, applicant zip codes, and tenure data.",
+        "deliverable": "Write an audit report for the COO and HR leadership that (a) measures the screener's predictive validity for retention using an out-of-time holdout, (b) tests for disparate impact using census demographics linked to applicant zip codes as a proxy for protected attributes, (c) runs sensitivity analysis on the ranking threshold used to advance candidates, (d) presents the findings as a hiring-efficiency-versus-EEOC-exposure tradeoff with dollar estimates, and (e) recommends pausing, continuing, or rolling out with constrained monitoring. Show your work."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "claude_opus_4_7",
+    "strategy": "no_neg_fs",
+    "generation_seconds": 16.461747884750366,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.06307084965869844,
+      "p95": 0.12882544647175131,
+      "max": 0.14552061413452122,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.008612985744296383,
+      "p95": 0.03505347593582887
+    },
+    "readability": {
+      "flesch_mean": 29.921377805087673,
+      "flesch_std": 10.768248021549248,
+      "word_count_mean": 48.0,
+      "word_count_std": 3.7416573867739413
+    },
+    "construct_equivalence_judge": {
+      "score": 0.88,
+      "rationale": "All six variants require the same core competencies: technical model evaluation (baseline performance, disparate-impact analysis), ethical risk identification (proxy discrimination via geographic/demographic attributes), stakeholder communication (executive-level reporting to C-suite or VP), and documented reasoning with a go/no-go recommendation. The canonical solution steps map cleanly onto every variant since each involves a geographic proxy, a protected-class fairness concern, and a revenue/risk tradeoff framing. Minor drift exists in Variant 6 (scholarship scoring in education shifts the legal exposure framework from ECOA/FHA to Title VI/IX and removes a direct revenue tradeoff), and the target stakeholder varies slightly across variants, but the demand level and competency structure remain substantially consistent across all cases."
+    },
+    "variants_sample": [
+      {
+        "id": "var_1",
+        "scenario": "A mid-sized retail bank deployed an AI loan-pricing model six months ago. Loan officers in three branches report that applicants from certain neighborhoods are quoted noticeably higher interest rates despite comparable credit profiles. Audit the system and report to the Chief Risk Officer.",
+        "deliverable": "Technical audit report + 3-page executive brief"
+      },
+      {
+        "id": "var_2",
+        "scenario": "A national property insurer rolled out an AI-driven premium calculator. Agents have flagged that quotes for homes in older urban districts spike sharply while suburban quotes remain stable, even after controlling for claims history. Audit the model and present findings to the VP of Underwriting.",
+        "deliverable": "Audit findings document + recommendation memo"
+      },
+      {
+        "id": "var_3",
+        "scenario": "A large apartment-management company adopted an AI tenant-screening tool. Leasing agents notice rejection rates are markedly higher for applicants from specific postal codes despite similar income and credit standing. Audit the tool and report to the Chief Operating Officer.",
+        "deliverable": "Audit report + 3-page brief for executive leadership"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "gpt_5_5",
+    "strategy": "dpcg",
+    "generation_seconds": 80.8193929195404,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.11072967808712873,
+      "p95": 0.14247752986469633,
+      "max": 0.15126957469935892,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.01317870039252826,
+      "p95": 0.02076502732240437
+    },
+    "readability": {
+      "flesch_mean": 9.465319678592028,
+      "flesch_std": 5.987396791426281,
+      "word_count_mean": 127.2,
+      "word_count_std": 2.6381811916545845
+    },
+    "construct_equivalence_judge": {
+      "score": 0.96,
+      "rationale": "All six variants faithfully preserve every competency in the blueprint: each requires a held-out time-split revenue baseline (technical evaluation), a census-linked zip-code disparate-impact analysis (ethical risk identification), threshold sensitivity analysis (technical evaluation), and a legal-exposure framing with a pause/constrained-rollout recommendation (stakeholder communication and documented reasoning). The surface domains differ (retail, healthcare, banking, utilities, education, insurance) but the cognitive demand, methodological steps, and deliverable structure are isomorphic across variants. Minor variation in stakeholder titles and revenue figures introduces negligible construct drift."
+    },
+    "variants_sample": [
+      {
+        "id": "alpha",
+        "scenario": "An online furniture retailer is preparing to deploy a machine-learning lead scorer that decides which shoppers get premium sales outreach. The chief financial officer wants an independent audit because the vendor claims the score will lift net revenue by $18 million, yet store managers worry the cutoff may steer service away from neighborhoods with different census profiles. You are given historical transaction logs, model scores, zip codes, and prior outreach outcomes. Assess whether the business case holds under a held-out time-split, whether zip-code demographics reveal disparate impact, how threshold choices alter revenue and fairness, and how legal exposure should shape a pause or constrained rollout with monitoring.",
+        "deliverable": "CFO-ready audit memo covering the revenue baseline, zip-demographic disparate-impact test, threshold sensitivity, legal-exposure framing, and rollout recommendation."
+      },
+      {
+        "id": "bravo",
+        "scenario": "A regional hospital network uses an AI scheduler to rank patients for follow-up calls after discharge, aiming to protect reimbursement tied to readmission avoidance. The chief compliance officer asks for an audit after analysts report a 27% improvement in predicted retention value, while nurses suspect the calling threshold may underserve areas with older housing and different census demographics. You receive discharge dates, call histories, zip codes, payer data, model scores, and realized revenue effects. Determine whether the gain survives a held-out time-split, test disparate impact with zip-demographic proxies, stress the threshold settings, and translate the revenue benefit into legal and patient-equity risk before advising rollout status.",
+        "deliverable": "Compliance audit brief linking revenue validation, zip-proxy disparate impact, threshold stress testing, legal exposure, and deployment advice."
+      },
+      {
+        "id": "charlie",
+        "scenario": "A community bank has bought a credit-offer model that prioritizes which small-business applicants receive expedited underwriting. The chief risk officer needs an audit because the vendor projects $42 million in incremental loan revenue, but branch leaders fear the score may correlate with neighborhood race and income patterns. Available data include application dates, approvals, booked revenue, zip codes, scores, and final decisions. Build the evaluation around a held-out time-split, estimate revenue accuracy against actual outcomes, compute disparate impact using census-linked zip-code proxies, examine how approval thresholds change both yield and fairness, and state whether legal exposure supports delaying launch or allowing a monitored constrained rollout.",
+        "deliverable": "Risk committee memo with revenue-accuracy evidence, proxy-based disparate-impact results, threshold analysis, legal-risk tradeoff, and launch recommendation."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "gpt_5_5",
+    "strategy": "no_cmap_cot",
+    "generation_seconds": 43.500218868255615,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.06735156365774367,
+      "p95": 0.1044230190443718,
+      "max": 0.12120769915808713,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.006413636900369098,
+      "p95": 0.022989840348330914
+    },
+    "readability": {
+      "flesch_mean": 11.129245935578444,
+      "flesch_std": 5.68324843179464,
+      "word_count_mean": 136.2,
+      "word_count_std": 4.975942121849891
+    },
+    "construct_equivalence_judge": {
+      "score": 0.97,
+      "rationale": "All six variants map directly onto every competency in the blueprint: each requires technical validation via a time-split holdout baseline, disparate-impact testing through ZIP-code/census demographic proxies, threshold sensitivity analysis, a quantified revenue-vs-risk communication framing, and a pause/constrain/monitor rollout recommendation. The surface domains differ (grocery, auto lending, meal kits, fitness clubs, travel, property management) but the cognitive demand and methodological steps are identical across all variants, preserving construct equivalence at essentially the same level. The only negligible drift is that Variant 5 uses 'approximate location' rather than explicit ZIP code, which is a trivial surface variation with no meaningful impact on the underlying competency structure."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_01",
+        "scenario": "A regional grocery chain is piloting an AI system that ranks loyalty-card customers for personalized discount offers. The vendor claims the model will increase weekly promotion revenue by targeting only customers most likely to redeem profitable offers. Executives want to expand the system to all stores next month, but a compliance manager is concerned that the ranking may systematically exclude customers from lower-income neighborhoods because the model uses purchase history, store location, and delivery-zone data.",
+        "deliverable": "Prepare a concise audit memo for the executive team assessing whether the promotion-targeting AI should be expanded. Include how you would validate revenue impact using historical data, how you would test for uneven effects using location-based demographic proxies, how threshold choices should be stress-tested, how to communicate the business upside alongside regulatory and reputational risk, and whether you recommend pausing, limiting, or monitoring the rollout."
+      },
+      {
+        "id": "variant_02",
+        "scenario": "A mid-sized auto lender has adopted an AI tool that prioritizes online loan applicants for fast-track approval review. The sales team reports higher funded-loan volume, while the legal team worries that applicants from certain ZIP codes may be less likely to receive fast-track handling. The model does not use race or ethnicity directly, but it includes employment stability, requested loan amount, dealer location, and applicant address-derived variables.",
+        "deliverable": "Write an audit report for senior leadership evaluating the fast-track loan AI. Address how to establish a reliable revenue and approval-accuracy benchmark from past applications, how to examine potential disparate impact using census-linked ZIP-code demographics, how to analyze sensitivity to cutoff settings, how to frame the findings as a quantified revenue versus compliance-risk decision, and what rollout recommendation you would make."
+      },
+      {
+        "id": "variant_03",
+        "scenario": "A subscription meal-kit company is using an AI churn-retention model to decide which customers receive high-value save offers. The marketing department says the model improves net retained revenue, but customer advocacy staff have noticed that households in some delivery areas rarely receive the best offers. The model uses order frequency, skipped weeks, delivery density, recipe preferences, and customer service history.",
+        "deliverable": "Create a decision-ready audit brief on the retention-offer model. Explain how you would measure performance against a time-based holdout benchmark, how you would assess whether offer eligibility differs across protected-group proxies derived from ZIP-code census patterns, how threshold changes could alter revenue and fairness outcomes, how to quantify the tradeoff between retained revenue and legal or reputational exposure, and whether the company should stop, constrain, or monitor deployment."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "gpt_5_5",
+    "strategy": "no_neg_fs",
+    "generation_seconds": 25.23170804977417,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.06941696697444852,
+      "p95": 0.10909716358938788,
+      "max": 0.14699505288930878,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.02859218644036726,
+      "p95": 0.04172567532126933
+    },
+    "readability": {
+      "flesch_mean": 27.744365201513006,
+      "flesch_std": 8.192207791186073,
+      "word_count_mean": 48.3,
+      "word_count_std": 2.6476404589747453
+    },
+    "construct_equivalence_judge": {
+      "score": 0.82,
+      "rationale": "All six variants require the same core competencies: technical evaluation of an AI model's outputs, identification of disparate-impact across geographic/demographic proxies, stakeholder-appropriate communication, and documented reasoning with a risk-tradeoff recommendation. The canonical solution steps (baseline accuracy, disparate-impact ratio via zip-code proxy, sensitivity analysis, revenue/risk framing, constrained rollout) apply uniformly across all scenarios. Minor drift exists because the legal exposure and regulatory stakes differ meaningfully across domains (ECOA/fair lending in V1, ACA/insurance in V2, FHA in V5 vs. lower-stakes retail/telecom/SaaS contexts), which could shift the depth of ethical-risk identification and the weight of the legal-framing competency, but the fundamental construct and demand level remain largely consistent."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1",
+        "scenario": "A national auto lender deployed an AI loan pre-approval model. Branch managers report that applicants from several urban neighborhoods are being rejected at unusually high rates despite similar income and credit profiles. Audit and report to the Chief Risk Officer.",
+        "deliverable": "Audit report + executive risk briefing"
+      },
+      {
+        "id": "variant_2",
+        "scenario": "A health insurance company deployed an AI claims-review system to flag potentially excessive procedures. Patient advocates report that claims from certain ZIP codes are being denied more often than comparable claims elsewhere. Audit and report to the VP of Claims Operations.",
+        "deliverable": "Findings memo + rollout recommendation"
+      },
+      {
+        "id": "variant_3",
+        "scenario": "A national retailer deployed an AI promotion-targeting engine for online discounts. Store teams report that customers in lower-income delivery zones receive fewer high-value offers despite similar purchase histories. Audit and report to the Chief Marketing Officer.",
+        "deliverable": "Audit report + 3-page leadership brief"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "gemini_3_1_pro",
+    "strategy": "dpcg",
+    "generation_seconds": 44.312824010849,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.053674565172200504,
+      "p95": 0.089536028028542,
+      "max": 0.14275533899493292,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.002014652272809929,
+      "p95": 0.008539734497181307
+    },
+    "readability": {
+      "flesch_mean": -11.025848261893364,
+      "flesch_std": 6.824581607982688,
+      "word_count_mean": 120.5,
+      "word_count_std": 2.1095023109728985
+    },
+    "construct_equivalence_judge": {
+      "score": 0.92,
+      "rationale": "All six variants consistently require the same four core competencies: technical validation via temporal data splitting, disparate-impact analysis using geographic proxies, threshold sensitivity testing, and a revenue-versus-risk framing leading to a deployment recommendation. The canonical solution steps map cleanly onto every variant with only surface-level domain changes (lending, insurance claims, dynamic pricing, hiring, auto insurance, property valuation). Minor construct drift exists in Variant 3 (dynamic pricing has weaker regulatory precedent than lending/employment discrimination) and Variant 2 (fraud detection introduces a slightly different ethical framing), but the cognitive demand and competency coverage remain essentially equivalent across all variants."
+    },
+    "variants_sample": [
+      {
+        "id": "V1",
+        "scenario": "Your team is finalizing a predictive loan-approval algorithm intended to generate $25M in new annual interest revenue. The model utilizes applicant financial history and residential postal codes to determine creditworthiness. Before the scheduled deployment next month, the Chief Risk Officer requires a comprehensive algorithmic audit. You must utilize historical data to validate predictive accuracy, ensuring the model avoids discriminatory lending practices linked to geographic proxies. Furthermore, the audit must evaluate the impact of adjusting the approval confidence cutoff. You are required to balance potential financial gains against regulatory exposure and provide a definitive deployment recommendation.",
+        "deliverable": "A formal risk assessment memorandum addressed to the Chief Risk Officer detailing the audit methodology and a final deployment recommendation."
+      },
+      {
+        "id": "V2",
+        "scenario": "A novel automated claims-adjudication system is slated for integration, promising to reduce administrative overhead by 18%. The architecture leverages longitudinal patient histories and neighborhood zip codes to rapidly flag potentially fraudulent submissions for denial. The VP of Medical Economics demands a rigorous pre-deployment evaluation of this architecture. Your objective is to validate the system's baseline efficacy using chronologically partitioned historical logs. Crucially, you must investigate whether geographic variables inadvertently encode socioeconomic biases, analyze the sensitivity of the fraud-detection threshold, and quantify the intersection of operational savings and legal liability. Provide a clear recommendation regarding the system's activation.",
+        "deliverable": "An executive briefing document for the VP of Medical Economics outlining the temporal validation, demographic proxy risks, and a constrained rollout strategy."
+      },
+      {
+        "id": "V3",
+        "scenario": "Our digital storefront is preparing to launch an algorithmic dynamic-pricing engine projected to increase quarterly margins by $12M. The algorithm calculates consumer willingness-to-pay using browsing behavior and delivery postal codes. The Chief Marketing Officer requires an exhaustive technical audit prior to the impending holiday rollout. You must establish a robust performance baseline using temporally separated transaction data. Additionally, it is imperative to assess potential disparate impact metrics arising from geographic proxies, test the sensitivity of the discount-allocation thresholds, and articulate the fundamental tradeoff between revenue maximization and consumer protection litigation. Propose a definitive strategic path forward.",
+        "deliverable": "A strategic audit report directed to the Chief Marketing Officer, detailing the financial-ethical tradeoff analysis and a concrete deployment protocol."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "gemini_3_1_pro",
+    "strategy": "no_cmap_cot",
+    "generation_seconds": 47.155641078948975,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.103411543984139,
+      "p95": 0.16433061933590667,
+      "max": 0.19721980011007653,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.028834520253898495,
+      "p95": 0.06595444219316017
+    },
+    "readability": {
+      "flesch_mean": 2.1430144087633978,
+      "flesch_std": 5.417136066652967,
+      "word_count_mean": 93.7,
+      "word_count_std": 6.634003316248795
+    },
+    "construct_equivalence_judge": {
+      "score": 0.92,
+      "rationale": "All six variants preserve the five canonical solution steps almost identically: time-split holdout baseline, zip-code demographic disparate-impact ratio, threshold sensitivity analysis, revenue/risk tradeoff framing with quantified legal exposure, and a pause-or-constrained-rollout recommendation. The underlying competencies (technical evaluation, ethical risk identification, stakeholder communication, documented reasoning) are demanded at the same cognitive level across all variants. Minor construct drift exists only in Variant 5 (healthcare scheduling introduces clinical equity nuance beyond standard fair-lending/fair-housing frameworks) and Variant 6 (marketing targeting has weaker legal exposure than credit or housing), but neither shift is severe enough to change the fundamental measurement target."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1_mortgage_approval",
+        "scenario": "A regional bank is preparing to deploy an automated AI mortgage approval system to increase origination revenue and reduce manual processing costs. The model was trained on historical loan application data from 2018 to 2023, which includes applicant financial histories and residential zip codes.",
+        "deliverable": "An audit report that establishes a revenue-accuracy baseline using a time-based holdout set, computes disparate-impact ratios using zip-code demographics as a protected-attribute proxy, runs a sensitivity analysis on approval score thresholds, frames the findings as a quantified tradeoff between origination revenue and fair-lending legal exposure, and provides a final recommendation for either a paused or constrained rollout with ongoing monitoring."
+      },
+      {
+        "id": "variant_2_auto_insurance",
+        "scenario": "An auto insurance provider is implementing an AI dynamic pricing engine to maximize premium revenue by predicting policyholder accident risk. The training dataset consists of historical claims data and the garaging zip codes of the insured vehicles.",
+        "deliverable": "An audit report that establishes a revenue-accuracy baseline using a time-split validation approach, computes disparate-impact ratios across zip-code demographic proxies, conducts a sensitivity analysis on the risk-pricing thresholds, frames the results as a tradeoff between premium revenue and regulatory/legal exposure, and recommends a monitored limited release or a complete pause."
+      },
+      {
+        "id": "variant_3_ecommerce_fraud",
+        "scenario": "A global e-commerce platform is rolling out a new AI fraud detection system designed to minimize chargebacks while maximizing legitimate transaction revenue. The model relies on a dataset of past purchases, user behavior, and shipping zip codes.",
+        "deliverable": "An audit report that calculates a baseline of saved revenue versus false declines using a temporal holdout, measures disparate impact using shipping zip-code demographics as a proxy, evaluates sensitivity across fraud-score thresholds, presents a quantified tradeoff between revenue and ethical/legal risk, and recommends either pausing the deployment or proceeding with a constrained, monitored rollout."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "gemini_3_1_pro",
+    "strategy": "no_neg_fs",
+    "generation_seconds": 136.2891399860382,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.03903215714913267,
+      "p95": 0.07066436155349125,
+      "max": 0.07916189660185222,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.02483395017190798,
+      "p95": 0.041906408198543
+    },
+    "readability": {
+      "flesch_mean": 19.798988466657583,
+      "flesch_std": 11.519126602228155,
+      "word_count_mean": 49.9,
+      "word_count_std": 1.8681541692269406
+    },
+    "construct_equivalence_judge": {
+      "score": 0.82,
+      "rationale": "All six variants consistently require the same core competencies: technical evaluation of an AI system's performance baseline, identification of disparate-impact across geography-as-demographic-proxy, stakeholder-appropriate communication, and documented reasoning with a risk/tradeoff framing. The canonical solution steps (held-out evaluation, disparate-impact ratio via zip/postal code demographics, sensitivity analysis, revenue-risk tradeoff quantification, and constrained rollout recommendation) map cleanly onto every variant's domain. Minor drift exists in Variant 6, where the marketing framing and 'lifetime value' optimization context slightly de-emphasizes legal/ethical exposure relative to business performance, and Variant 3's resume-screening context shifts the performance baseline methodology slightly away from revenue-accuracy toward recall/precision metrics, but neither fundamentally changes the competency demands or cognitive level required."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1",
+        "scenario": "A national grocery chain rolled out an AI dynamic pricing engine to maximize margins. Store managers in certain urban zip codes report that staple goods are being priced significantly higher than in suburban locations despite similar supply costs. Audit and report to the VP of Pricing.",
+        "deliverable": "Technical audit summary + executive risk memo"
+      },
+      {
+        "id": "variant_2",
+        "scenario": "A fintech startup launched an AI-driven credit limit increase algorithm to boost lending revenue. Customer support notes a spike in complaints from specific postal codes where users are denied increases despite having perfect payment histories. Audit and report to the Chief Risk Officer.",
+        "deliverable": "Quantitative audit report + compliance tradeoff presentation"
+      },
+      {
+        "id": "variant_3",
+        "scenario": "A large tech firm implemented an AI resume screener to reduce cost-per-hire. Recruiters observe that applicants from certain regional universities are systematically scored lower despite matching all keyword qualifications and experience requirements. Audit and report to the Chief HR Officer.",
+        "deliverable": "Bias assessment report + rollout recommendation brief"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "claude_opus_4_7",
+    "strategy": "dpcg",
+    "generation_seconds": 40.97704482078552,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.03031834650708503,
+      "p95": 0.052494679962881645,
+      "max": 0.06360999303379163,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.0006194171825987378,
+      "p95": 0.004128830391456654
+    },
+    "readability": {
+      "flesch_mean": 24.339190922467754,
+      "flesch_std": 22.153037284688704,
+      "word_count_mean": 127.1,
+      "word_count_std": 8.3
+    },
+    "construct_equivalence_judge": {
+      "score": 0.82,
+      "rationale": "All six variants require the same core competencies \u2014 statistical methodology selection, root-cause analysis, stakeholder communication, and documented reasoning \u2014 and all map closely to the canonical five-step solution (drift quantification, pipeline tracing, falsifying alternatives, remediation with rollback, and recurrence monitoring). The primary sources of minor drift are register and audience calibration: Variants 2 and 5 use casual language and target lay audiences (Slack thread, school board briefing), which slightly reduces the methodological rigor demanded in the deliverable format compared to the formal technical reports in Variants 1, 3, 4, and 6. However, the underlying investigative competencies being measured remain substantively consistent across all variants, with no variant fundamentally redirecting toward a different construct."
+    },
+    "variants_sample": [
+      {
+        "id": 1,
+        "scenario": "You are a credit risk analyst at a regional bank. The loan approval model your team deployed six months ago shows a 14% gap in approval rates between applicants from urban and rural ZIP codes, despite similar income distributions. Internal audit has flagged this disparity for review before the next regulatory examination. Historical baselines from the prior rule-based system did not show this gap. The pipeline ingests credit bureau pulls, applicant disclosures, and a third-party employment verification feed. Your director wants clarity on whether the gap reflects a real risk signal or a defect introduced somewhere in feature engineering, labeling, or sampling logic. The compliance officer expects defensible methodology.",
+        "deliverable": "Submit a written investigation memo to the Chief Risk Officer identifying the root cause, ruling out alternative explanations, proposing a pipeline remediation with rollback procedure, and specifying recurrence-monitoring metrics."
+      },
+      {
+        "id": 2,
+        "scenario": "u r the data person at a mid-size online retailer. the recommendation engine has been live a while, and last week the marketing lead noticed that click-through rate for women shoppers dropped about 22% vs men over the past quarter, even tho purchase volume looks normal-ish. before this quarter the gap was basically zero. the pipeline pulls from session logs, a product catalog feed, and a labels table built from past purchases. ur manager wants u to figure out what happened, prove it wasn't just holiday weirdness or a traffic shift, and say how to fix it without breaking the live site.",
+        "deliverable": "Post a Slack-thread writeup for the marketing lead and engineering manager covering the cause, falsified alternative explanations, a staged fix with rollback steps, and ongoing checks."
+      },
+      {
+        "id": 3,
+        "scenario": "As a clinical informatics fellow at an academic medical center, you are evaluating a sepsis early-warning model integrated into the EHR eighteen months ago. Quality improvement staff observed that the model's positive predictive value among Black inpatients has declined to 0.31, compared with 0.52 for white inpatients, a divergence not present at initial validation. Inputs include vitals streams, laboratory results, and a problem-list-derived comorbidity feature constructed during nightly ETL. Hospital leadership has paused expansion to additional units pending your analysis. The chief medical information officer requires methodologically defensible conclusions suitable for the institutional review committee.",
+        "deliverable": "Prepare a structured technical report for the Medical Informatics Committee detailing the cohort drift analysis, identified pipeline defect, refuted confounders, remediation with rollback, and continuous monitoring plan."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "claude_opus_4_7",
+    "strategy": "no_cmap_cot",
+    "generation_seconds": 32.389394998550415,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.053217820116665905,
+      "p95": 0.0889451448439595,
+      "max": 0.17273642018414634,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.00884750946713977,
+      "p95": 0.025615305573225024
+    },
+    "readability": {
+      "flesch_mean": 12.523469505510409,
+      "flesch_std": 7.431058999067382,
+      "word_count_mean": 107.0,
+      "word_count_std": 7.0710678118654755
+    },
+    "construct_equivalence_judge": {
+      "score": 0.95,
+      "rationale": "All six variants require the same five-step canonical solution: quantify cohort-level metric drift, trace it to a specific pipeline stage, falsify alternative explanations, recommend a fix with rollback, and define ongoing monitoring. The competencies tested\u2014statistical methodology selection, root-cause analysis, stakeholder communication, and documented reasoning\u2014are uniformly demanded across all variants at the same cognitive level. Minor surface differences in domain (fintech, healthcare, HR, fraud, streaming, advertising) do not shift the underlying construct or difficulty, making the variants highly equivalent."
+    },
+    "variants_sample": [
+      {
+        "id": 1,
+        "scenario": "You are the lead data scientist at a fintech company. Over the last quarter, the loan approval model has shown approval rates diverging across applicant ZIP-code clusters, and the compliance team has flagged a potential disparate impact issue. The pipeline ingests credit bureau data, applies feature engineering (including a recently updated income-imputation step), and outputs scores used by underwriters.",
+        "deliverable": "Produce an investigation report that quantifies the divergence across cohorts, traces it back through the pipeline to the responsible transformation or data source, rules out alternative explanations such as a shift in applicant mix or seasonal borrowing patterns, proposes a remediation with a safe rollback path, and specifies the ongoing checks that would catch a similar issue in the future."
+      },
+      {
+        "id": 2,
+        "scenario": "You work on the clinical analytics team at a hospital network. A readmission-risk model used to allocate post-discharge nursing resources is showing systematically different risk distributions for patients seen at urban versus rural facilities since a recent EHR vendor migration. Clinicians are complaining that risk scores no longer match their intuition.",
+        "deliverable": "Deliver a written analysis that measures how risk-score outputs have shifted by facility cohort, isolates which pipeline stage or label definition introduced the change, falsifies competing hypotheses such as a real change in patient acuity or flu-season effects, recommends a corrective patch with a clear revert procedure, and defines the monitoring dashboard that would surface a recurrence."
+      },
+      {
+        "id": 3,
+        "scenario": "You lead the people-analytics group at a large tech employer. The resume-screening model used by recruiters has begun producing lower advancement rates for candidates from non-target universities since the team added a new 'years of relevant experience' parser to the pipeline. HR leadership wants answers before the next hiring cycle.",
+        "deliverable": "Write up an investigation that measures the advancement-rate gap across candidate cohorts, traces the gap to a specific feature-engineering or labeling change, demonstrates that alternatives like a shift in applicant pool composition or seasonal hiring volume do not explain it, recommends a fix with a rollback strategy, and prescribes the monitoring that would alert the team if the disparity returns."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "claude_opus_4_7",
+    "strategy": "no_neg_fs",
+    "generation_seconds": 15.496877908706665,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.039743441213843135,
+      "p95": 0.07192137273929916,
+      "max": 0.11940501263774499,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.017125499163161678,
+      "p95": 0.026052631578947365
+    },
+    "readability": {
+      "flesch_mean": 25.713269355644364,
+      "flesch_std": 9.192916667213613,
+      "word_count_mean": 48.2,
+      "word_count_std": 3.994996871087636
+    },
+    "construct_equivalence_judge": {
+      "score": 0.82,
+      "rationale": "All six variants require the same core competencies \u2014 statistical methodology to quantify differential outcomes across cohorts, root-cause tracing through pipeline steps, falsification of alternative explanations, and a remediation plan with monitoring \u2014 closely matching the blueprint's canonical solution. Minor drift exists in Variant 5 (e-commerce seller visibility), which frames the problem more as a product anomaly than a bias/fairness investigation, slightly reducing emphasis on protected-cohort analysis and ethical stakeholder communication. Variants 1, 4, and 6 carry higher regulatory and ethical stakes that may shift the stakeholder communication demand upward, but the underlying investigative methodology remains equivalent across all variants."
+    },
+    "variants_sample": [
+      {
+        "id": "var_1",
+        "scenario": "A national bank deployed an ML credit-scoring model. Loan officers in three rural branches report that small-business applicants are being denied at twice the rate of comparable urban applicants, despite similar financial profiles. Investigate and report to the Chief Risk Officer.",
+        "deliverable": "Investigation report + remediation plan for executive review"
+      },
+      {
+        "id": "var_2",
+        "scenario": "A university adopted an AI-driven admissions screening pipeline. Counselors notice that first-generation college applicants from rural high schools are being scored systematically lower in the 'academic preparedness' dimension. Audit and report to the Provost.",
+        "deliverable": "Audit findings + 2-page brief for the admissions committee"
+      },
+      {
+        "id": "var_3",
+        "scenario": "A streaming platform deployed a new content-recommendation model. Product analysts notice that watch-time metrics for non-English-language subscribers have dropped 18% since rollout, while English-language metrics rose. Investigate and report to the VP of Product.",
+        "deliverable": "Root-cause memo + rollback recommendation"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "gpt_5_5",
+    "strategy": "dpcg",
+    "generation_seconds": 42.484513998031616,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.04175449350413102,
+      "p95": 0.07322121780426992,
+      "max": 0.08936721396389334,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.0010915074144435073,
+      "p95": 0.0049261083743842365
+    },
+    "readability": {
+      "flesch_mean": 17.788805603705285,
+      "flesch_std": 8.54458695184512,
+      "word_count_mean": 107.1,
+      "word_count_std": 1.1357816691600546
+    },
+    "construct_equivalence_judge": {
+      "score": 0.95,
+      "rationale": "All six variants require the same five-step canonical solution: compute cohort-level metric drift, trace it to a feature-engineering or label source, falsify alternative explanations (sampling and seasonality), recommend a reversible pipeline fix, and specify recurrence monitoring. Each variant provides two plausible pipeline suspects (one feature transform, one label source) and two alternative explanations to rule out, maintaining identical cognitive demand across domains. The minor 0.05 deduction reflects trivial surface variation in metric type (recall vs. precision vs. lift) and stakeholder framing, which could marginally shift the emphasis of the communication component but does not alter the underlying competencies or their level of demand."
+    },
+    "variants_sample": [
+      {
+        "id": "alpha",
+        "scenario": "In a consumer lending pipeline, the credit policy lead notices that the automated approval model treats applicants from partner referrals differently after a feature refresh. Approval recall for referral applicants fell by 9%, while manual reviewers report no comparable change in file quality. The lead suspects a transformation added to income normalization or a refreshed repayment-status label may have shifted downstream decisions. You are asked to compare model outcomes across applicant cohorts, locate the pipeline step most consistent with the drift, rule out a different applicant mix and calendar effects, and propose a safe correction with rollback and recurrence monitoring.",
+        "deliverable": "Bias investigation memo for the credit policy lead"
+      },
+      {
+        "id": "bravo",
+        "scenario": "At a hospital network, a readmission risk scoring service was updated after the analytics team revised encounter features. The care management director sees that flagged-risk sensitivity for patients discharged from rural clinics declined by 11%, though discharge planners say referral patterns appear stable. Possible causes include a new medication grouping rule, a delayed claims label feed, or a normal seasonal shift in respiratory admissions. Investigate cohort-level metric drift, trace the change through the feature and label path, challenge the competing explanations, and recommend a pipeline remedy that can be reversed safely if patient triage worsens.",
+        "deliverable": "Clinical analytics incident report for the care management director"
+      },
+      {
+        "id": "charlie",
+        "scenario": "A streaming media company refreshed its recommendation training pipeline after adding behavioral tags from a new event parser. The head of audience growth observes that completion-rate lift for Spanish-language documentary viewers dropped by 7%, despite stable promotion plans and no reported catalog outage. Engineers are unsure whether the problem started in sessionization, genre tagging, or the watch-completion label. Review downstream drift by viewer cohort, trace the anomaly to the most plausible pipeline dependency, test whether acquisition mix or release timing explains the change, and advise a fix with rollback guidance and monitoring for future recurrence.",
+        "deliverable": "Recommendation pipeline drift brief for the audience growth head"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "gpt_5_5",
+    "strategy": "no_cmap_cot",
+    "generation_seconds": 29.367281198501587,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.06798575566611897,
+      "p95": 0.12024667029508816,
+      "max": 0.19766464213847498,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.009081933603275529,
+      "p95": 0.02551282051282051
+    },
+    "readability": {
+      "flesch_mean": 17.661113252839023,
+      "flesch_std": 4.855027192527033,
+      "word_count_mean": 104.8,
+      "word_count_std": 3.5156791662493894
+    },
+    "construct_equivalence_judge": {
+      "score": 0.95,
+      "rationale": "All six variants require the same five-step canonical solution: quantifying cohort-level metric drift, tracing the root cause to a feature-engineering or label-source change, falsifying alternative explanations (volume/sampling shifts and temporal/seasonal effects), recommending a fix with rollback, and specifying recurrence monitoring. The surface domains differ (banking, healthcare, hiring, payments, social media, ride-hailing) but the underlying competencies\u2014statistical methodology selection, root-cause analysis, stakeholder communication, and documented reasoning\u2014are consistently demanded at the same cognitive level across all variants. Minor variation in terminology (memo vs. report vs. brief) and the specific alternative explanations to falsify introduce negligible construct drift."
+    },
+    "variants_sample": [
+      {
+        "id": "V01",
+        "scenario": "A bank recently refreshed its loan prequalification data pipeline. Two weeks later, compliance analysts noticed that approval recommendations dropped sharply for applicants from newer ZIP-code regions, while older regions stayed stable. The model version did not change, but several upstream data transformations and a new bureau-feed mapping were deployed.",
+        "deliverable": "Prepare an investigation memo that quantifies downstream recommendation drift across applicant cohorts, identifies whether the shift originates in a feature-engineering step or label/source feed, rules out plausible alternatives such as sampling mix changes or seasonal application patterns, recommends a pipeline correction with a rollback plan, and specifies monitoring that would catch the issue if it recurs."
+      },
+      {
+        "id": "V02",
+        "scenario": "A hospital analytics team updated the pipeline that predicts 30-day readmission risk. After deployment, risk scores rose noticeably for patients discharged from satellite clinics, but remained similar for main-campus patients. The predictive model was unchanged, while discharge-code normalization and outcome-label ingestion were modified.",
+        "deliverable": "Write a technical incident report that measures downstream risk-score drift across patient cohorts, traces the cause to either a feature transformation or the readmission-label source, falsifies competing explanations such as patient-volume changes or seasonal illness patterns, proposes a fix and rollback procedure, and documents monitoring needed to detect a recurrence."
+      },
+      {
+        "id": "V03",
+        "scenario": "An online hiring platform revised its candidate-ranking data pipeline. Recruiters then observed that candidates from bootcamp programs were ranked lower than before, while candidates from traditional degree programs showed little change. No ranking model weights changed, but resume parsing rules and historical hiring-outcome labels were updated.",
+        "deliverable": "Produce an investigation brief that calculates downstream ranking drift by candidate cohort, determines whether the drift comes from a feature-engineering change or a label-source change, eliminates alternative explanations such as applicant-pool shifts or hiring-season effects, recommends a pipeline fix with a rollback plan, and defines monitoring to identify the same failure mode in the future."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "gpt_5_5",
+    "strategy": "no_neg_fs",
+    "generation_seconds": 15.683989763259888,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.05371782254938347,
+      "p95": 0.1227173080774697,
+      "max": 0.14847097824616493,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.029858674582621373,
+      "p95": 0.04799999999999997
+    },
+    "readability": {
+      "flesch_mean": 17.002584694587902,
+      "flesch_std": 11.018788244749471,
+      "word_count_mean": 44.5,
+      "word_count_std": 2.0615528128088303
+    },
+    "construct_equivalence_judge": {
+      "score": 0.82,
+      "rationale": "All six variants require the same core competencies: selecting appropriate statistical methods to detect metric drift across cohorts, tracing the root cause to a pipeline component, falsifying alternative explanations, recommending a fix with rollback, and communicating findings to a senior stakeholder. The scenarios vary in domain (credit, education, municipal, streaming, staffing, insurance) but the underlying analytical workflow and cognitive demand remain consistent. Minor construct drift exists because Variant 3 lacks an explicit rollback deliverable and Variant 4 slightly over-indexes on rollback while under-specifying the monitoring documentation, but these differences are small enough not to substantially alter what competencies are being measured."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1",
+        "scenario": "A retail bank deployed an AI credit-limit adjustment model. Customer support teams report that long-tenured small-business customers in one region are receiving unexpectedly low limit increases compared with similar accounts elsewhere. Audit and report to the Chief Risk Officer.",
+        "deliverable": "Investigation report + executive recommendation memo"
+      },
+      {
+        "id": "variant_2",
+        "scenario": "An online learning platform deployed an AI course-recommendation engine. Academic advisors notice that adult learners returning after career breaks are being routed into remedial modules at unusually high rates. Audit and report to the VP of Product.",
+        "deliverable": "Bias investigation brief + remediation plan"
+      },
+      {
+        "id": "variant_3",
+        "scenario": "A municipal services agency deployed an AI system to prioritize road repair requests. Neighborhood representatives report that requests from recently rezoned districts are being deprioritized despite similar damage reports. Audit and report to the City Operations Director.",
+        "deliverable": "Findings report + stakeholder-facing summary"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "gemini_3_1_pro",
+    "strategy": "dpcg",
+    "generation_seconds": 46.384528160095215,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.045458226945423064,
+      "p95": 0.08576495555681232,
+      "max": 0.10520735910862541,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.002746385044863344,
+      "p95": 0.013599673868732164
+    },
+    "readability": {
+      "flesch_mean": -9.954053185615177,
+      "flesch_std": 5.045110920296638,
+      "word_count_mean": 113.2,
+      "word_count_std": 2.749545416973504
+    },
+    "construct_equivalence_judge": {
+      "score": 0.95,
+      "rationale": "All six variants preserve the same five canonical solution steps: computing metric drift across a demographic/geographic cohort, tracing drift to a feature-engineering step or label source, falsifying alternative explanations (seasonality and sampling), recommending a pipeline fix with rollback, and specifying monitoring for recurrence. The deliverables across variants map directly onto the same competencies (statistical methodology selection, root-cause analysis, stakeholder communication, documented reasoning process) at equivalent cognitive demand levels. Minor surface variation in domain (healthcare, e-commerce, credit, rideshare, education, real estate) and metric type (recall, precision, conversion, latency, variance) introduces negligible construct drift since the underlying analytical process and reasoning requirements remain structurally identical."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1_healthcare",
+        "scenario": "The Chief Medical Officer has identified a concerning anomaly within the hospital's automated patient triage pipeline. Over the preceding quarter, the system's false-negative rate for predicting emergent sepsis increased by exactly 14% specifically among elderly demographics. You must investigate the underlying data architecture to determine whether a recent feature-engineering modification or a shift in the electronic health record labeling source precipitated this algorithmic bias. It is imperative that your investigation rigorously falsifies alternative hypotheses, including seasonal fluctuations in patient admissions or temporary sampling variations within the emergency department.",
+        "deliverable": "A technical memorandum detailing the root cause, a proposed pipeline remediation with a rollback protocol, and a continuous monitoring framework to prevent future regressions."
+      },
+      {
+        "id": "variant_2_ecommerce",
+        "scenario": "The VP of Merchandising has reported a significant degradation in the personalized product recommendation engine. Throughout the recent promotional cycle, the conversion drop-off rate surged by 22% exclusively for users browsing on mobile devices. You are tasked with auditing the ingestion pipeline to ascertain if a flawed user-agent feature extraction process or a corrupted behavioral tracking label caused this systematic skew. Your analysis must definitively rule out extraneous factors, such as inherent mobile traffic seasonality or randomized sampling discrepancies during the promotional event.",
+        "deliverable": "An executive action plan specifying the diagnostic methodology, the identified pipeline defect, a corrective deployment strategy with rollback contingencies, and automated alerts for subsequent drift detection."
+      },
+      {
+        "id": "variant_3_finance",
+        "scenario": "The Head of Risk Management escalated a severe discrepancy originating from the automated credit underwriting algorithm. During the previous fiscal month, the default prediction model exhibited an unexpected 18% deterioration in recall for applicants from rural zip codes. You must forensically examine the data pipeline to identify whether an updated geolocation feature transformation or an altered credit bureau reporting feed introduced this demographic bias. Furthermore, your evaluation must systematically invalidate confounding variables, such as macroeconomic cyclicality or transient shifts in applicant sampling distributions.",
+        "deliverable": "A comprehensive diagnostic report outlining the statistical methodology used, the confirmed root cause, a software patch recommendation with rollback procedures, and a revised telemetry dashboard specification."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "gemini_3_1_pro",
+    "strategy": "no_cmap_cot",
+    "generation_seconds": 31.76772975921631,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.04431871334220881,
+      "p95": 0.07154568960521365,
+      "max": 0.07983277756440185,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.001889193283961661,
+      "p95": 0.00574055829228243
+    },
+    "readability": {
+      "flesch_mean": 0.31253200666724296,
+      "flesch_std": 8.680174419345047,
+      "word_count_mean": 91.8,
+      "word_count_std": 4.833218389437829
+    },
+    "construct_equivalence_judge": {
+      "score": 0.92,
+      "rationale": "All six variants consistently operationalize the same five canonical solution steps: computing cohort-level metric drift, tracing it to a specific pipeline stage, falsifying alternative explanations, recommending a fix with rollback, and defining ongoing monitoring. The competencies of statistical methodology selection, root-cause analysis, stakeholder communication, and documented reasoning are uniformly demanded across all scenarios at comparable cognitive depth. Minor construct drift exists only in that Variant 3 (device-type CTR) is slightly less bias-focused and more of a performance-parity problem, but the structural demands and required reasoning process remain equivalent."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1_healthcare",
+        "scenario": "A hospital's patient triage AI has recently started assigning lower priority scores to patients originating from specific rural zip codes, leading to increased wait times for this demographic. The underlying data pipeline aggregates electronic health records (EHR) and demographic data daily.",
+        "deliverable": "A comprehensive report that computes the triage accuracy drift across geographic cohorts, traces the bias to a specific missing-value imputation step for rural clinic data, falsifies alternative explanations such as seasonal flu spikes or shifts in patient volume, proposes a pipeline patch with a safe rollback strategy, and defines automated monitoring alerts to detect future geographic disparities."
+      },
+      {
+        "id": "variant_2_finance",
+        "scenario": "A retail bank's automated loan approval system exhibits a sudden, sharp decline in approval rates specifically for applicants classified as freelance or gig workers. The backend data pipeline processes transaction histories, income streams, and credit bureau feeds.",
+        "deliverable": "A technical memo demonstrating the approval rate drift between employment-type cohorts, pinpointing the root cause to a recent change in income-smoothing feature engineering, disproving macroeconomic shifts or changes in application quality as the cause, detailing a pipeline remediation and rollback plan, and outlining a telemetry dashboard to monitor ongoing employment-class fairness."
+      },
+      {
+        "id": "variant_3_ecommerce",
+        "scenario": "An online retailer's product recommendation engine is suffering from significantly decreased click-through rates for mobile app users compared to desktop users following a recent backend infrastructure update. The pipeline ingests clickstream and user interaction logs.",
+        "deliverable": "An analysis document quantifying the metric drift between device-type cohorts, identifying the specific interaction-parsing pipeline step responsible for the skew, eliminating alternative causes like seasonal shopping trends or marketing traffic shifts, recommending a code fix with explicit rollback procedures, and specifying a monitoring setup to ensure future device-level metric parity."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "gemini_3_1_pro",
+    "strategy": "no_neg_fs",
+    "generation_seconds": 24.107342004776,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.0363454556395718,
+      "p95": 0.06646769134653477,
+      "max": 0.09327689461439935,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.019405739756758144,
+      "p95": 0.03973126375535733
+    },
+    "readability": {
+      "flesch_mean": 18.26510106773937,
+      "flesch_std": 12.171716685196383,
+      "word_count_mean": 50.3,
+      "word_count_std": 3.0347981810987035
+    },
+    "construct_equivalence_judge": {
+      "score": 0.82,
+      "rationale": "All six variants consistently require the same core competencies: statistical methodology to detect differential outcomes across cohorts, root-cause tracing through pipeline steps, falsification of alternative explanations, and stakeholder-facing documentation. Minor drift exists in that Variant 5 (EV routing delays) leans more toward operational routing logic than feature-engineering or label bias, and Variant 6 (dialect toxicity) emphasizes training data and model behavior rather than a feature-engineering or label-source trace, slightly shifting the root-cause analysis target. The deliverable formats vary but all require both technical and executive-facing communication, preserving the stakeholder communication and documented reasoning competencies across variants."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1",
+        "scenario": "A fintech company launched an automated credit-limit increase model. Financial advisors note a spike in complaints from self-employed applicants who are being denied at unusually high rates despite excellent credit histories. Audit the pipeline and report to the Chief Risk Officer.",
+        "deliverable": "Root-cause analysis document + executive summary for the Risk Committee"
+      },
+      {
+        "id": "variant_2",
+        "scenario": "A multinational corporation uses an AI resume screening tool. Recruiters observe that candidates who attended coding bootcamps instead of traditional universities are systematically filtered out for entry-level engineering roles. Audit the system and report to the Chief Human Resources Officer.",
+        "deliverable": "Pipeline diagnostic report + policy recommendation memo"
+      },
+      {
+        "id": "variant_3",
+        "scenario": "An e-commerce platform implemented a dynamic pricing engine. Customer feedback indicates that users in rural zip codes are seeing systematically higher base prices for household goods compared to urban users purchasing the same items. Audit the pricing pipeline and report to the VP of Retail Operations.",
+        "deliverable": "Technical audit log + 2-page briefing for the operations team"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "claude_opus_4_7",
+    "strategy": "dpcg",
+    "generation_seconds": 46.160768032073975,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.044549223100147355,
+      "p95": 0.07715517877414899,
+      "max": 0.10881669350274949,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.004744089931523495,
+      "p95": 0.02304576402654484
+    },
+    "readability": {
+      "flesch_mean": 10.051405643407236,
+      "flesch_std": 14.450820994699392,
+      "word_count_mean": 148.7,
+      "word_count_std": 3.6891733491393435
+    },
+    "construct_equivalence_judge": {
+      "score": 0.92,
+      "rationale": "All six variants require the same four competencies at the same cognitive level: triage/prioritization of affected parties by severity, construction of a causal chain from an upstream data/infrastructure change through model failure to user impact, drafting of three audience-specific messages (technical, executive, end-user), and explicit annotation of required decisions plus firm-vs-inferred evidence. The surface domains differ (banking, healthcare, music, delivery, agriculture, education) but the structural demands are identical across every deliverable specification. The only minor drift is Variant 4's informal register, which slightly reduces the explicit scaffolding around documented reasoning, and Variant 2's HIPAA/clinical-risk constraint adds a compliance layer not present elsewhere, but neither shift meaningfully changes which competencies are measured or at what level of demand."
+    },
+    "variants_sample": [
+      {
+        "id": "v1",
+        "scenario": "At a regional retail bank, the deployed fraud-detection model began flagging 18% of legitimate debit transactions as suspicious last Tuesday, locking thousands of cardholders out of normal purchases during the morning commute. Investigation suggests a vendor pushed an updated merchant-category-code mapping that the feature pipeline did not normalize, shifting input distributions for the gradient-boosted classifier. Branch managers are fielding complaints, the call center is overwhelmed, and the Chief Risk Officer wants answers before tomorrow's executive committee meeting. The data science team must triage user impact, reconstruct the causal chain, and communicate appropriately to engineers, the executive committee, and affected customers.",
+        "deliverable": "A single PDF containing a severity-ranked incident triage table plus three audience-tailored messages (engineering postmortem, executive summary, customer notice), each annotated with the decision the recipient must make and a clear separation of firm evidence versus inferred claims."
+      },
+      {
+        "id": "v2",
+        "scenario": "Our hospital network's sepsis early-warning model started missing roughly 1 in 4 true positives on the night shift after a silent upgrade to the electronic health record's vitals streaming format changed timestamp granularity from minutes to seconds. Bedside nurses noticed alerts arriving late or not at all; two patient safety reports have already been filed. The clinical informatics director, the on-call ML platform engineers, and the families of affected patients all need different explanations. Leadership wants a coordinated communication plan today that respects HIPAA, conveys clinical risk honestly, and avoids alarming patients beyond what the evidence supports.",
+        "deliverable": "One incident communication packet that ranks affected wards by clinical severity, traces the causal chain from data ingestion change to missed alerts, and includes three drafted messages (engineering postmortem, hospital executive briefing, patient family letter) with each tagged by required decision and confidence level of supporting evidence."
+      },
+      {
+        "id": "v3",
+        "scenario": "The recommender system on our streaming music app started serving wildly off-genre playlists to about 320,000 premium subscribers after the overnight retraining job ingested partially corrupted listening logs from a new mobile SDK release. Social media is filling up with screenshots, churn risk is rising, and the head of product is demanding a fix narrative before the all-hands tomorrow. The ML team needs to sort which user cohorts were hit hardest, explain how bad telemetry produced bad recommendations, and write distinct notes for backend engineers, the product leadership team, and confused subscribers.",
+        "deliverable": "A shared incident document containing a cohort-level severity ranking, a labeled causal diagram from telemetry corruption to recommendation drift, and three written communications (engineering postmortem, product leadership summary, in-app subscriber notice), each marked with the audience's required decision and an explicit firm-versus-inferred evidence column."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "claude_opus_4_7",
+    "strategy": "no_cmap_cot",
+    "generation_seconds": 38.67497205734253,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.0999748715578559,
+      "p95": 0.1303804325422071,
+      "max": 0.2840135115088962,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.1332604271318113,
+      "p95": 0.17120622568093385
+    },
+    "readability": {
+      "flesch_mean": 34.73552609738317,
+      "flesch_std": 4.831116947264813,
+      "word_count_mean": 157.6,
+      "word_count_std": 7.213875518748574
+    },
+    "construct_equivalence_judge": {
+      "score": 0.95,
+      "rationale": "All six variants faithfully reproduce every competency in the blueprint: each requires explicit severity-scaled triage, a full causal chain from upstream data/system change through model failure to end-user harm, three audience-differentiated written communications with decision framing, and a firm-vs-inferred evidence annotation. The structural demand level is identical across variants\u2014same number of deliverables, same analytical depth required, same epistemic-documentation step. The only variation is surface domain (fintech, healthcare, streaming, autonomous vehicles, credit scoring, content moderation), which appropriately changes context without shifting the underlying construct being measured, resulting in near-perfect construct equivalence with only trivial drift from domain-specific nuances such as regulatory salience in the clinical and credit variants."
+    },
+    "variants_sample": [
+      {
+        "id": 1,
+        "scenario": "You are the lead data scientist at a fintech company. Over the past 72 hours, your fraud detection model has been flagging a surge of legitimate transactions as fraudulent, locking thousands of customer accounts. Initial investigation suggests an upstream change in how merchant category codes were encoded after a payment processor migration, which the model interpreted as anomalous patterns. Customer support is overwhelmed, executives are demanding answers, and engineering needs to coordinate a rollback.",
+        "deliverable": "Produce a triage assessment that rates each affected user segment by severity using an explicit scale. Construct the causal chain linking the upstream data change to the model misclassifications to customer harm. Then draft three written communications: (1) a postmortem for the engineering team, (2) an executive summary for the C-suite, and (3) a notice to affected customers. For each message, state the decision the audience needs to make after reading. Append a brief note distinguishing claims supported by firm evidence from those that remain inferential."
+      },
+      {
+        "id": 2,
+        "scenario": "You lead the ML team supporting a clinical decision support tool used at several hospitals. Radiologists have reported that the tool's confidence scores for flagging suspicious lung nodules have dropped sharply over the last two weeks, and several cases were under-prioritized in the worklist. Preliminary analysis points to a recent firmware update on one vendor's CT scanners that subtly changed image preprocessing, shifting the input distribution outside the model's training range. Clinical leadership, your engineering team, and referring physicians all need information.",
+        "deliverable": "Produce a triage assessment that rates each affected patient-impact category by severity using an explicit scale. Construct the causal chain linking the scanner firmware change to the model behavior change to patient-care impact. Then draft three written communications: (1) a postmortem for the ML engineering team, (2) an executive summary for hospital leadership, and (3) a notice to clinicians using the tool. For each message, state the decision the audience needs to make. Append a brief note distinguishing what is firmly established from what remains inferred."
+      },
+      {
+        "id": 3,
+        "scenario": "You are the senior ML engineer behind the recommendation system at a major streaming platform. Engagement metrics dropped 18% over the weekend, and users on social media are complaining their feeds suddenly show irrelevant, repetitive content. Investigation suggests a content metadata pipeline update changed how genre tags are normalized, causing the embedding lookup to miss for newly ingested titles. Product, engineering, and a growing volume of subscribers all want explanations.",
+        "deliverable": "Produce a triage assessment that rates each affected user cohort by severity using an explicit scale. Build the causal chain from the metadata normalization change to degraded recommendation quality to user dissatisfaction. Then draft three written communications: (1) a postmortem for the engineering and ML team, (2) an executive summary for the head of product, and (3) a public-facing notice to subscribers. For each message, state the decision the audience must make. Append a brief note separating firm evidence from inference."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "claude_opus_4_7",
+    "strategy": "no_neg_fs",
+    "generation_seconds": 18.370445251464844,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.043878007053475124,
+      "p95": 0.08008277069575755,
+      "max": 0.12548949871201373,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.001644996059889677,
+      "p95": 0.0
+    },
+    "readability": {
+      "flesch_mean": 20.610665392011917,
+      "flesch_std": 9.991073887845035,
+      "word_count_mean": 52.0,
+      "word_count_std": 4.669047011971501
+    },
+    "construct_equivalence_judge": {
+      "score": 0.72,
+      "rationale": "All six variants require incident triage/prioritization, causal narrative construction, multi-tier stakeholder communication, and documented reasoning, preserving the core competency structure. Minor drift exists in a few cases: Variant 3 omits an explicit triage deliverable label and Variant 6 replaces a customer-facing notice with a store-operator briefing, slightly shifting the audience-decision-anticipation demand away from end-consumers toward internal operators. The domain contexts vary (credit, education, ride-share, insurance, streaming, supply chain) but do not fundamentally alter the cognitive demands required by the blueprint."
+    },
+    "variants_sample": [
+      {
+        "id": "var_1",
+        "scenario": "A national retail bank deployed an ML credit-decisioning model. Branch managers in three states report a spike in declined applications from small-business customers with strong historical repayment records. The risk committee is meeting in 72 hours. Triage the incident and report to the Chief Risk Officer.",
+        "deliverable": "Incident triage report + engineering postmortem, executive summary, and customer-facing notice"
+      },
+      {
+        "id": "var_2",
+        "scenario": "An online learning platform deployed an AI essay-scoring model used in district-wide assessments. Teachers in two districts report that English-learner students are receiving scores inconsistent with classroom performance. School boards are demanding answers within the week. Investigate and communicate findings.",
+        "deliverable": "Triage memo + three-tier communication package (engineering, district superintendents, affected families)"
+      },
+      {
+        "id": "var_3",
+        "scenario": "A ride-share company's surge-pricing model began producing fares that drivers and riders both report as erratic in two metro areas after a holiday weekend. Support tickets are climbing and a press inquiry has arrived. Audit the incident and prepare communications.",
+        "deliverable": "Postmortem document + executive brief + customer notice"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "gpt_5_5",
+    "strategy": "dpcg",
+    "generation_seconds": 58.93101906776428,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.07353240116281944,
+      "p95": 0.09654295594833721,
+      "max": 0.1311391453051001,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.09488545683606725,
+      "p95": 0.10072884329869078
+    },
+    "readability": {
+      "flesch_mean": 4.288127608825309,
+      "flesch_std": 6.548505527366481,
+      "word_count_mean": 137.8,
+      "word_count_std": 2.2271057451320084
+    },
+    "construct_equivalence_judge": {
+      "score": 0.92,
+      "rationale": "All six variants require identical deliverable components (severity triage, causal narrative, engineering postmortem, executive summary, customer notice, audience decision needs, firm-versus-inferred evidence notes) and engage the same four competencies at the same cognitive level: incident triage and prioritization, causal chain construction from data shift to model error to user impact, multi-audience stakeholder communication, and documented epistemic reasoning. The surface-level variation in domain, jargon, and stakeholder title is intentional and does not shift the underlying construct or demand level. A minor deduction is warranted because Variant 5's deliverable prompt is slightly less explicit about the three-audience message structure compared to the others, introducing a small risk of narrower stakeholder communication coverage, but this is a marginal difference that does not substantially alter construct equivalence."
+    },
+    "variants_sample": [
+      {
+        "id": "variant-01",
+        "scenario": "Dimensions varied: healthcare operations; clinical-ops jargon; formal professional reading level; chief medical officer stakeholder. A hospital network\u2019s discharge planning model began recommending routine follow-up for patients who later required urgent outreach. The issue appeared after a new intake workflow changed how home-support notes were entered. Nurses report that the model now underweights caregiver availability and overweights stable vital signs, creating unsafe reassurance for some discharge coordinators. Early chart review shows the urgent callback rate rose to 18%. The chief medical officer needs a clear account of severity, likely cause, patient impact, and which claims are proven versus still provisional before deciding whether to pause use across sites.",
+        "deliverable": "Produce a stakeholder communication packet for the hospital incident: include a severity triage, causal narrative, engineering postmortem, executive summary, customer notice, audience decision needs, and firm-versus-inferred evidence notes."
+      },
+      {
+        "id": "variant-02",
+        "scenario": "Dimensions varied: financial services; risk-control jargon; board-ready reading level; vice president of fraud stakeholder. A card issuer\u2019s fraud model began approving transactions that analysts later flagged as suspicious. The pattern followed a merchant-category feed update from a payment processor, which changed labels for several high-risk online vendors. Reviewers believe the model treated those purchases as ordinary retail spend and suppressed manual review queues. Fraud operations reports that chargeback losses increased by 27%. The vice president of fraud must decide whether to tighten rules, notify partners, or keep monitoring while engineers validate the feature pipeline and separate confirmed facts from plausible explanations.",
+        "deliverable": "Produce a stakeholder communication packet for the fraud-model incident: include a severity triage, causal narrative, engineering postmortem, executive summary, customer notice, audience decision needs, and firm-versus-inferred evidence notes."
+      },
+      {
+        "id": "variant-03",
+        "scenario": "Dimensions varied: higher education; student-success jargon; civic professional reading level; dean of enrollment stakeholder. A university\u2019s retention-risk model started flagging many commuting students as low risk even though advisors later found serious attendance barriers. The change followed a learning-management-system migration that altered how late assignment submissions were recorded. Advising staff suspect the model interpreted missing course activity as normal transfer noise rather than disengagement. Appeal volume rose by 22%. The dean of enrollment needs a communication plan that explains user-facing severity, how the data shift may have distorted predictions, what students experienced, and which evidence is established versus inferred before authorizing outreach.",
+        "deliverable": "Produce a stakeholder communication packet for the student-success incident: include a severity triage, causal narrative, engineering postmortem, executive summary, customer notice, audience decision needs, and firm-versus-inferred evidence notes."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "gpt_5_5",
+    "strategy": "no_cmap_cot",
+    "generation_seconds": 36.0287880897522,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.12055334813562746,
+      "p95": 0.15066778722230564,
+      "max": 0.1597815069500195,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.22992632775581825,
+      "p95": 0.24856687172476646
+    },
+    "readability": {
+      "flesch_mean": 18.390217776494758,
+      "flesch_std": 5.503149189629566,
+      "word_count_mean": 132.5,
+      "word_count_std": 6.545991139621257
+    },
+    "construct_equivalence_judge": {
+      "score": 0.95,
+      "rationale": "All six variants require the same four competencies at the same cognitive level: triaging severity with a defined scale, constructing a data-shift-to-model-error-to-user-impact causal chain, drafting three audience-specific messages with explicit decision framing, and separating confirmed evidence from inference. The surface domains differ (grocery, edtech, travel, healthcare, music, IoT) but the deliverable structure and intellectual demands are held constant across all variants. Minor variation exists in the healthcare scenario (patient safety stakes are slightly higher, which could marginally elevate the severity-triage difficulty), but this does not meaningfully shift the underlying competency being measured."
+    },
+    "variants_sample": [
+      {
+        "id": "V01",
+        "scenario": "A grocery delivery app uses a demand-forecasting model to estimate delivery times and assign driver capacity. After a holiday weekend, suburban order patterns changed sharply: larger baskets, more frozen items, and more afternoon orders than usual. The model continued to predict normal pick-and-pack durations, causing customers in three metro areas to receive delivery windows that were 45\u201390 minutes too optimistic. Support tickets and refund requests spiked before the operations team paused the automated estimates.",
+        "deliverable": "Prepare an incident communication package. Include a user-facing severity rating using a clearly defined scale, a causal narrative connecting the observed demand shift to the model behavior and customer impact, and three audience-specific messages: an engineering postmortem, an executive summary, and a customer notice. For each message, state what decision the audience needs to make. Clearly separate confirmed evidence from reasonable inferences."
+      },
+      {
+        "id": "V02",
+        "scenario": "An online learning platform uses a recommendation model to assign practice problems to students. At the start of a new semester, many schools imported revised curriculum tags, including several new topic names that were not present in training data. The model began routing algebra review questions to students working on geometry, leading teachers to report mismatched assignments and students to abandon practice sessions. The product team disabled auto-assignment for affected courses while investigating.",
+        "deliverable": "Prepare an incident communication package. Include a user-facing severity rating using a clearly defined scale, a causal narrative connecting the curriculum-tag change to the model behavior and learner impact, and three audience-specific messages: an engineering postmortem, an executive summary, and a school/customer notice. For each message, state what decision the audience needs to make. Clearly separate confirmed evidence from reasonable inferences."
+      },
+      {
+        "id": "V03",
+        "scenario": "A travel booking site uses a fraud-risk model to decide when to require extra verification before ticket purchase. Following a promotion with a new airline partner, the checkout flow received many legitimate bookings from first-time users in countries that had little historical volume. The model over-weighted novelty signals and sent a large share of these customers into manual review, delaying confirmations and causing some fares to expire. Customer care escalated the issue after complaints increased.",
+        "deliverable": "Prepare an incident communication package. Include a user-facing severity rating using a clearly defined scale, a causal narrative connecting the traffic mix change to the model behavior and traveler impact, and three audience-specific messages: an engineering postmortem, an executive summary, and a customer notice. For each message, state what decision the audience needs to make. Clearly separate confirmed evidence from reasonable inferences."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "gpt_5_5",
+    "strategy": "no_neg_fs",
+    "generation_seconds": 15.225901126861572,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.04516394566728435,
+      "p95": 0.0932261772219672,
+      "max": 0.09956493249001432,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.027142089322556406,
+      "p95": 0.039173884077281805
+    },
+    "readability": {
+      "flesch_mean": 17.0210137501095,
+      "flesch_std": 11.969111191413484,
+      "word_count_mean": 44.8,
+      "word_count_std": 3.249615361854384
+    },
+    "construct_equivalence_judge": {
+      "score": 0.82,
+      "rationale": "All six variants consistently require the same four core competencies: triaging a model failure by severity, constructing a causal chain (data/system change \u2192 model error \u2192 user impact), drafting multi-audience communications, and documenting firm vs. inferred evidence. The deliverable framing is nearly identical across variants, with minor surface differences in audience titles and the explicit three-audience requirement being slightly more prominent in some variants (V3, V4, V5) than others (V1, V2). The cognitive demand level is uniform \u2014 each scenario presents a post-deployment failure triggered by an upstream data change, requiring the same analytical and communication depth \u2014 so construct drift is minimal and largely cosmetic."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1",
+        "scenario": "A national retail bank deployed an AI credit-limit adjustment system. Customer support reports a spike in complaints from long-tenured customers whose limits were reduced after recent payroll data updates. Audit and report to the Chief Risk Officer.",
+        "deliverable": "Incident assessment memo + stakeholder communication package"
+      },
+      {
+        "id": "variant_2",
+        "scenario": "An online university deployed an AI student-success predictor. Academic advisors report that transfer students are being marked low-risk shortly before failing required gateway courses. Audit and report to the Provost.",
+        "deliverable": "Findings report + executive and student-facing communication drafts"
+      },
+      {
+        "id": "variant_3",
+        "scenario": "A health insurance company deployed an AI prior-authorization assistant. Care coordinators report delayed approvals for patients with complex chronic conditions after a coding taxonomy update. Audit and report to the VP of Clinical Operations.",
+        "deliverable": "Root-cause brief + three-audience incident communications"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "gemini_3_1_pro",
+    "strategy": "dpcg",
+    "generation_seconds": 51.37242388725281,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.04476104905374587,
+      "p95": 0.08386289586359721,
+      "max": 0.09832458659478163,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.005594925147145295,
+      "p95": 0.018520176634582112
+    },
+    "readability": {
+      "flesch_mean": -15.200122333758276,
+      "flesch_std": 6.2731335460553765,
+      "word_count_mean": 159.3,
+      "word_count_std": 3.0347981810987035
+    },
+    "construct_equivalence_judge": {
+      "score": 0.92,
+      "rationale": "All six variants consistently require the same four competencies at the same cognitive level: severity triage using a domain-appropriate scale, causal chain construction from a data/input shift through model error to end-user impact, three differentiated stakeholder communications (technical postmortem, executive summary, external notice) with anticipated decisions per audience, and explicit separation of confirmed evidence from inference. The surface domains vary (healthcare, finance, retail, autonomous vehicles, energy, agriculture) but the structural demand and deliverable format are nearly identical across all variants, with only minor differences in domain-specific terminology (e.g., 'clinical-impact scale' vs. 'transportation safety scale') that do not alter the underlying competency being measured. The slight deduction reflects marginal variation in the explicitness of the triage scale specification and the relative stakes of the domains, which could introduce minor differences in the depth of reasoning elicited."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1",
+        "scenario": "As the Lead ML Engineer for a prominent diagnostic network, you oversee a computer vision system classifying radiological scans. Recently, a significant data shift occurred due to a hospital consortium upgrading their MRI hardware, introducing unprecedented contrast artifacts. Consequently, the algorithm began generating false positives for pulmonary anomalies, unnecessarily delaying critical reviews for genuine pathologies. Our internal dashboard indicates a 22% spike in secondary clinician overrides during the past forty-eight hours. The clinical director demands an immediate explanation, while the software team needs technical directives to patch the pipeline, and affiliated hospitals require transparent guidance regarding ongoing diagnostic reliability.",
+        "deliverable": "Produce a comprehensive report containing: 1) A severity triage assessment using a standard clinical-impact scale; 2) A causal narrative linking the hardware shift to patient impact; 3) Three tailored communications (engineering postmortem, executive summary, hospital notice); 4) Anticipated decisions for each audience; and 5) An appendix distinguishing confirmed empirical evidence from inferred operational assumptions."
+      },
+      {
+        "id": "variant_2",
+        "scenario": "Serving as the Chief Risk Officer for an algorithmic trading firm, you must address a sudden deterioration in a high-frequency execution model. A macroeconomic data provider unexpectedly altered their timestamp formatting, creating a subtle feature shift. This misalignment caused the predictive engine to miscalculate liquidity constraints, resulting in aggressive block trades during volatile market conditions. Preliminary audits reveal an unintended capital exposure of $4.5M across domestic equity portfolios. The quantitative research division requires a detailed autopsy, the board of directors expects a strategic risk evaluation, and our institutional investors must receive a formal notification regarding the execution anomaly.",
+        "deliverable": "Submit a structured dossier that includes: 1) A prioritized triage of the incident based on financial severity; 2) A causal chain mapping the timestamp shift to portfolio exposure; 3) Three distinct messages (quantitative postmortem, board-level executive summary, investor notice); 4) The primary decision each audience must execute; and 5) A methodological section delineating established facts from inferred market dynamics."
+      },
+      {
+        "id": "variant_3",
+        "scenario": "As the Product Manager for a global retail platform, you manage the personalized recommendation engine. A recent third-party cookie deprecation initiated a massive behavioral data shift, eliminating historical browsing context for unregistered visitors. Deprived of these signals, the recommendation algorithm defaulted to promoting obscure, low-converting inventory to new users. Analytics confirm a precipitous drop in engagement, with cart abandonment rates increasing by 18% over the weekend. The backend engineering squad needs actionable debugging parameters, the executive leadership team requires a revenue-impact briefing, and our merchant partners are demanding an explanation for the sudden reduction in storefront traffic.",
+        "deliverable": "Create an action plan featuring: 1) An incident triage ranking based on user-facing friction; 2) A causal sequence connecting cookie deprecation to merchant impact; 3) Three specific drafts (backend engineering postmortem, leadership executive summary, merchant notification); 4) Identification of the critical decision facing each stakeholder group; and 5) Documentation separating verified telemetry data from inferred consumer behavior."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "gemini_3_1_pro",
+    "strategy": "no_cmap_cot",
+    "generation_seconds": 44.14177179336548,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.06443588408469664,
+      "p95": 0.10096054306328746,
+      "max": 0.1252061105311355,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.024730756037277334,
+      "p95": 0.04961180267404333
+    },
+    "readability": {
+      "flesch_mean": 30.732002597849792,
+      "flesch_std": 5.317067377877867,
+      "word_count_mean": 121.9,
+      "word_count_std": 7.354590403278758
+    },
+    "construct_equivalence_judge": {
+      "score": 0.97,
+      "rationale": "All six variants map precisely onto the five canonical deliverables: severity-scale triage, causal-chain construction, three-audience drafting (engineering/executive/customer), decision-anticipation per audience, and firm-vs-inferred evidence documentation. The surface scenarios differ in domain (retail, healthcare, ride-hailing, banking, IoT, logistics) but each preserves the same structural demand and cognitive level for every competency. The only negligible drift is Variant 6 substituting 'store managers' for the generic 'customer' audience, which is still a user-facing stakeholder role and does not materially shift the construct being measured."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1_ecommerce",
+        "scenario": "A fashion retail recommendation AI has started suggesting heavy winter coats to users in July. The issue began after a summer catalog update caused a data pipeline mapping error. Customer support is receiving numerous complaints about irrelevant suggestions, and a significant dip in daily conversion rates has been flagged.",
+        "deliverable": "1) Triage the reported user incidents using a defined severity scale based on shopper impact. 2) Map the causal chain from the catalog data update to the recommendation error and the resulting drop in revenue. 3) Draft three communications: an engineering postmortem, an executive summary, and a customer apology. 4) For each communication, anticipate and state the primary decision that specific audience needs to make. 5) Document which parts of your incident investigation are confirmed facts versus inferred assumptions."
+      },
+      {
+        "id": "variant_2_healthcare",
+        "scenario": "A symptom-checking AI at a telehealth clinic is downplaying severe respiratory issues. A recent software update changed how patient ages are encoded in the database, causing the model to misclassify the urgency of elderly patients. As a result, several high-risk patients are experiencing delayed callbacks from human doctors.",
+        "deliverable": "1) Triage the delayed callback incidents using a severity scale focused on patient-facing impact. 2) Construct a causal chain linking the age encoding data shift to the triage model's failure and the resulting patient delays. 3) Write an engineering postmortem, a clinic executive summary, and a patient notification. 4) Identify the critical decision each of these three audiences must make based on your message. 5) Clearly list what evidence in your report is verified data versus inferred conclusions."
+      },
+      {
+        "id": "variant_3_ridesharing",
+        "scenario": "A ride-hailing app's dynamic pricing model failed to trigger surge pricing during a major city-wide subway outage. The model was confused by a sudden influx of out-of-town user accounts, which altered the baseline demographic data features. Drivers are abandoning the app due to low pay, and thousands of riders are stranded without available cars.",
+        "deliverable": "1) Triage the stranded rider and driver shortage incidents using a defined user-impact severity scale. 2) Build a causal narrative from the demographic data shift to the pricing model failure and the overall service breakdown. 3) Draft an engineering postmortem, an executive summary, and a rider/driver notice. 4) Anticipate and note the key operational or business decision each audience must make upon reading your message. 5) Document your reasoning process, separating firm evidence from inferred details."
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "gemini_3_1_pro",
+    "strategy": "no_neg_fs",
+    "generation_seconds": 29.83467698097229,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.03812892821430612,
+      "p95": 0.0633693804011437,
+      "max": 0.10685172323268774,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.023075703264389638,
+      "p95": 0.03760866249809364
+    },
+    "readability": {
+      "flesch_mean": 17.179547972668164,
+      "flesch_std": 8.591712195415761,
+      "word_count_mean": 47.5,
+      "word_count_std": 2.5787593916455256
+    },
+    "construct_equivalence_judge": {
+      "score": 0.82,
+      "rationale": "All six variants consistently require the four core competencies: triage/severity assessment, causal chain construction, multi-audience communication drafting, and distinguishing firm evidence from inference. The deliverable structures map closely to the canonical solution across variants, with each requiring three tiered communications targeting analogous audience types (technical, executive, and affected-party). Minor drift exists in Variant 4 (evidence-inference log as primary deliverable emphasizes documentation over triage) and Variant 2 (root cause narrative leads rather than triage matrix), slightly reweighting the competency emphasis, but the overall construct equivalence remains high."
+    },
+    "variants_sample": [
+      {
+        "id": "variant_1",
+        "scenario": "A retail bank deployed an AI fraud detection system. Customers traveling internationally report their credit cards are being systematically frozen despite submitting travel notices. Audit the system and report to the Chief Risk Officer.",
+        "deliverable": "Incident triage matrix + 3 tailored communications (engineering postmortem, executive summary, customer notice)"
+      },
+      {
+        "id": "variant_2",
+        "scenario": "A tech enterprise deployed an AI resume screening tool. Recruiters notice that applicants from a specific tier of universities are being automatically rejected for entry-level roles despite meeting all criteria. Audit and report to the VP of Human Resources.",
+        "deliverable": "Root cause narrative + 3 targeted memos (data science team, HR leadership, applicant notification)"
+      },
+      {
+        "id": "variant_3",
+        "scenario": "An online marketplace deployed an AI dynamic pricing engine. Sellers in the electronics category report their items are being priced below cost during weekend evening hours. Audit and report to the Chief Commercial Officer.",
+        "deliverable": "Severity assessment + 3 distinct messages (ML engineering, executive board, seller update)"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "llama_3_2_3b_inst",
+    "strategy": "reference",
+    "generation_seconds": 10.463618040084839,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.11796949514788775,
+      "p95": 0.44888678170728574,
+      "max": 0.650171540628286,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.06831286219455679,
+      "p95": 0.4107142857142857
+    },
+    "readability": {
+      "flesch_mean": -28.142648909337595,
+      "flesch_std": 7.891791553335822,
+      "word_count_mean": 42.1,
+      "word_count_std": 5.990826320300064
+    },
+    "construct_equivalence_judge": {
+      "score": 0.2,
+      "rationale": "Each variant isolates only one of the four blueprint competencies rather than integrating all four, meaning no single variant replicates the full construct the blueprint defines. The canonical solution requires simultaneous technical evaluation, ethical/disparate-impact analysis, stakeholder framing, and documented reasoning in a unified audit workflow, but the variants fragment these into siloed, single-competency deliverables. Additionally, the variants omit the specific methodological demands (held-out time-split baselines, disparate-impact ratios, sensitivity analysis, quantified legal exposure, constrained rollout recommendations) that define the required cognitive level, resulting in substantial construct drift across the set."
+    },
+    "variants_sample": [
+      {
+        "id": 1,
+        "scenario": "E-commerce platform audit for a small online retailer",
+        "deliverable": {
+          "title": "Technical evaluation quality",
+          "description": "Assess the technical feasibility of implementing AI-driven pricing optimization on the e-commerce platform",
+          "tasks": [
+            "Analyze the technical requirements for integrating AI algorithms into the platform",
+            "Evaluate the performance of different machine learning models for pricing optimization"
+          ]
+        }
+      },
+      {
+        "id": 2,
+        "scenario": "Healthcare data analysis for a hospital",
+        "deliverable": {
+          "title": "Ethical risk identification",
+          "description": "Identify potential ethical risks associated with using AI in healthcare data analysis",
+          "tasks": [
+            "Analyze the potential for bias in AI algorithms",
+            "Evaluate the impact of AI on patient data privacy"
+          ]
+        }
+      },
+      {
+        "id": 3,
+        "scenario": "Marketing campaign optimization for a social media agency",
+        "deliverable": {
+          "title": "Stakeholder communication",
+          "description": "Develop a communication plan for stakeholders on the use of AI in marketing campaign optimization",
+          "tasks": [
+            "Create a stakeholder analysis report",
+            "Develop a presentation for senior management"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "llama_3_2_3b_inst",
+    "strategy": "reference",
+    "generation_seconds": 14.377580881118774,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.748399667770787,
+      "p95": 0.8481530169861854,
+      "max": 0.8818347349755705,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.8954264918971742,
+      "p95": 0.9245283018867925
+    },
+    "readability": {
+      "flesch_mean": -18.136723129700457,
+      "flesch_std": 2.0672101555532674,
+      "word_count_mean": 54.9,
+      "word_count_std": 0.9433981132056604
+    },
+    "construct_equivalence_judge": {
+      "score": 0.95,
+      "rationale": "All six variants share identical competency lists, titles, and canonical solution outlines, differing only in the surface-level domain scenario (e-commerce, medical, financial, churn, recommendation, sentiment). The underlying construct \u2014 statistical methodology selection, root-cause analysis, stakeholder communication, and documented reasoning \u2014 is preserved at the same cognitive demand level across all variants. A minor deduction is warranted because domain context (e.g., medical diagnosis vs. e-commerce) could subtly shift the complexity of stakeholder communication or the specificity of pipeline fix recommendations, but this drift is minimal."
+    },
+    "variants_sample": [
+      {
+        "id": "1",
+        "scenario": "E-commerce Product Recommendation",
+        "deliverable": "{\"title\": \"Data Pipeline Bias Investigation\", \"competencies\": [\"Statistical methodology selection\", \"Root-cause analysis\", \"Stakeholder communication\", \"Documented reasoning process\"], \"canonical_solution_outline\": [\"Compute downstream metric drift across cohorts.\", \"Trace drift to a feature-engineering step or label source.\", \"Falsify alternative explanations (sampling change, seasonality).\", \"Recommend pipeline fix with rollback plan.\", \"Document what monitoring would detect recurrence.\"]}"
+      },
+      {
+        "id": "2",
+        "scenario": "Medical Diagnosis",
+        "deliverable": "{\"title\": \"Data Pipeline Bias Investigation\", \"competencies\": [\"Statistical methodology selection\", \"Root-cause analysis\", \"Stakeholder communication\", \"Documented reasoning process\"], \"canonical_solution_outline\": [\"Compute downstream metric drift across cohorts.\", \"Trace drift to a feature-engineering step or label source.\", \"Falsify alternative explanations (sampling change, seasonality).\", \"Recommend pipeline fix with rollback plan.\", \"Document what monitoring would detect recurrence.\"]}"
+      },
+      {
+        "id": "3",
+        "scenario": "Financial Risk Analysis",
+        "deliverable": "{\"title\": \"Data Pipeline Bias Investigation\", \"competencies\": [\"Statistical methodology selection\", \"Root-cause analysis\", \"Stakeholder communication\", \"Documented reasoning process\"], \"canonical_solution_outline\": [\"Compute downstream metric drift across cohorts.\", \"Trace drift to a feature-engineering step or label source.\", \"Falsify alternative explanations (sampling change, seasonality).\", \"Recommend pipeline fix with rollback plan.\", \"Document what monitoring would detect recurrence.\"]}"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "llama_3_2_3b_inst",
+    "strategy": "reference",
+    "generation_seconds": 26.820236921310425,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.6713258312946223,
+      "p95": 0.9999999999999963,
+      "max": 1.0000000000000007,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.6345262495349845,
+      "p95": 0.9492221118834823
+    },
+    "readability": {
+      "flesch_mean": 22.29055673101362,
+      "flesch_std": 5.865499686579471,
+      "word_count_mean": 159.6,
+      "word_count_std": 4.673328578219169
+    },
+    "construct_equivalence_judge": {
+      "score": 0.4,
+      "rationale": "All six variants address the same four competency categories and follow the same structural template, preserving surface-level construct coverage. However, the scenarios vary substantially in severity (Low vs. High vs. Critical), which changes the cognitive demand of triage and causal narrative construction \u2014 a low-severity minor inconvenience requires fundamentally different prioritization reasoning than a critical financial-loss incident, making the variants non-equivalent in difficulty and depth. Additionally, none of the variants meaningfully demonstrate the canonical solution's key requirements of anticipating audience-specific decisions or distinguishing firm vs. inferred evidence, reducing construct fidelity across the board regardless of severity level."
+    },
+    "variants_sample": [
+      {
+        "id": 1,
+        "scenario": "A critical model failure affects 1000 users, causing a 30-minute delay in a key business process. The incident is reported by a user who experienced the error.",
+        "deliverable": {
+          "incident_triage": "High",
+          "causal_narrative": "Data shift to model error caused a delay in business process, resulting in user impact.",
+          "stakeholder_communication": "Engineering postmortem: 'We experienced a critical model failure that caused a 30-minute delay in our business process. We are investigating the root cause and will take corrective action.' Executive summary: 'Our model failure resulted in a significant delay, affecting 1000 users. We are working to resolve the issue.' Customer notice: 'Our business process was delayed due to a model error. We apologize for the inconvenience and are working to resolve the issue.'",
+          "documented_reasoning_process": "Triage incident by user-facing severity, build causal chain from data shift to model error to user impact, draft three messages for different audiences, anticipate decision-making for each audience, document firm vs inferred evidence."
+        }
+      },
+      {
+        "id": 2,
+        "scenario": "A model failure affects a small group of users, causing a minor inconvenience. The incident is reported by a user who experienced the error.",
+        "deliverable": {
+          "incident_triage": "Low",
+          "causal_narrative": "Data shift to model error caused a minor delay in a business process, resulting in user impact.",
+          "stakeholder_communication": "Engineering postmortem: 'We experienced a minor model failure that caused a short delay in our business process. We are investigating the root cause and will take corrective action.' Executive summary: 'Our model failure resulted in a minor delay, affecting a small group of users. We are working to resolve the issue.' Customer notice: 'Our business process was delayed due to a model error. We apologize for the inconvenience and are working to resolve the issue.'",
+          "documented_reasoning_process": "Triage incident by user-facing severity, build causal chain from data shift to model error to user impact, draft three messages for different audiences, anticipate decision-making for each audience, document firm vs inferred evidence."
+        }
+      },
+      {
+        "id": 3,
+        "scenario": "A model failure affects a large number of users, causing significant financial losses. The incident is reported by a user who experienced the error.",
+        "deliverable": {
+          "incident_triage": "Critical",
+          "causal_narrative": "Data shift to model error caused significant financial losses, resulting in user impact.",
+          "stakeholder_communication": "Engineering postmortem: 'We experienced a critical model failure that caused significant financial losses. We are investigating the root cause and will take corrective action.' Executive summary: 'Our model failure resulted in significant financial losses, affecting a large number of users. We are working to resolve the issue.' Customer notice: 'Our business process was severely impacted due to a model error. We apologize for the significant losses and are working to resolve the issue.'",
+          "documented_reasoning_process": "Triage incident by user-facing severity, build causal chain from data shift to model error to user impact, draft three messages for different audiences, anticipate decision-making for each audience, document firm vs inferred evidence."
+        }
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B1_ai_audit",
+    "model": "gpt2_small",
+    "strategy": "reference",
+    "generation_seconds": 20.48523211479187,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.013881811137676644,
+      "p95": 0.06832719062063523,
+      "max": 0.11119735542226969,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.00011022927689594356,
+      "p95": 0.0
+    },
+    "readability": {
+      "flesch_mean": 44.720215264420446,
+      "flesch_std": 22.059431505275164,
+      "word_count_mean": 80.0,
+      "word_count_std": 56.06959960620372
+    },
+    "construct_equivalence_judge": {
+      "score": 0.02,
+      "rationale": "None of the six variants present a coherent, scorable assessment scenario that could measure the blueprint competencies (technical evaluation, ethical risk identification, stakeholder communication, documented reasoning). The variants consist almost entirely of garbled text, placeholder blanks, mathematical gibberish, or off-topic tax/poverty content with no deliverable specified in any case. There is no construct equivalence because no variant actually instantiates the assessment at all."
+    },
+    "variants_sample": [
+      {
+        "id": "gpt2_v0",
+        "scenario": "_______________________________________________________________________________________________________________________________________________________ (b) New scenario variant: _______________________________________________________________________________________________________________________________________________________ (c) New scenario variant: _______________________________________________________________________________________________________________________________________________________ (d) New scenario variant: _______________________________________________________________________________________________________________________________________________________ (e) _______________________________________________________________________________________________________________________________________________________ (f) _______________________________________________________________________________________________________________________________________________________ (g) The above scenarios are an important example of using new scenarios, in which the current one is used as the basis for the new scenario. A new scenario variant allows to determine that the current one is more accurate. An example of a new scenario variant is the 'A' scenario, which is more accurate than the A scenario that was previously used for the new scenario. In a new scenario variant, the original scenario is used to calculate the accuracy of the new scenario, but the A scenario has the same information. In addition, as a result, the new scenario variant will be updated in an automated way.",
+        "deliverable": "(unspecified)"
+      },
+      {
+        "id": "gpt2_v1",
+        "scenario": "____________ ____ | _____ ____ |______ ____________ ____ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |______ ____________ | ____ |",
+        "deliverable": "(unspecified)"
+      },
+      {
+        "id": "gpt2_v2",
+        "scenario": "\ue341 Use AI test at baseline for all scenarios.",
+        "deliverable": "(unspecified)"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B2_data_pipeline_bias",
+    "model": "gpt2_small",
+    "strategy": "reference",
+    "generation_seconds": 13.840231895446777,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.12031739964666907,
+      "p95": 0.8505862057841802,
+      "max": 1.0,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.0,
+      "p95": 0.0
+    },
+    "readability": {
+      "flesch_mean": -8.016472922762542,
+      "flesch_std": 71.38809968989678,
+      "word_count_mean": 34.9,
+      "word_count_std": 45.53998243302252
+    },
+    "construct_equivalence_judge": {
+      "score": 0.05,
+      "rationale": "None of the six variants contain a recognizable scenario or deliverable that maps to the blueprint's competencies of statistical methodology selection, root-cause analysis, stakeholder communication, or documented reasoning. Variants 1\u20135 are either empty, garbled symbols, or meaningless strings, while Variant 6 references a loosely related academic framing but omits all required pipeline-investigation tasks and deliverables. Construct equivalence cannot be established when no variant faithfully instantiates the canonical assessment structure."
+    },
+    "variants_sample": [
+      {
+        "id": "gpt2_v0",
+        "scenario": "\ue800/ \ue800/",
+        "deliverable": "(unspecified)"
+      },
+      {
+        "id": "gpt2_v1",
+        "scenario": "\u300a\u300a\u2285A \u2286\u300a \u300a\u2286 \u300a\u2286 \u300a\u2286\u300a \u2286\u300a \u300a\u2286 \u300a\u2286\u300a \u300a\u2286 \u300a\u2286\u300a \u2286\u300a \u300a\u2286\u300a \u300a\u2286\u300a \u2286\u300a \u300a\u2286\u300a .\u300a\u300a, \u300a\u2286\u300a , ) 2 : A. (\u300a\u2286) \u2248 2.0 (\u221a 2.0) (\u221a 2.0)",
+        "deliverable": "(unspecified)"
+      },
+      {
+        "id": "gpt2_v2",
+        "scenario": "\u3010DATA ORM\u3011(Data Analysis, New Option for Sample Analysis):",
+        "deliverable": "(unspecified)"
+      }
+    ]
+  },
+  {
+    "blueprint_id": "B3_model_failure_comms",
+    "model": "gpt2_small",
+    "strategy": "reference",
+    "generation_seconds": 14.000903129577637,
+    "n_variants": 10,
+    "surface_diversity_cosine": {
+      "mean": 0.023197930771699696,
+      "p95": 0.0639741053909912,
+      "max": 0.11520425157265499,
+      "n_pairs": 45
+    },
+    "ngram_overlap_4gram": {
+      "mean": 0.0,
+      "p95": 0.0
+    },
+    "readability": {
+      "flesch_mean": 12.27477792207794,
+      "flesch_std": 41.20251976666881,
+      "word_count_mean": 31.5,
+      "word_count_std": 42.99360417550499
+    },
+    "construct_equivalence_judge": {
+      "score": 0.05,
+      "rationale": "Nearly all variants consist of blank scenario fields and unspecified deliverables, providing no measurable construct at all. Variant 2 contains some text but it is incoherent and does not align with any of the four blueprint competencies (triage, causal narrative, stakeholder communication, documented reasoning). None of the variants operationalize the canonical solution steps, making construct equivalence essentially nonexistent across the set."
+    },
+    "variants_sample": [
+      {
+        "id": "gpt2_v0",
+        "scenario": "__________",
+        "deliverable": "(unspecified)"
+      },
+      {
+        "id": "gpt2_v1",
+        "scenario": "\u300e1st. Model failure). We are aiming at an \u300e3rd. Model failure\u300f as a consequence of the failure of the data set to its initial value of 3-5 and the failure of the data set to its initial value of 1. The model is a subset of the data set, with a fixed amount of data that should be kept by users in case the model fails to perform all its intended functions (i.e., in-place data validation) or if it fails to perform all its intended function (i.e., in-place data validation). A 2-D model is also required in this scenario, for example to verify that the data set is correctly formatted and that the user interface and the user-generated UI are working properly (see Figure 4).",
+        "deliverable": "(unspecified)"
+      },
+      {
+        "id": "gpt2_v2",
+        "scenario": "_________________",
+        "deliverable": "(unspecified)"
+      }
+    ]
+  }
+]

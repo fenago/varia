@@ -1,0 +1,152 @@
+[
+ {
+  "id": "B1_ai_audit",
+  "title": "AI Solution Audit for a Real Business",
+  "competencies": [
+   "Technical evaluation quality",
+   "Ethical risk identification",
+   "Stakeholder communication",
+   "Documented reasoning process"
+  ],
+  "rubric": {
+   "Technical evaluation quality": {
+    "1_developing": "Identifies obvious surface issues only; no statistical methodology proposed.",
+    "2_approaching": "Names relevant evaluation methods but applies them generically.",
+    "3_meets": "Selects defensible methods given data-access constraints; explains why.",
+    "4_exceeds": "Methods are tightly scoped to the specific failure mode; alternatives explicitly ruled out with reasoning."
+   },
+   "Ethical risk identification": {
+    "1_developing": "Misses the equity/fairness dimension or treats it as secondary.",
+    "2_approaching": "Names a bias concern but does not propose how to measure it.",
+    "3_meets": "Identifies the protected-attribute risk and proposes a disparate-impact analysis.",
+    "4_exceeds": "Connects the disparate-impact finding to legal/regulatory exposure and quantifies."
+   },
+   "Stakeholder communication": {
+    "1_developing": "Technical jargon dominates; non-technical reader would not act.",
+    "2_approaching": "Translates findings but buries the decision-relevant tradeoff.",
+    "3_meets": "Frames the tradeoff for the non-technical audience explicitly.",
+    "4_exceeds": "Anticipates follow-up questions and pre-empts them in the framing."
+   },
+   "Documented reasoning process": {
+    "1_developing": "No visible decision trail; presents conclusions without alternatives considered.",
+    "2_approaching": "Mentions some alternatives but does not show why they were rejected.",
+    "3_meets": "Documents decision points and the evidence that drove each one.",
+    "4_exceeds": "Reflects on where reasoning shifted and what evidence triggered the shift."
+   }
+  },
+  "canonical_solution": "1) Establish revenue-accuracy baseline using held-out time-split. 2) Compute disparate-impact ratio across protected-attribute proxy (zip-code demographics from census). 3) Run sensitivity analysis on threshold parameters. 4) Frame finding as revenue/risk tradeoff with quantified legal exposure. 5) Recommend pause or constrained rollout with monitoring."
+ },
+ {
+  "id": "B2_data_pipeline_bias",
+  "title": "Data Pipeline Bias Investigation",
+  "competencies": [
+   "Statistical methodology selection",
+   "Root-cause analysis",
+   "Stakeholder communication",
+   "Documented reasoning process"
+  ],
+  "rubric": {
+   "Statistical methodology selection": {
+    "1_developing": "Defaults to simple aggregate statistics without considering distribution shift.",
+    "2_approaching": "Mentions distribution shift but applies an inappropriate test.",
+    "3_meets": "Selects a test appropriate to the data type and known constraints; justifies.",
+    "4_exceeds": "Combines multiple complementary tests and reconciles disagreement between them."
+   },
+   "Root-cause analysis": {
+    "1_developing": "Stops at correlation; treats the symptom as the cause.",
+    "2_approaching": "Identifies a plausible mechanism but does not test it.",
+    "3_meets": "Proposes and falsifies at least one alternative mechanism.",
+    "4_exceeds": "Traces the issue upstream to data-generation or labeling process."
+   },
+   "Stakeholder communication": {
+    "1_developing": "Reports findings as numbers without business implication.",
+    "2_approaching": "Names the implication but does not quantify the decision.",
+    "3_meets": "Quantifies impact in business terms with a clear recommendation.",
+    "4_exceeds": "Provides the recommendation plus the conditions under which it should be reconsidered."
+   },
+   "Documented reasoning process": {
+    "1_developing": "Presents the final answer with no path to it.",
+    "2_approaching": "Outlines steps but not the decisions between them.",
+    "3_meets": "Documents the decision tree and the data that drove each branch.",
+    "4_exceeds": "Notes where the reasoning could be wrong and what would falsify it."
+   }
+  },
+  "canonical_solution": "1) Compute downstream metric drift across cohorts. 2) Trace drift to a feature-engineering step or label source. 3) Falsify alternative explanations (sampling change, seasonality). 4) Recommend pipeline fix with rollback plan. 5) Document what monitoring would detect recurrence."
+ },
+ {
+  "id": "B3_model_failure_comms",
+  "title": "Stakeholder Communication for a Model Failure",
+  "competencies": [
+   "Incident triage and prioritization",
+   "Causal narrative construction",
+   "Stakeholder communication",
+   "Documented reasoning process"
+  ],
+  "rubric": {
+   "Incident triage and prioritization": {
+    "1_developing": "Treats all impacts equally; no severity stratification.",
+    "2_approaching": "Names severity but uses an ad-hoc scale.",
+    "3_meets": "Uses a defensible severity framework and applies it consistently.",
+    "4_exceeds": "Maps severity to organizational stakeholders and their decisions."
+   },
+   "Causal narrative construction": {
+    "1_developing": "Story is a list of facts in time order, no cause-effect chain.",
+    "2_approaching": "Proposes a cause but does not connect it to the observed effects.",
+    "3_meets": "Constructs a defensible cause-effect chain from trigger to impact.",
+    "4_exceeds": "Acknowledges what the narrative cannot yet explain and what evidence would clarify."
+   },
+   "Stakeholder communication": {
+    "1_developing": "One-size-fits-all message regardless of audience.",
+    "2_approaching": "Differentiates technical vs business audience but generically.",
+    "3_meets": "Tailors message to what each audience must decide.",
+    "4_exceeds": "Anticipates the second-order question each audience will ask and answers it."
+   },
+   "Documented reasoning process": {
+    "1_developing": "No record of how conclusions were reached.",
+    "2_approaching": "Reasoning is present but not separated from action.",
+    "3_meets": "Reasoning is documented with evidence pointers.",
+    "4_exceeds": "Reasoning is documented and explicitly distinguishes what is known from what is inferred."
+   }
+  },
+  "canonical_solution": "1) Triage incidents by user-facing severity using a defined scale. 2) Build causal chain from data shift to model error to user impact. 3) Draft three messages: engineering postmortem, executive summary, customer notice. 4) For each, anticipate the decision each audience must make. 5) Document what evidence is firm vs inferred."
+ },
+ {
+  "id": "B4_historical_argument",
+  "title": "Constructing a Historical Argument from Primary Sources",
+  "held_out": true,
+  "note": "Distant-discipline generalisation probe, pre-registered for the follow-up; not part of the pilot's 60 cells. Shares no competency string with B1-B3 except written communication.",
+  "competencies": [
+   "Source evaluation and corroboration",
+   "Historical contextualization",
+   "Evidence-based argument construction",
+   "Written communication for an academic audience"
+  ],
+  "rubric": {
+   "Source evaluation and corroboration": {
+    "1_developing": "Takes every source at face value; no attention to origin or purpose.",
+    "2_approaching": "Notes author or date but does not use them to weigh reliability.",
+    "3_meets": "Assesses each source's origin, purpose, and audience, and corroborates key claims across sources.",
+    "4_exceeds": "Identifies where sources conflict, explains the conflict from their provenance, and states which reading the evidence favors."
+   },
+   "Historical contextualization": {
+    "1_developing": "Reads the sources through present-day assumptions.",
+    "2_approaching": "Mentions period background but does not connect it to the sources.",
+    "3_meets": "Situates each source in the events, norms, and constraints of its moment and uses that context to interpret it.",
+    "4_exceeds": "Distinguishes what contemporaries could have known from what is visible only in hindsight, and interprets accordingly."
+   },
+   "Evidence-based argument construction": {
+    "1_developing": "Asserts a thesis without citing the sources.",
+    "2_approaching": "Cites sources but as decoration; claims would stand or fall without them.",
+    "3_meets": "Builds a thesis whose every major claim rests on cited source evidence.",
+    "4_exceeds": "Addresses the strongest counter-reading of the evidence and explains why the thesis survives it."
+   },
+   "Written communication for an academic audience": {
+    "1_developing": "Structure and register unsuited to academic argument.",
+    "2_approaching": "Organized but the thesis is implicit or drifts.",
+    "3_meets": "Clear thesis, ordered argument, consistent academic register, and transparent citation of sources.",
+    "4_exceeds": "Prose anticipates a skeptical reader: signposts the argument, concedes limits, and keeps claims proportional to evidence."
+   }
+  },
+  "canonical_solution": "1) Inventory the source packet: for each source record author, date, type, purpose, and intended audience. 2) Weigh reliability: flag self-interested or retrospective accounts; corroborate each load-bearing fact across at least two independent sources. 3) Reconstruct context: what was happening, what did actors know, what constraints did they face at the time of each source. 4) Draft a thesis answering the assigned question that the corroborated evidence can carry. 5) Build the argument: each major claim cites specific passages; conflicting evidence is confronted, not omitted. 6) Address the strongest rival interpretation and show why the evidence favors the thesis. 7) Close with what the packet cannot settle and what additional sources would."
+ }
+]

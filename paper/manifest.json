@@ -1,0 +1,30 @@
+{
+  "run_id": "rc-20260513-174951-4d3fe7",
+  "target_conference": "neurips_2025",
+  "files": [
+    "paper_final.md",
+    "paper_final.pdf",
+    "references.bib",
+    "code/",
+    "charts/",
+    "verification_report.json",
+    "sanitization_report.json",
+    "paper.tex",
+    "neurips_2025.sty",
+    "paper.pdf",
+    "paper_v1_pipeline_generated.pdf"
+  ],
+  "generated": "2026-05-13T18:05:54+00:00",
+  "notes": {
+    "paper_final.md": "Final corrected paper (Markdown source of record)",
+    "paper_final.pdf": "Final corrected paper, built from paper_final.md via pandoc/xelatex",
+    "references.bib": "BibTeX bibliography, 39 verified and cited entries",
+    "code/": "Full pilot pipeline (run_experiment/run_extras/retries/merge), post-hoc robustness analyses (gap_analysis.py), pre-registered follow-up harness (run_followup.py), and blueprints.json incl. held-out B4",
+    "charts/": "Result visualizations regenerated from outputs/summary.json",
+    "verification_report.json": "Citation integrity & relevance verification (40/42 verified; 2 hallucinated entries removed from paper and bib)",
+    "sanitization_report.json": "Numeric-claims verification",
+    "paper.tex / paper.pdf / paper_v1_pipeline_generated.pdf": "Stale v1 pipeline-generated artifacts, retained for provenance only \u2014 superseded by paper_final.*"
+  },
+  "revised": "2026-09-05",
+  "revision_notes": "Methods corrected to match executed code; gap arithmetic and blueprint descriptions fixed; Tables 4-6 added (per-model breakdown, exact paired permutation tests with Holm correction, threshold gating); ranking-sensitivity and embedding-diversity checks added; follow-up harness and held-out blueprint released."
+}

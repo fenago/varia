@@ -59,6 +59,24 @@ What is demo-grade: the signing key is generated in the browser and labelled as 
 in the browser until a student shares them; students and employer reviewers are not authenticated.
 A durable, college-held record store and a college signing key are the next structural steps.
 
+## Research: paper and experiments
+
+The benchmark research behind the app lives in this repository:
+
+- **`paper/paper_final.md`** and **`paper/paper_final_V3.pdf`** — the current revision of the
+  VARIA benchmark paper (supersedes `varia_paper_v1.pdf`), with per-model results, exact
+  permutation tests with Holm correction, bootstrap CIs, threshold gating, and ranking
+  sensitivity analyses. Figures are in `paper/charts/`, citations in `paper/references.bib`.
+- **`experiments/`** — the full pilot code (generation, judging, metrics, merge, gap analysis),
+  the blueprints, the pre-registered follow-up harness (`run_followup.py`), and the raw result
+  JSONs in `experiments/outputs/`. Requires `OPENROUTER_API_KEY` for live runs; see
+  `experiments/README.md`.
+- **`experiments/demo_variants.py`** — a live cross-discipline demo: pick a stored blueprint, a
+  named preset (pre-algebra, student-teaching reflection, nursing SBAR handoff, business
+  cash-flow memo), or any one-line `--topic`, and it drafts the blueprint and generates
+  surface-distinct, construct-equivalent variants with Claude Sonnet 5.5, printing the paper's
+  quick diversity and difficulty-parity checks.
+
 ## Layout
 
 See `CLAUDE.md` for the architecture, the page-by-page spec, the domain rules from the paper, and
