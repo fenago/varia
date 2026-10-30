@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { PAGES, pageKeyForPath } from "../router";
 import { usePageTitleOverride } from "./PageTitleContext";
@@ -63,6 +63,8 @@ export function ReviewLayout() {
 
       <footer className="va-review-foot va-no-print">
         Miami Dade College · AI Assessment Grant · nothing on this page is stored anywhere but your browser
+        {" · "}
+        <Link to="/outcomes" className="va-foot-link">Grant outcomes report →</Link>
       </footer>
     </div>
   );

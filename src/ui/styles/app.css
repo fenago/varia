@@ -824,3 +824,22 @@ h2, h3 { text-wrap: balance; }
 .va-switch input:disabled + .va-switch-track { opacity: .45; }
 .va-quantities td { vertical-align: top; }
 .va-quantities code { font-size: 13px; }
+
+/* Footer on every instructor-shell page: one link to the grant outcomes report. */
+.va-foot {
+  border-top: 1px solid var(--color-divider);
+  margin-top: 28px;
+  padding: 14px 32px 22px;
+  font-size: 13px;
+  text-align: center;
+}
+.va-foot a,
+.va-foot-link {
+  color: color-mix(in srgb, var(--color-text) 62%, transparent);
+  text-decoration: none;
+}
+.va-foot a:hover,
+.va-foot-link:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}

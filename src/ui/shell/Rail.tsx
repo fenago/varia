@@ -33,6 +33,7 @@ const SECTIONS: { heading: string; items: RailItem[] }[] = [
       { to: "/surface", label: "Trade-off surface" },
       { to: "/console", label: "Compliance console" },
       { to: "/employer", label: "Employer validation" },
+      { to: "/outcomes", label: "Grant outcomes" },
     ],
   },
   {

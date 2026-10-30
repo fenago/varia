@@ -29,6 +29,7 @@ import For from "./pages/For";
 import Portfolio from "./pages/Portfolio";
 import Talent from "./pages/Talent";
 import Credential from "./pages/Credential";
+import Outcomes from "./pages/Outcomes";
 
 export type PageKey =
   | "home"
@@ -57,7 +58,8 @@ export type PageKey =
   | "journey"
   | "portfolio"
   | "task"
-  | "talent";
+  | "talent"
+  | "outcomes";
 
 /** Crumb + title per page, copied from the mockup's PAGES map. */
 export const PAGES: Record<PageKey, { crumb: string; title: string; path: string }> = {
@@ -88,6 +90,7 @@ export const PAGES: Record<PageKey, { crumb: string; title: string; path: string
   journey: { crumb: "Orientation", title: "VARIA, in one picture", path: "/journey" },
   portfolio: { crumb: "Portfolio", title: "Your verified work", path: "/portfolio" },
   talent: { crumb: "Talent view", title: "Candidates who did your work", path: "/talent" },
+  outcomes: { crumb: "Oversight", title: "Grant outcomes report", path: "/outcomes" },
 };
 
 /** Resolve the page key for a pathname (so /grade/v-07 → "grade", /review/b1 → "review"). */
@@ -123,6 +126,7 @@ export function App() {
           <Route path="/console" element={<Console />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/employer" element={<Employer />} />
+          <Route path="/outcomes" element={<Outcomes />} />
           <Route path="/for" element={<For />} />
           <Route path="/for/:audience" element={<For />} />
           <Route path="*" element={<Home />} />

@@ -106,6 +106,9 @@ export function Layout() {
           <Outlet />
           <Walkthrough />
         </div>
+        <footer className="va-foot va-no-print">
+          <Link to="/outcomes">Grant outcomes report — the numbers this pilot reports on →</Link>
+        </footer>
       </main>
     </div>
   );
